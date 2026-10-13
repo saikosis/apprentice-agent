@@ -1,0 +1,91 @@
+[
+  {
+    "id": "v-01",
+    "name": "Consignment vendor bypasses PO match",
+    "description": "Invoices from consignment-type vendors carry no PO. The expert reconciles quantities and amounts against the monthly Consignment Statement tab, then approves.",
+    "sop_rules": [
+      "§3.2"
+    ],
+    "session_ids": [
+      "s-01",
+      "s-05"
+    ],
+    "deviation_ids": [
+      "d-01",
+      "d-06"
+    ],
+    "exemplar_clips": [
+      {
+        "session_id": "s-01",
+        "start_ts": "02:02",
+        "end_ts": "03:10"
+      },
+      {
+        "session_id": "s-05",
+        "start_ts": "03:50",
+        "end_ts": "04:30"
+      }
+    ],
+    "frequency": 2
+  },
+  {
+    "id": "v-02",
+    "name": "Line-stoppage urgent payment, single approval",
+    "description": "A CFO email tagged 'URGENT – line stoppage' for a critical vendor under ₹2,00,000 is released with one approver and a post-facto Finance Controller note.",
+    "sop_rules": [
+      "§3.3",
+      "§3.5"
+    ],
+    "session_ids": [
+      "s-02",
+      "s-06"
+    ],
+    "deviation_ids": [
+      "d-03",
+      "d-04",
+      "d-07"
+    ],
+    "exemplar_clips": [
+      {
+        "session_id": "s-02",
+        "start_ts": "03:20",
+        "end_ts": "04:10"
+      },
+      {
+        "session_id": "s-06",
+        "start_ts": "02:15",
+        "end_ts": "03:00"
+      }
+    ],
+    "frequency": 3
+  },
+  {
+    "id": "v-03",
+    "name": "Renumbered duplicate rejected",
+    "description": "A resend with a new invoice number but the same vendor, amount and line items within 10 days is rejected as a duplicate.",
+    "sop_rules": [
+      "§3.4"
+    ],
+    "session_ids": [
+      "s-04",
+      "s-06"
+    ],
+    "deviation_ids": [
+      "d-05",
+      "d-08"
+    ],
+    "exemplar_clips": [
+      {
+        "session_id": "s-04",
+        "start_ts": "01:30",
+        "end_ts": "02:20"
+      },
+      {
+        "session_id": "s-06",
+        "start_ts": "04:50",
+        "end_ts": "05:30"
+      }
+    ],
+    "frequency": 2
+  }
+]
