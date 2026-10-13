@@ -39,7 +39,7 @@ Apprentice watches an expert work in Google Sheets + Gmail (screen + voice), ask
 ````
 make setup        # uv sync; cd frontend && pnpm i
 make dev          # backend :8080 (uvicorn --reload) + vite :5173 (proxy /api → 8080)
-make types        # uv run python scripts/export_schema.py > shared/schema.json && pnpm --dir frontend exec json2ts -i ../shared/schema.json -o src/types/contract.ts
+make types        # uv run python -m scripts.export_schema > shared/schema.json && pnpm --dir frontend exec json2ts -i ../shared/schema.json -o src/types/contract.ts
 make test         # uv run pytest -q backend/tests && pnpm --dir frontend test --run
 make lint         # uv run ruff check backend && uv run ruff format --check backend && pnpm --dir frontend lint && pnpm --dir frontend tsc --noEmit
 make build        # pnpm --dir frontend build → backend/app/static

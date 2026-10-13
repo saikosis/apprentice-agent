@@ -1,0 +1,22 @@
+# secrets
+.env
+.env.*
+*.pem
+*-key.json
+service-account*.json
+client_secret*.json
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# node
+node_modules/
+frontend/dist/
+
+# build output
+backend/app/static/

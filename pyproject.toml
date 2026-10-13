@@ -1,0 +1,29 @@
+[project]
+name = "apprentice"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic>=2",
+    "google-genai",
+    "google-cloud-firestore",
+    "google-cloud-storage",
+    "google-cloud-modelarmor",
+    "firebase-admin",
+]
+
+[dependency-groups]
+dev = ["pytest", "httpx", "ruff", "mypy"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.mypy]
+ignore_missing_imports = true

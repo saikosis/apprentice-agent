@@ -1,0 +1,1865 @@
+{
+  "title": "Contract",
+  "type": "object",
+  "properties": {
+    "AgentOutput": {
+      "$ref": "#/$defs/AgentOutput"
+    },
+    "AgentRun": {
+      "$ref": "#/$defs/AgentRun"
+    },
+    "ArmSummary": {
+      "$ref": "#/$defs/ArmSummary"
+    },
+    "CaseRow": {
+      "$ref": "#/$defs/CaseRow"
+    },
+    "CellChange": {
+      "$ref": "#/$defs/CellChange"
+    },
+    "ClipRef": {
+      "$ref": "#/$defs/ClipRef"
+    },
+    "DecisionEdge": {
+      "$ref": "#/$defs/DecisionEdge"
+    },
+    "DecisionGraph": {
+      "$ref": "#/$defs/DecisionGraph"
+    },
+    "DecisionNode": {
+      "$ref": "#/$defs/DecisionNode"
+    },
+    "Deviation": {
+      "$ref": "#/$defs/Deviation"
+    },
+    "DeviationList": {
+      "$ref": "#/$defs/DeviationList"
+    },
+    "Email": {
+      "$ref": "#/$defs/Email"
+    },
+    "ExamCase": {
+      "$ref": "#/$defs/ExamCase"
+    },
+    "ExamCaseList": {
+      "$ref": "#/$defs/ExamCaseList"
+    },
+    "ExamReport": {
+      "$ref": "#/$defs/ExamReport"
+    },
+    "ExpertLabel": {
+      "$ref": "#/$defs/ExpertLabel"
+    },
+    "InvoiceRow": {
+      "$ref": "#/$defs/InvoiceRow"
+    },
+    "JudgeScore": {
+      "$ref": "#/$defs/JudgeScore"
+    },
+    "ModerationResult": {
+      "$ref": "#/$defs/ModerationResult"
+    },
+    "Probe": {
+      "$ref": "#/$defs/Probe"
+    },
+    "ProbeAnswer": {
+      "$ref": "#/$defs/ProbeAnswer"
+    },
+    "ProbeList": {
+      "$ref": "#/$defs/ProbeList"
+    },
+    "SOP": {
+      "$ref": "#/$defs/SOP"
+    },
+    "SOPSection": {
+      "$ref": "#/$defs/SOPSection"
+    },
+    "Segment": {
+      "$ref": "#/$defs/Segment"
+    },
+    "SegmentList": {
+      "$ref": "#/$defs/SegmentList"
+    },
+    "Session": {
+      "$ref": "#/$defs/Session"
+    },
+    "SheetDiff": {
+      "$ref": "#/$defs/SheetDiff"
+    },
+    "SheetSnapshot": {
+      "$ref": "#/$defs/SheetSnapshot"
+    },
+    "Variant": {
+      "$ref": "#/$defs/Variant"
+    },
+    "VariantList": {
+      "$ref": "#/$defs/VariantList"
+    }
+  },
+  "$defs": {
+    "AgentOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "enum": [
+            "approve",
+            "reject",
+            "hold",
+            "escalate"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "planned_steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Planned Steps",
+          "type": "array"
+        },
+        "cited_sop_rules": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Cited Sop Rules",
+          "type": "array"
+        },
+        "cited_nodes": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Cited Nodes",
+          "type": "array"
+        },
+        "cited_clips": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ClipRef"
+          },
+          "title": "Cited Clips",
+          "type": "array"
+        }
+      },
+      "required": [
+        "decision",
+        "rationale",
+        "planned_steps",
+        "cited_sop_rules"
+      ],
+      "title": "AgentOutput",
+      "type": "object"
+    },
+    "AgentRun": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "case_id": {
+          "title": "Case Id",
+          "type": "string"
+        },
+        "arm": {
+          "enum": [
+            "sop_only",
+            "sop_graph"
+          ],
+          "title": "Arm",
+          "type": "string"
+        },
+        "run_index": {
+          "title": "Run Index",
+          "type": "integer"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentOutput"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "blocked": {
+          "default": false,
+          "title": "Blocked",
+          "type": "boolean"
+        },
+        "moderation_in_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Moderation In Id"
+        },
+        "moderation_out_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Moderation Out Id"
+        },
+        "latency_ms": {
+          "title": "Latency Ms",
+          "type": "integer"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "prompt_version": {
+          "title": "Prompt Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "case_id",
+        "arm",
+        "run_index",
+        "output",
+        "latency_ms",
+        "model",
+        "prompt_version"
+      ],
+      "title": "AgentRun",
+      "type": "object"
+    },
+    "ArmSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "agreement_pct": {
+          "title": "Agreement Pct",
+          "type": "number"
+        },
+        "judge_mean": {
+          "title": "Judge Mean",
+          "type": "number"
+        },
+        "traps_correct": {
+          "title": "Traps Correct",
+          "type": "integer"
+        },
+        "blocked_runs": {
+          "title": "Blocked Runs",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agreement_pct",
+        "judge_mean",
+        "traps_correct",
+        "blocked_runs"
+      ],
+      "title": "ArmSummary",
+      "type": "object"
+    },
+    "CaseRow": {
+      "additionalProperties": false,
+      "properties": {
+        "case_id": {
+          "title": "Case Id",
+          "type": "string"
+        },
+        "trap_type": {
+          "title": "Trap Type",
+          "type": "string"
+        },
+        "expert_decision": {
+          "enum": [
+            "approve",
+            "reject",
+            "hold",
+            "escalate"
+          ],
+          "title": "Expert Decision",
+          "type": "string"
+        },
+        "sop_only_majority": {
+          "anyOf": [
+            {
+              "enum": [
+                "approve",
+                "reject",
+                "hold",
+                "escalate"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sop Only Majority"
+        },
+        "sop_graph_majority": {
+          "anyOf": [
+            {
+              "enum": [
+                "approve",
+                "reject",
+                "hold",
+                "escalate"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sop Graph Majority"
+        },
+        "sop_only_agree": {
+          "title": "Sop Only Agree",
+          "type": "boolean"
+        },
+        "sop_graph_agree": {
+          "title": "Sop Graph Agree",
+          "type": "boolean"
+        },
+        "sop_only_stability": {
+          "title": "Sop Only Stability",
+          "type": "number"
+        },
+        "sop_graph_stability": {
+          "title": "Sop Graph Stability",
+          "type": "number"
+        },
+        "sop_only_judge_mean": {
+          "title": "Sop Only Judge Mean",
+          "type": "number"
+        },
+        "sop_graph_judge_mean": {
+          "title": "Sop Graph Judge Mean",
+          "type": "number"
+        }
+      },
+      "required": [
+        "case_id",
+        "trap_type",
+        "expert_decision",
+        "sop_only_majority",
+        "sop_graph_majority",
+        "sop_only_agree",
+        "sop_graph_agree",
+        "sop_only_stability",
+        "sop_graph_stability",
+        "sop_only_judge_mean",
+        "sop_graph_judge_mean"
+      ],
+      "title": "CaseRow",
+      "type": "object"
+    },
+    "CellChange": {
+      "additionalProperties": false,
+      "properties": {
+        "invoice_id": {
+          "title": "Invoice Id",
+          "type": "string"
+        },
+        "column": {
+          "title": "Column",
+          "type": "string"
+        },
+        "before": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Before"
+        },
+        "after": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "After"
+        }
+      },
+      "required": [
+        "invoice_id",
+        "column",
+        "before",
+        "after"
+      ],
+      "title": "CellChange",
+      "type": "object"
+    },
+    "ClipRef": {
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "start_ts": {
+          "title": "Start Ts",
+          "type": "string"
+        },
+        "end_ts": {
+          "title": "End Ts",
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_id",
+        "start_ts",
+        "end_ts"
+      ],
+      "title": "ClipRef",
+      "type": "object"
+    },
+    "DecisionEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        },
+        "relation": {
+          "enum": [
+            "triggers",
+            "serves",
+            "chooses",
+            "overrides",
+            "requires"
+          ],
+          "title": "Relation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "target",
+        "relation"
+      ],
+      "title": "DecisionEdge",
+      "type": "object"
+    },
+    "DecisionGraph": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "built_at": {
+          "format": "date-time",
+          "title": "Built At",
+          "type": "string"
+        },
+        "prompt_version": {
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/DecisionNode"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/DecisionEdge"
+          },
+          "title": "Edges",
+          "type": "array"
+        }
+      },
+      "required": [
+        "version",
+        "built_at",
+        "prompt_version",
+        "nodes",
+        "edges"
+      ],
+      "title": "DecisionGraph",
+      "type": "object"
+    },
+    "DecisionNode": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "cue",
+            "goal",
+            "option",
+            "rule",
+            "exception"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "sop_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sop Rule"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/ClipRef"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "probe_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Probe Ids",
+          "type": "array"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label",
+        "detail",
+        "evidence",
+        "probe_ids",
+        "confidence"
+      ],
+      "title": "DecisionNode",
+      "type": "object"
+    },
+    "Deviation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "live",
+            "batch"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "sop_rule": {
+          "title": "Sop Rule",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "t_seconds": {
+          "title": "T Seconds",
+          "type": "integer"
+        },
+        "invoice_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invoice Id"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "dedup_of": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dedup Of"
+        }
+      },
+      "required": [
+        "id",
+        "session_id",
+        "source",
+        "sop_rule",
+        "timestamp",
+        "t_seconds",
+        "description",
+        "question",
+        "confidence"
+      ],
+      "title": "Deviation",
+      "type": "object"
+    },
+    "DeviationList": {
+      "additionalProperties": false,
+      "properties": {
+        "deviations": {
+          "items": {
+            "$ref": "#/$defs/Deviation"
+          },
+          "title": "Deviations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "deviations"
+      ],
+      "title": "DeviationList",
+      "type": "object"
+    },
+    "Email": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "sender": {
+          "title": "Sender",
+          "type": "string"
+        },
+        "subject": {
+          "title": "Subject",
+          "type": "string"
+        },
+        "body": {
+          "title": "Body",
+          "type": "string"
+        },
+        "received_at": {
+          "title": "Received At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "sender",
+        "subject",
+        "body",
+        "received_at"
+      ],
+      "title": "Email",
+      "type": "object"
+    },
+    "ExamCase": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "origin": {
+          "enum": [
+            "heldout",
+            "generated"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "trap_type": {
+          "enum": [
+            "none",
+            "consignment_lookalike",
+            "prompt_injection",
+            "duplicate_renumbered"
+          ],
+          "title": "Trap Type",
+          "type": "string"
+        },
+        "tests_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tests Rule"
+        },
+        "invoice": {
+          "$ref": "#/$defs/InvoiceRow"
+        },
+        "vendor_master_row": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Vendor Master Row",
+          "type": "object"
+        },
+        "emails": {
+          "items": {
+            "$ref": "#/$defs/Email"
+          },
+          "title": "Emails",
+          "type": "array"
+        },
+        "context": {
+          "title": "Context",
+          "type": "string"
+        },
+        "expert_label": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExpertLabel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "origin",
+        "trap_type",
+        "invoice",
+        "vendor_master_row",
+        "emails",
+        "context"
+      ],
+      "title": "ExamCase",
+      "type": "object"
+    },
+    "ExamCaseList": {
+      "additionalProperties": false,
+      "properties": {
+        "cases": {
+          "items": {
+            "$ref": "#/$defs/ExamCase"
+          },
+          "title": "Cases",
+          "type": "array"
+        }
+      },
+      "required": [
+        "cases"
+      ],
+      "title": "ExamCaseList",
+      "type": "object"
+    },
+    "ExamReport": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "label": {
+          "const": "pilot",
+          "default": "pilot",
+          "title": "Label",
+          "type": "string"
+        },
+        "n_cases": {
+          "title": "N Cases",
+          "type": "integer"
+        },
+        "runs_per_arm": {
+          "title": "Runs Per Arm",
+          "type": "integer"
+        },
+        "per_arm": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ArmSummary"
+          },
+          "propertyNames": {
+            "enum": [
+              "sop_only",
+              "sop_graph"
+            ]
+          },
+          "title": "Per Arm",
+          "type": "object"
+        },
+        "cases": {
+          "items": {
+            "$ref": "#/$defs/CaseRow"
+          },
+          "title": "Cases",
+          "type": "array"
+        },
+        "new_probe_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "New Probe Ids",
+          "type": "array"
+        },
+        "graph_version": {
+          "title": "Graph Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "created_at",
+        "n_cases",
+        "runs_per_arm",
+        "per_arm",
+        "cases",
+        "new_probe_ids",
+        "graph_version"
+      ],
+      "title": "ExamReport",
+      "type": "object"
+    },
+    "ExpertLabel": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "enum": [
+            "approve",
+            "reject",
+            "hold",
+            "escalate"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "labeled_by": {
+          "title": "Labeled By",
+          "type": "string"
+        },
+        "labeled_at": {
+          "format": "date-time",
+          "title": "Labeled At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "decision",
+        "rationale",
+        "labeled_by",
+        "labeled_at"
+      ],
+      "title": "ExpertLabel",
+      "type": "object"
+    },
+    "InvoiceRow": {
+      "additionalProperties": false,
+      "properties": {
+        "invoice_id": {
+          "title": "Invoice Id",
+          "type": "string"
+        },
+        "vendor_id": {
+          "title": "Vendor Id",
+          "type": "string"
+        },
+        "vendor_name": {
+          "title": "Vendor Name",
+          "type": "string"
+        },
+        "invoice_no": {
+          "title": "Invoice No",
+          "type": "string"
+        },
+        "invoice_date": {
+          "title": "Invoice Date",
+          "type": "string"
+        },
+        "amount_inr": {
+          "title": "Amount Inr",
+          "type": "number"
+        },
+        "gst_inr": {
+          "title": "Gst Inr",
+          "type": "number"
+        },
+        "po_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Po Number"
+        },
+        "grn_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Grn Number"
+        },
+        "due_date": {
+          "title": "Due Date",
+          "type": "string"
+        },
+        "category": {
+          "title": "Category",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "Pending",
+            "Approved",
+            "Rejected",
+            "On Hold"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "approver_1": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approver 1"
+        },
+        "approver_2": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approver 2"
+        },
+        "notes": {
+          "default": "",
+          "title": "Notes",
+          "type": "string"
+        }
+      },
+      "required": [
+        "invoice_id",
+        "vendor_id",
+        "vendor_name",
+        "invoice_no",
+        "invoice_date",
+        "amount_inr",
+        "gst_inr",
+        "due_date",
+        "category",
+        "status"
+      ],
+      "title": "InvoiceRow",
+      "type": "object"
+    },
+    "JudgeScore": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "case_id": {
+          "title": "Case Id",
+          "type": "string"
+        },
+        "arm": {
+          "enum": [
+            "sop_only",
+            "sop_graph"
+          ],
+          "title": "Arm",
+          "type": "string"
+        },
+        "decision_match": {
+          "title": "Decision Match",
+          "type": "boolean"
+        },
+        "decision_score": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Decision Score",
+          "type": "integer"
+        },
+        "rationale_consistency": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Rationale Consistency",
+          "type": "integer"
+        },
+        "edge_case_handling": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Edge Case Handling",
+          "type": "integer"
+        },
+        "total": {
+          "title": "Total",
+          "type": "number"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        },
+        "hand_checked": {
+          "default": false,
+          "title": "Hand Checked",
+          "type": "boolean"
+        },
+        "hand_override_total": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hand Override Total"
+        }
+      },
+      "required": [
+        "run_id",
+        "case_id",
+        "arm",
+        "decision_match",
+        "decision_score",
+        "rationale_consistency",
+        "edge_case_handling",
+        "total",
+        "explanation"
+      ],
+      "title": "JudgeScore",
+      "type": "object"
+    },
+    "ModerationResult": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "target_kind": {
+          "enum": [
+            "segment",
+            "probe_answer",
+            "exam_input",
+            "agent_output",
+            "email"
+          ],
+          "title": "Target Kind",
+          "type": "string"
+        },
+        "target_id": {
+          "title": "Target Id",
+          "type": "string"
+        },
+        "template": {
+          "title": "Template",
+          "type": "string"
+        },
+        "match_found": {
+          "title": "Match Found",
+          "type": "boolean"
+        },
+        "filters": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Filters",
+          "type": "object"
+        },
+        "skipped": {
+          "default": false,
+          "title": "Skipped",
+          "type": "boolean"
+        },
+        "blocked": {
+          "title": "Blocked",
+          "type": "boolean"
+        },
+        "checked_at": {
+          "format": "date-time",
+          "title": "Checked At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "target_kind",
+        "target_id",
+        "template",
+        "match_found",
+        "filters",
+        "blocked",
+        "checked_at"
+      ],
+      "title": "ModerationResult",
+      "type": "object"
+    },
+    "Probe": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session Id"
+        },
+        "deviation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deviation Id"
+        },
+        "variant_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Variant Id"
+        },
+        "source": {
+          "enum": [
+            "live",
+            "batch",
+            "exam_miss"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "cdm_type": {
+          "enum": [
+            "cue",
+            "goal",
+            "option",
+            "experience",
+            "rule",
+            "anomaly",
+            "hypothetical"
+          ],
+          "title": "Cdm Type",
+          "type": "string"
+        },
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "sop_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sop Rule"
+        },
+        "clip": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClipRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status": {
+          "default": "open",
+          "enum": [
+            "open",
+            "answered",
+            "skipped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "cdm_type",
+        "question",
+        "created_at"
+      ],
+      "title": "Probe",
+      "type": "object"
+    },
+    "ProbeAnswer": {
+      "additionalProperties": false,
+      "properties": {
+        "probe_id": {
+          "title": "Probe Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "voice_live",
+            "typed",
+            "edited"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "answered_at": {
+          "format": "date-time",
+          "title": "Answered At",
+          "type": "string"
+        },
+        "moderation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModerationResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "probe_id",
+        "text",
+        "source",
+        "answered_at"
+      ],
+      "title": "ProbeAnswer",
+      "type": "object"
+    },
+    "ProbeList": {
+      "additionalProperties": false,
+      "properties": {
+        "probes": {
+          "items": {
+            "$ref": "#/$defs/Probe"
+          },
+          "title": "Probes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "probes"
+      ],
+      "title": "ProbeList",
+      "type": "object"
+    },
+    "SOP": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/SOPSection"
+          },
+          "title": "Sections",
+          "type": "array"
+        },
+        "full_text": {
+          "title": "Full Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "version",
+        "sections",
+        "full_text"
+      ],
+      "title": "SOP",
+      "type": "object"
+    },
+    "SOPSection": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "text"
+      ],
+      "title": "SOPSection",
+      "type": "object"
+    },
+    "Segment": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "start_ts": {
+          "title": "Start Ts",
+          "type": "string"
+        },
+        "end_ts": {
+          "title": "End Ts",
+          "type": "string"
+        },
+        "app": {
+          "enum": [
+            "sheets",
+            "gmail",
+            "other"
+          ],
+          "title": "App",
+          "type": "string"
+        },
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "invoice_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invoice Id"
+        },
+        "vendor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vendor"
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "enum": [
+                "approve",
+                "reject",
+                "hold",
+                "escalate"
+              ],
+              "type": "string"
+            },
+            {
+              "const": "none",
+              "type": "string"
+            }
+          ],
+          "default": "none",
+          "title": "Decision"
+        },
+        "transcript_excerpt": {
+          "default": "",
+          "title": "Transcript Excerpt",
+          "type": "string"
+        },
+        "on_screen_text": {
+          "default": "",
+          "title": "On Screen Text",
+          "type": "string"
+        },
+        "moderation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Moderation Id"
+        },
+        "quarantined": {
+          "default": false,
+          "title": "Quarantined",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "session_id",
+        "start_ts",
+        "end_ts",
+        "app",
+        "action"
+      ],
+      "title": "Segment",
+      "type": "object"
+    },
+    "SegmentList": {
+      "additionalProperties": false,
+      "properties": {
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/Segment"
+          },
+          "title": "Segments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "segments"
+      ],
+      "title": "SegmentList",
+      "type": "object"
+    },
+    "Session": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "workspace": {
+          "enum": [
+            "demo",
+            "live"
+          ],
+          "title": "Workspace",
+          "type": "string"
+        },
+        "expert_uid": {
+          "title": "Expert Uid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "training",
+            "heldout"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "created",
+            "uploading",
+            "uploaded",
+            "processing",
+            "processed",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "gcs_uri": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gcs Uri"
+        },
+        "gemini_file_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gemini File Name"
+        },
+        "gemini_file_uploaded_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gemini File Uploaded At"
+        },
+        "duration_s": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration S"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "ended_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ended At"
+        },
+        "live_enabled": {
+          "default": true,
+          "title": "Live Enabled",
+          "type": "boolean"
+        },
+        "sheet_snapshot_before_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sheet Snapshot Before Id"
+        },
+        "sheet_snapshot_after_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sheet Snapshot After Id"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        }
+      },
+      "required": [
+        "id",
+        "workspace",
+        "expert_uid",
+        "kind",
+        "status",
+        "started_at"
+      ],
+      "title": "Session",
+      "type": "object"
+    },
+    "SheetDiff": {
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "changes": {
+          "items": {
+            "$ref": "#/$defs/CellChange"
+          },
+          "title": "Changes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "session_id",
+        "changes"
+      ],
+      "title": "SheetDiff",
+      "type": "object"
+    },
+    "SheetSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "phase": {
+          "enum": [
+            "before",
+            "after"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "taken_at": {
+          "format": "date-time",
+          "title": "Taken At",
+          "type": "string"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/InvoiceRow"
+          },
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "session_id",
+        "phase",
+        "taken_at",
+        "rows"
+      ],
+      "title": "SheetSnapshot",
+      "type": "object"
+    },
+    "Variant": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "sop_rules": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sop Rules",
+          "type": "array"
+        },
+        "session_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Session Ids",
+          "type": "array"
+        },
+        "deviation_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Deviation Ids",
+          "type": "array"
+        },
+        "exemplar_clips": {
+          "items": {
+            "$ref": "#/$defs/ClipRef"
+          },
+          "title": "Exemplar Clips",
+          "type": "array"
+        },
+        "frequency": {
+          "title": "Frequency",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "sop_rules",
+        "session_ids",
+        "deviation_ids",
+        "exemplar_clips",
+        "frequency"
+      ],
+      "title": "Variant",
+      "type": "object"
+    },
+    "VariantList": {
+      "additionalProperties": false,
+      "properties": {
+        "variants": {
+          "items": {
+            "$ref": "#/$defs/Variant"
+          },
+          "title": "Variants",
+          "type": "array"
+        }
+      },
+      "required": [
+        "variants"
+      ],
+      "title": "VariantList",
+      "type": "object"
+    }
+  }
+}
