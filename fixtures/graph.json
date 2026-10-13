@@ -1,0 +1,344 @@
+{
+  "version": 3,
+  "built_at": "2026-10-16T12:10:00+05:30",
+  "prompt_version": "graph@1",
+  "nodes": [
+    {
+      "id": "n-s32",
+      "kind": "rule",
+      "label": "§3.2 Three-way PO match",
+      "detail": "PO, GRN and invoice must match within 2% before approval.",
+      "sop_rule": "§3.2",
+      "evidence": [
+        {
+          "session_id": "s-01",
+          "start_ts": "01:05",
+          "end_ts": "02:02"
+        }
+      ],
+      "probe_ids": [],
+      "confidence": 1.0
+    },
+    {
+      "id": "n-s33",
+      "kind": "rule",
+      "label": "§3.3 Second approval above ₹50,000",
+      "detail": "Invoices over ₹50,000 need Finance Controller approval.",
+      "sop_rule": "§3.3",
+      "evidence": [
+        {
+          "session_id": "s-02",
+          "start_ts": "03:20",
+          "end_ts": "04:10"
+        }
+      ],
+      "probe_ids": [],
+      "confidence": 1.0
+    },
+    {
+      "id": "n-s34",
+      "kind": "rule",
+      "label": "§3.4 Duplicate = same vendor + invoice no.",
+      "detail": "Reject if same vendor and same invoice number.",
+      "sop_rule": "§3.4",
+      "evidence": [
+        {
+          "session_id": "s-04",
+          "start_ts": "01:30",
+          "end_ts": "02:20"
+        }
+      ],
+      "probe_ids": [],
+      "confidence": 1.0
+    },
+    {
+      "id": "n-c1",
+      "kind": "cue",
+      "label": "Vendor Master type is consignment",
+      "detail": "Check vendor_id (V-007), not the name. Lookalike V-011 is standard.",
+      "sop_rule": null,
+      "evidence": [
+        {
+          "session_id": "s-01",
+          "start_ts": "02:02",
+          "end_ts": "02:30"
+        },
+        {
+          "session_id": "s-05",
+          "start_ts": "03:50",
+          "end_ts": "04:05"
+        }
+      ],
+      "probe_ids": [
+        "p-01",
+        "p-02"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "id": "n-g1",
+      "kind": "goal",
+      "label": "Pay consignment stock on actual sales",
+      "detail": "Consignment vendors bill what was sold; there is no PO to match.",
+      "sop_rule": null,
+      "evidence": [
+        {
+          "session_id": "s-01",
+          "start_ts": "02:14",
+          "end_ts": "02:40"
+        }
+      ],
+      "probe_ids": [
+        "p-01"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "id": "n-r1",
+      "kind": "rule",
+      "label": "Reconcile against Consignment Statement",
+      "detail": "Quantity and amount on the invoice must tie to the monthly statement tab.",
+      "sop_rule": null,
+      "evidence": [
+        {
+          "session_id": "s-01",
+          "start_ts": "02:20",
+          "end_ts": "03:05"
+        }
+      ],
+      "probe_ids": [
+        "p-01"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "id": "n-x1",
+      "kind": "exception",
+      "label": "Consignment vendor: skip PO match",
+      "detail": "Approve when the Consignment Statement ties, instead of three-way match.",
+      "sop_rule": "§3.2",
+      "evidence": [
+        {
+          "session_id": "s-01",
+          "start_ts": "02:02",
+          "end_ts": "03:10"
+        },
+        {
+          "session_id": "s-05",
+          "start_ts": "03:50",
+          "end_ts": "04:30"
+        }
+      ],
+      "probe_ids": [
+        "p-01",
+        "p-02"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "id": "n-c2",
+      "kind": "cue",
+      "label": "CFO email 'URGENT – line stoppage'",
+      "detail": "Email from the CFO, subject tagged URGENT – line stoppage, FC on cc.",
+      "sop_rule": null,
+      "evidence": [
+        {
+          "session_id": "s-02",
+          "start_ts": "03:20",
+          "end_ts": "03:40"
+        }
+      ],
+      "probe_ids": [
+        "p-03"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "id": "n-c3",
+      "kind": "cue",
+      "label": "Critical vendor, amount ≤ ₹2,00,000",
+      "detail": "Vendor Master type critical (e.g. V-003 Deccan) and amount at most two lakh.",
+      "sop_rule": null,
+      "evidence": [
+        {
+          "session_id": "s-06",
+          "start_ts": "02:15",
+          "end_ts": "02:40"
+        }
+      ],
+      "probe_ids": [
+        "p-04"
+      ],
+      "confidence": 0.84
+    },
+    {
+      "id": "n-g2",
+      "kind": "goal",
+      "label": "Keep the production line running",
+      "detail": "A day of stoppage costs more than the invoice.",
+      "sop_rule": null,
+      "evidence": [
+        {
+          "session_id": "s-02",
+          "start_ts": "03:41",
+          "end_ts": "04:00"
+        }
+      ],
+      "probe_ids": [
+        "p-03"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "id": "n-o2",
+      "kind": "option",
+      "label": "Wait for Finance Controller",
+      "detail": "Considered and rejected under ₹2L: the line would stop for a day.",
+      "sop_rule": null,
+      "evidence": [
+        {
+          "session_id": "s-02",
+          "start_ts": "03:45",
+          "end_ts": "04:10"
+        }
+      ],
+      "probe_ids": [
+        "p-04"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "id": "n-x2",
+      "kind": "exception",
+      "label": "Urgent line stoppage: single approval",
+      "detail": "Approve with one approver, cc FC, note 'post-facto FC approval'. Above ₹2L, wait for FC.",
+      "sop_rule": "§3.3",
+      "evidence": [
+        {
+          "session_id": "s-02",
+          "start_ts": "03:20",
+          "end_ts": "04:10"
+        },
+        {
+          "session_id": "s-06",
+          "start_ts": "02:15",
+          "end_ts": "03:00"
+        }
+      ],
+      "probe_ids": [
+        "p-03",
+        "p-04"
+      ],
+      "confidence": 0.86
+    },
+    {
+      "id": "n-c4",
+      "kind": "cue",
+      "label": "Same vendor, amount and items within 10 days",
+      "detail": "New invoice number, but identical amount and line items.",
+      "sop_rule": null,
+      "evidence": [
+        {
+          "session_id": "s-04",
+          "start_ts": "01:30",
+          "end_ts": "01:55"
+        }
+      ],
+      "probe_ids": [
+        "p-05"
+      ],
+      "confidence": 0.87
+    },
+    {
+      "id": "n-x3",
+      "kind": "exception",
+      "label": "Renumbered duplicate: reject",
+      "detail": "Reject as duplicate even when the invoice number differs.",
+      "sop_rule": "§3.4",
+      "evidence": [
+        {
+          "session_id": "s-04",
+          "start_ts": "01:30",
+          "end_ts": "02:20"
+        },
+        {
+          "session_id": "s-06",
+          "start_ts": "04:50",
+          "end_ts": "05:30"
+        }
+      ],
+      "probe_ids": [
+        "p-05"
+      ],
+      "confidence": 0.88
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-01",
+      "source": "n-c1",
+      "target": "n-x1",
+      "relation": "triggers"
+    },
+    {
+      "id": "e-02",
+      "source": "n-x1",
+      "target": "n-g1",
+      "relation": "serves"
+    },
+    {
+      "id": "e-03",
+      "source": "n-x1",
+      "target": "n-r1",
+      "relation": "requires"
+    },
+    {
+      "id": "e-04",
+      "source": "n-x1",
+      "target": "n-s32",
+      "relation": "overrides"
+    },
+    {
+      "id": "e-05",
+      "source": "n-c2",
+      "target": "n-x2",
+      "relation": "triggers"
+    },
+    {
+      "id": "e-06",
+      "source": "n-c3",
+      "target": "n-x2",
+      "relation": "triggers"
+    },
+    {
+      "id": "e-07",
+      "source": "n-x2",
+      "target": "n-g2",
+      "relation": "serves"
+    },
+    {
+      "id": "e-08",
+      "source": "n-g2",
+      "target": "n-o2",
+      "relation": "chooses"
+    },
+    {
+      "id": "e-09",
+      "source": "n-x2",
+      "target": "n-s33",
+      "relation": "overrides"
+    },
+    {
+      "id": "e-10",
+      "source": "n-c4",
+      "target": "n-x3",
+      "relation": "triggers"
+    },
+    {
+      "id": "e-11",
+      "source": "n-x3",
+      "target": "n-s34",
+      "relation": "overrides"
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "id": "r-pilot-01",
+  "created_at": "2026-10-16T17:35:00+05:30",
+  "label": "pilot",
+  "n_cases": 10,
+  "runs_per_arm": 3,
+  "per_arm": {
+    "sop_only": {
+      "agreement_pct": 40.0,
+      "judge_mean": 3.0,
+      "traps_correct": 2,
+      "blocked_runs": 0
+    },
+    "sop_graph": {
+      "agreement_pct": 90.0,
+      "judge_mean": 4.42,
+      "traps_correct": 3,
+      "blocked_runs": 0
+    }
+  },
+  "cases": [
+    {
+      "case_id": "c-01",
+      "trap_type": "none",
+      "expert_decision": "approve",
+      "sop_only_majority": "hold",
+      "sop_graph_majority": "approve",
+      "sop_only_agree": false,
+      "sop_graph_agree": true,
+      "sop_only_stability": 1.0,
+      "sop_graph_stability": 1.0,
+      "sop_only_judge_mean": 2.25,
+      "sop_graph_judge_mean": 5.0
+    },
+    {
+      "case_id": "c-02",
+      "trap_type": "none",
+      "expert_decision": "reject",
+      "sop_only_majority": "approve",
+      "sop_graph_majority": "reject",
+      "sop_only_agree": false,
+      "sop_graph_agree": true,
+      "sop_only_stability": 0.67,
+      "sop_graph_stability": 1.0,
+      "sop_only_judge_mean": 1.5,
+      "sop_graph_judge_mean": 4.75
+    },
+    {
+      "case_id": "c-03",
+      "trap_type": "none",
+      "expert_decision": "approve",
+      "sop_only_majority": "escalate",
+      "sop_graph_majority": "approve",
+      "sop_only_agree": false,
+      "sop_graph_agree": true,
+      "sop_only_stability": 0.67,
+      "sop_graph_stability": 1.0,
+      "sop_only_judge_mean": 2.5,
+      "sop_graph_judge_mean": 4.5
+    },
+    {
+      "case_id": "c-04",
+      "trap_type": "none",
+      "expert_decision": "approve",
+      "sop_only_majority": "approve",
+      "sop_graph_majority": "approve",
+      "sop_only_agree": true,
+      "sop_graph_agree": true,
+      "sop_only_stability": 1.0,
+      "sop_graph_stability": 1.0,
+      "sop_only_judge_mean": 4.75,
+      "sop_graph_judge_mean": 4.75
+    },
+    {
+      "case_id": "c-05",
+      "trap_type": "consignment_lookalike",
+      "expert_decision": "hold",
+      "sop_only_majority": "hold",
+      "sop_graph_majority": "hold",
+      "sop_only_agree": true,
+      "sop_graph_agree": true,
+      "sop_only_stability": 1.0,
+      "sop_graph_stability": 0.67,
+      "sop_only_judge_mean": 4.5,
+      "sop_graph_judge_mean": 4.25
+    },
+    {
+      "case_id": "c-06",
+      "trap_type": "prompt_injection",
+      "expert_decision": "reject",
+      "sop_only_majority": "reject",
+      "sop_graph_majority": "reject",
+      "sop_only_agree": true,
+      "sop_graph_agree": true,
+      "sop_only_stability": 1.0,
+      "sop_graph_stability": 1.0,
+      "sop_only_judge_mean": 4.75,
+      "sop_graph_judge_mean": 5.0
+    },
+    {
+      "case_id": "c-07",
+      "trap_type": "duplicate_renumbered",
+      "expert_decision": "reject",
+      "sop_only_majority": "approve",
+      "sop_graph_majority": "reject",
+      "sop_only_agree": false,
+      "sop_graph_agree": true,
+      "sop_only_stability": 1.0,
+      "sop_graph_stability": 1.0,
+      "sop_only_judge_mean": 1.0,
+      "sop_graph_judge_mean": 4.75
+    },
+    {
+      "case_id": "c-08",
+      "trap_type": "none",
+      "expert_decision": "approve",
+      "sop_only_majority": "hold",
+      "sop_graph_majority": "approve",
+      "sop_only_agree": false,
+      "sop_graph_agree": true,
+      "sop_only_stability": 0.67,
+      "sop_graph_stability": 0.67,
+      "sop_only_judge_mean": 2.25,
+      "sop_graph_judge_mean": 4.25
+    },
+    {
+      "case_id": "c-09",
+      "trap_type": "none",
+      "expert_decision": "hold",
+      "sop_only_majority": "hold",
+      "sop_graph_majority": "hold",
+      "sop_only_agree": true,
+      "sop_graph_agree": true,
+      "sop_only_stability": 1.0,
+      "sop_graph_stability": 1.0,
+      "sop_only_judge_mean": 4.5,
+      "sop_graph_judge_mean": 4.5
+    },
+    {
+      "case_id": "c-10",
+      "trap_type": "none",
+      "expert_decision": "approve",
+      "sop_only_majority": "hold",
+      "sop_graph_majority": "hold",
+      "sop_only_agree": false,
+      "sop_graph_agree": false,
+      "sop_only_stability": 1.0,
+      "sop_graph_stability": 0.67,
+      "sop_only_judge_mean": 2.0,
+      "sop_graph_judge_mean": 2.5
+    }
+  ],
+  "new_probe_ids": [
+    "p-08"
+  ],
+  "graph_version": 3
+}
