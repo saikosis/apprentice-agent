@@ -11,6 +11,9 @@ FIXTURES = Path(__file__).parents[2] / "fixtures"
 # fixture filename -> type it must validate as. Add entries as fixtures land.
 SCHEMAS: dict[str, object] = {
     "sessions.json": list[c.Session],
+    "segments.json": list[c.Segment],
+    "deviations.json": list[c.Deviation],
+    "probe_answers.json": list[c.ProbeAnswer],
     "probes.json": list[c.Probe],
     "variants.json": list[c.Variant],
     "graph.json": c.DecisionGraph,

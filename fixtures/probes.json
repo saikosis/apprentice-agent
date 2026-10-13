@@ -1,0 +1,134 @@
+[
+  {
+    "id": "p-01",
+    "session_id": "s-01",
+    "deviation_id": "d-01",
+    "variant_id": "v-01",
+    "source": "live",
+    "cdm_type": "cue",
+    "question": "Why did you skip the PO match for Kaveri?",
+    "sop_rule": "§3.2",
+    "clip": {
+      "session_id": "s-01",
+      "start_ts": "02:02",
+      "end_ts": "03:10"
+    },
+    "status": "answered",
+    "created_at": "2026-10-15T10:07:00+05:30"
+  },
+  {
+    "id": "p-02",
+    "session_id": null,
+    "deviation_id": null,
+    "variant_id": "v-01",
+    "source": "batch",
+    "cdm_type": "rule",
+    "question": "Is there a rule you use for consignment vendors that isn't in the SOP?",
+    "sop_rule": "§3.2",
+    "clip": {
+      "session_id": "s-05",
+      "start_ts": "03:50",
+      "end_ts": "04:30"
+    },
+    "status": "answered",
+    "created_at": "2026-10-15T14:20:00+05:30"
+  },
+  {
+    "id": "p-03",
+    "session_id": "s-02",
+    "deviation_id": "d-03",
+    "variant_id": "v-02",
+    "source": "live",
+    "cdm_type": "goal",
+    "question": "What were you trying to protect by approving the urgent payment same-day?",
+    "sop_rule": "§3.3",
+    "clip": {
+      "session_id": "s-02",
+      "start_ts": "03:20",
+      "end_ts": "04:10"
+    },
+    "status": "answered",
+    "created_at": "2026-10-15T11:40:00+05:30"
+  },
+  {
+    "id": "p-04",
+    "session_id": null,
+    "deviation_id": null,
+    "variant_id": "v-02",
+    "source": "batch",
+    "cdm_type": "hypothetical",
+    "question": "If the amount were ₹3 lakh instead, would you still skip the second approval?",
+    "sop_rule": "§3.3",
+    "clip": {
+      "session_id": "s-06",
+      "start_ts": "02:15",
+      "end_ts": "03:00"
+    },
+    "status": "answered",
+    "created_at": "2026-10-15T14:22:00+05:30"
+  },
+  {
+    "id": "p-05",
+    "session_id": "s-04",
+    "deviation_id": "d-05",
+    "variant_id": "v-03",
+    "source": "batch",
+    "cdm_type": "cue",
+    "question": "What on the screen told you INV-1057 was a resend of INV-1050?",
+    "sop_rule": "§3.4",
+    "clip": {
+      "session_id": "s-04",
+      "start_ts": "01:30",
+      "end_ts": "02:20"
+    },
+    "status": "answered",
+    "created_at": "2026-10-15T14:25:00+05:30"
+  },
+  {
+    "id": "p-06",
+    "session_id": null,
+    "deviation_id": null,
+    "variant_id": "v-03",
+    "source": "batch",
+    "cdm_type": "anomaly",
+    "question": "What would have made you stop and escalate this one instead of rejecting it?",
+    "sop_rule": "§3.4",
+    "clip": {
+      "session_id": "s-06",
+      "start_ts": "04:50",
+      "end_ts": "05:30"
+    },
+    "status": "open",
+    "created_at": "2026-10-15T14:26:00+05:30"
+  },
+  {
+    "id": "p-07",
+    "session_id": "s-02",
+    "deviation_id": "d-04",
+    "variant_id": null,
+    "source": "batch",
+    "cdm_type": "option",
+    "question": "What else could you have done with this invoice?",
+    "sop_rule": "§3.5",
+    "clip": {
+      "session_id": "s-02",
+      "start_ts": "03:45",
+      "end_ts": "04:10"
+    },
+    "status": "open",
+    "created_at": "2026-10-15T14:28:00+05:30"
+  },
+  {
+    "id": "p-08",
+    "session_id": null,
+    "deviation_id": null,
+    "variant_id": null,
+    "source": "exam_miss",
+    "cdm_type": "anomaly",
+    "question": "A consignment vendor sends a statement whose total is 4% above the invoice. What do you do, and why?",
+    "sop_rule": "§3.2",
+    "clip": null,
+    "status": "open",
+    "created_at": "2026-10-16T17:40:00+05:30"
+  }
+]

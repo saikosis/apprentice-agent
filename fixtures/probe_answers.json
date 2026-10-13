@@ -1,0 +1,112 @@
+[
+  {
+    "probe_id": "p-01",
+    "source": "voice_live",
+    "answered_at": "2026-10-15T10:08:00+05:30",
+    "moderation": {
+      "id": "mod-a1",
+      "target_kind": "probe_answer",
+      "target_id": "p-01",
+      "template": "apprentice-default",
+      "match_found": false,
+      "filters": {
+        "pi_and_jailbreak": "NO_MATCH_FOUND",
+        "sdp": "NO_MATCH_FOUND",
+        "malicious_uris": "NO_MATCH_FOUND",
+        "rai": "NO_MATCH_FOUND"
+      },
+      "skipped": false,
+      "blocked": false,
+      "checked_at": "2026-10-15T15:01:00+05:30"
+    },
+    "text": "Kaveri is consignment. There's no PO, they bill what we sold. So I tick it off against the monthly statement tab, quantity and amount, and if it ties I approve."
+  },
+  {
+    "probe_id": "p-02",
+    "source": "typed",
+    "answered_at": "2026-10-15T14:31:00+05:30",
+    "moderation": {
+      "id": "mod-a2",
+      "target_kind": "probe_answer",
+      "target_id": "p-02",
+      "template": "apprentice-default",
+      "match_found": false,
+      "filters": {
+        "pi_and_jailbreak": "NO_MATCH_FOUND",
+        "sdp": "NO_MATCH_FOUND",
+        "malicious_uris": "NO_MATCH_FOUND",
+        "rai": "NO_MATCH_FOUND"
+      },
+      "skipped": false,
+      "blocked": false,
+      "checked_at": "2026-10-15T15:02:00+05:30"
+    },
+    "text": "Only for vendors marked consignment in Vendor Master. Check the vendor ID, not the name — Kaveri Consolidated is a normal vendor and needs a PO."
+  },
+  {
+    "probe_id": "p-03",
+    "source": "voice_live",
+    "answered_at": "2026-10-15T11:41:00+05:30",
+    "moderation": {
+      "id": "mod-a3",
+      "target_kind": "probe_answer",
+      "target_id": "p-03",
+      "template": "apprentice-default",
+      "match_found": false,
+      "filters": {
+        "pi_and_jailbreak": "NO_MATCH_FOUND",
+        "sdp": "NO_MATCH_FOUND",
+        "malicious_uris": "NO_MATCH_FOUND",
+        "rai": "NO_MATCH_FOUND"
+      },
+      "skipped": false,
+      "blocked": false,
+      "checked_at": "2026-10-15T15:03:00+05:30"
+    },
+    "text": "The line. If Deccan stops shipping castings, the plant stops. A day of stoppage costs more than the invoice."
+  },
+  {
+    "probe_id": "p-04",
+    "source": "typed",
+    "answered_at": "2026-10-15T14:35:00+05:30",
+    "moderation": {
+      "id": "mod-a4",
+      "target_kind": "probe_answer",
+      "target_id": "p-04",
+      "template": "apprentice-default",
+      "match_found": false,
+      "filters": {
+        "pi_and_jailbreak": "NO_MATCH_FOUND",
+        "sdp": "NO_MATCH_FOUND",
+        "malicious_uris": "NO_MATCH_FOUND",
+        "rai": "NO_MATCH_FOUND"
+      },
+      "skipped": false,
+      "blocked": false,
+      "checked_at": "2026-10-15T15:04:00+05:30"
+    },
+    "text": "No. Above two lakh I wait for the Finance Controller, even if it's urgent. Under two lakh I approve, cc the FC and note 'post-facto FC approval'."
+  },
+  {
+    "probe_id": "p-05",
+    "source": "edited",
+    "answered_at": "2026-10-15T14:40:00+05:30",
+    "moderation": {
+      "id": "mod-a5",
+      "target_kind": "probe_answer",
+      "target_id": "p-05",
+      "template": "apprentice-default",
+      "match_found": false,
+      "filters": {
+        "pi_and_jailbreak": "NO_MATCH_FOUND",
+        "sdp": "NO_MATCH_FOUND",
+        "malicious_uris": "NO_MATCH_FOUND",
+        "rai": "NO_MATCH_FOUND"
+      },
+      "skipped": false,
+      "blocked": false,
+      "checked_at": "2026-10-15T15:05:00+05:30"
+    },
+    "text": "Same amount to the rupee and the same three line items, six days later. Vendors renumber when they think the first one got lost. Anything inside ten days like that is a duplicate."
+  }
+]
