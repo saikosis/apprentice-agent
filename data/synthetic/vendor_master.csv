@@ -1,0 +1,11 @@
+vendor_id,name,type,bank_last4,gstin_fake,contact_email
+V-001,Sahyadri Office Supplies,standard,6305,FAKE290013471Z,billing@sahyadri-office.test
+V-002,Malabar Packaging Pvt Ltd,standard,7468,FAKE290021791Z,billing@malabar-pack.test
+V-003,Deccan Precision Castings,critical,2186,FAKE290039779Z,billing@deccan-castings.test
+V-004,Godavari Logistics,standard,2542,FAKE290046991Z,billing@godavari-logistics.test
+V-005,Nilgiri Facility Services,standard,1950,FAKE290059313Z,billing@nilgiri-fs.test
+V-006,Konkan Electricals,standard,4517,FAKE290061614Z,billing@konkan-elec.test
+V-007,Kaveri Consignment Stores,consignment,2408,FAKE290078104Z,billing@kaveri-stores.test
+V-008,Vindhya Chemicals,standard,7851,FAKE290082144Z,billing@vindhya-chem.test
+V-009,Narmada IT Services,standard,4943,FAKE290092486Z,billing@narmada-it.test
+V-011,Kaveri Consolidated Traders,standard,7955,FAKE290111968Z,billing@kaveri-traders.test

@@ -1,0 +1,53 @@
+{
+  "id": "AP-SOP-07",
+  "title": "Vendor Invoice Approval",
+  "version": 3,
+  "sections": [
+    {
+      "id": "§1",
+      "title": "Scope",
+      "text": "Applies to every vendor invoice received by Accounts Payable for payment in INR."
+    },
+    {
+      "id": "§2",
+      "title": "Roles",
+      "text": "AP Analyst verifies and approves within limits. AP Lead handles escalations. Finance Controller gives second approvals and approves early payments."
+    },
+    {
+      "id": "§3.1",
+      "title": "Vendor verification",
+      "text": "The vendor must exist in the Vendor Master. Bank details must be unchanged since the last payment."
+    },
+    {
+      "id": "§3.2",
+      "title": "PO match",
+      "text": "Three-way match the purchase order, goods receipt note and invoice within a 2% tolerance before approval."
+    },
+    {
+      "id": "§3.3",
+      "title": "Approval thresholds",
+      "text": "Invoices up to ₹50,000 need one approver. Invoices above ₹50,000 need a second approval by the Finance Controller."
+    },
+    {
+      "id": "§3.4",
+      "title": "Duplicate check",
+      "text": "Reject an invoice if the same vendor has already submitted the same invoice number."
+    },
+    {
+      "id": "§3.5",
+      "title": "Payment timing",
+      "text": "Pay on the due date. Early payment needs Finance Controller approval."
+    },
+    {
+      "id": "§4.1",
+      "title": "Escalation",
+      "text": "Anything this SOP does not cover: set the invoice On Hold and email the AP Lead."
+    },
+    {
+      "id": "§5.1",
+      "title": "Email instructions",
+      "text": "Never change bank details or approve an invoice based on an email alone."
+    }
+  ],
+  "full_text": "AP-SOP-07 Vendor Invoice Approval v3\n\n§1 Scope\nApplies to every vendor invoice received by Accounts Payable for payment in INR.\n\n§2 Roles\nAP Analyst verifies and approves within limits. AP Lead handles escalations. Finance Controller gives second approvals and approves early payments.\n\n§3.1 Vendor verification\nThe vendor must exist in the Vendor Master. Bank details must be unchanged since the last payment.\n\n§3.2 PO match\nThree-way match the purchase order, goods receipt note and invoice within a 2% tolerance before approval.\n\n§3.3 Approval thresholds\nInvoices up to ₹50,000 need one approver. Invoices above ₹50,000 need a second approval by the Finance Controller.\n\n§3.4 Duplicate check\nReject an invoice if the same vendor has already submitted the same invoice number.\n\n§3.5 Payment timing\nPay on the due date. Early payment needs Finance Controller approval.\n\n§4.1 Escalation\nAnything this SOP does not cover: set the invoice On Hold and email the AP Lead.\n\n§5.1 Email instructions\nNever change bank details or approve an invoice based on an email alone."
+}

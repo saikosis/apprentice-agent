@@ -51,7 +51,7 @@ Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --reg
 ## Coding conventions
 - Python: full type hints; Pydantic v2 models only (`model_config = ConfigDict(extra="forbid")`); async FastAPI handlers; ruff defaults + isort; no bare `except`; log with `structlog`/`logging` JSON.
 - TS: `strict: true`; React function components + hooks only; no `any` (use generated types); data fetching through `src/api/client.ts` only; Tailwind or plain CSS modules, no UI-kit churn.
-- Every Gemini batch call goes through `app/gemini.py::structured(model, prompt_id, parts, schema)`, which sets `response_mime_type="application/json"` and `response_schema=<PydanticModel>`, validates, retries once on validation error, and records `prompt_id@version` + model on the output.
+- Every Gemini batch call goes through `app/gemini.py::structured(model, prompt_id, parts, schema)`, which sets `response_mime_type="application/json"` and `response_json_schema=<PydanticModel>.model_json_schema()` (the SDK's `response_schema` rejects the contract's `dict` fields in Developer API mode), validates, retries once on validation error, and records `prompt_id@version` + model on the output.
 
 ## Data-contract-first rule
 1. `backend/app/contract.py` is the source of truth. Change it first, then run `make types`, then commit both in the same commit.
