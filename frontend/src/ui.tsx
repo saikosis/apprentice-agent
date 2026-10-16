@@ -1,5 +1,13 @@
+import { CircleAlertIcon, PlayIcon, ShieldAlertIcon } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { videoUrl, type Ws } from "./api/client";
+import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
+import { Badge } from "./components/ui/badge";
+import { Button } from "./components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./components/ui/dialog";
+import { Empty as EmptyRoot, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "./components/ui/empty";
+import { Skeleton } from "./components/ui/skeleton";
+import { cn } from "./lib/utils";
 import type { ClipRef, Decision, ModerationResult } from "./types/contract";
 
 // ---- workspace ----
@@ -47,36 +55,81 @@ export function Loadable<T>({
   state: { data?: T; error?: string; loading: boolean };
   children: (data: T) => ReactNode;
 }) {
-  if (state.error) return <p className="error">Couldn't load this: {state.error}</p>;
-  if (state.data === undefined) return <p className="faint">Loading…</p>;
+  if (state.error) return <ErrorNote>Couldn't load this: {state.error}</ErrorNote>;
+  if (state.data === undefined)
+    return (
+      <div className="grid gap-4" aria-busy="true" aria-label="Loading">
+        <Skeleton className="h-40 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+      </div>
+    );
   return <>{children(state.data)}</>;
+}
+
+export function ErrorNote({ children }: { children: ReactNode }) {
+  return (
+    <Alert variant="destructive">
+      <CircleAlertIcon />
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
+  );
+}
+
+// ---- page frame ----
+export function PageHeader({ title, description, actions, crumb }: { title: string; description?: ReactNode; actions?: ReactNode; crumb?: ReactNode }) {
+  return (
+    <div className="mb-6 flex flex-wrap items-end gap-4">
+      <div className="flex min-w-0 flex-col gap-1.5">
+        {crumb && <div className="text-sm text-muted-foreground">{crumb}</div>}
+        <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+        {description && <p className="max-w-[68ch] text-muted-foreground">{description}</p>}
+      </div>
+      {actions && <div className="ml-auto flex flex-wrap gap-2">{actions}</div>}
+    </div>
+  );
 }
 
 // ---- marks ----
 const DECISION_LABEL = { approve: "Approve", reject: "Reject", hold: "On hold", escalate: "Escalate", none: "No decision" };
+const DECISION_DOT = { approve: "bg-success", reject: "bg-destructive", hold: "bg-warning", escalate: "bg-chart-5", none: "bg-muted-foreground" };
+
 export function DecisionChip({ d }: { d: Decision | "none" | null | undefined }) {
   const value = d ?? "none";
-  return <span className={`chip ${value}`}>{DECISION_LABEL[value]}</span>;
+  return (
+    <Badge variant="secondary">
+      <span className={cn("size-1.5 rounded-full", DECISION_DOT[value])} aria-hidden />
+      {DECISION_LABEL[value]}
+    </Badge>
+  );
 }
 
-export const Sop = ({ rule }: { rule?: string | null }) => (rule ? <span className="sop">SOP {rule}</span> : null);
+export const Sop = ({ rule }: { rule?: string | null }) =>
+  rule ? (
+    <Badge variant="outline" className="font-mono">
+      SOP {rule}
+    </Badge>
+  ) : null;
 
 export function ModerationTag({ m, quarantined }: { m?: ModerationResult | null; quarantined?: boolean }) {
   if (!quarantined && !m?.match_found) return null;
   const hits = m ? Object.entries(m.filters).filter(([, v]) => v === "MATCH_FOUND").map(([k]) => k) : [];
   return (
-    <span className="tag flag" title="Model Armor flagged this text. It is excluded from the decision graph.">
+    <Badge variant="destructive" title="Model Armor flagged this text. It is excluded from the decision graph.">
+      <ShieldAlertIcon data-icon="inline-start" />
       Flagged{hits.length ? `: ${hits.join(", ")}` : ""}, kept out of graph
-    </span>
+    </Badge>
   );
 }
 
-export function Empty({ title, children }: { title: string; children?: ReactNode }) {
+export function Empty({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="empty">
-      <h3>{title}</h3>
-      {children}
-    </div>
+    <EmptyRoot className="border">
+      <EmptyHeader>
+        <EmptyTitle>{title}</EmptyTitle>
+        {children && <EmptyDescription>{children}</EmptyDescription>}
+      </EmptyHeader>
+      {action && <EmptyContent>{action}</EmptyContent>}
+    </EmptyRoot>
   );
 }
 
@@ -95,24 +148,25 @@ const ClipContext = createContext<ClipCtx>(() => undefined);
 export function ClipButton({ clip, children }: { clip: ClipRef; children?: ReactNode }) {
   const open = useContext(ClipContext);
   return (
-    <button type="button" className="clip-btn" onClick={() => open(clip)} title={`Play ${clip.session_id} from ${clip.start_ts}`}>
+    <Button variant="link" size="sm" className="h-auto px-0" onClick={() => open(clip)} title={`Play ${clip.session_id} from ${clip.start_ts}`}>
+      <PlayIcon data-icon="inline-start" />
       {children ?? `${clip.start_ts}–${clip.end_ts}`}
-    </button>
+    </Button>
   );
 }
 
 export function ClipProvider({ children }: { children: ReactNode }) {
   const [clip, setClip] = useState<ClipRef | null>(null);
+  const [open, setOpen] = useState(false);
   const [src, setSrc] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
   const video = useRef<HTMLVideoElement>(null);
 
-  const open = useCallback((c: ClipRef) => {
+  const show = useCallback((c: ClipRef) => {
     setClip(c);
     setSrc(null);
     setErr(null);
-    dialog.current?.showModal();
+    setOpen(true);
     videoUrl(c.session_id).then(setSrc, () => setErr("This recording isn't available here. The clip reference is still valid."));
   }, []);
 
@@ -127,28 +181,28 @@ export function ClipProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ClipContext.Provider value={open}>
+    <ClipContext.Provider value={show}>
       {children}
-      <dialog ref={dialog} className="clip" onClose={() => video.current?.pause()}>
-        {clip && (
-          <>
-            <div className="clip-head">
-              <strong>Session {clip.session_id}</strong>
-              <span className="muted">
-                {clip.start_ts} to {clip.end_ts}
-              </span>
-              <button type="button" className="btn quiet small" onClick={() => dialog.current?.close()}>
-                Close
-              </button>
-            </div>
-            {err && <p className="muted">{err}</p>}
-            {src && (
-              <video ref={video} src={src} controls onLoadedMetadata={onLoaded} onTimeUpdate={onTime} preload="metadata" />
-            )}
-            {!src && !err && <p className="faint">Loading recording…</p>}
-          </>
-        )}
-      </dialog>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Session {clip?.session_id}</DialogTitle>
+            <DialogDescription>
+              {clip?.start_ts} to {clip?.end_ts}
+            </DialogDescription>
+          </DialogHeader>
+          {err && (
+            <Alert>
+              <AlertTitle>Recording unavailable</AlertTitle>
+              <AlertDescription>{err}</AlertDescription>
+            </Alert>
+          )}
+          {src && (
+            <video ref={video} src={src} controls onLoadedMetadata={onLoaded} onTimeUpdate={onTime} preload="metadata" className="w-full rounded-lg bg-black" />
+          )}
+          {!src && !err && <Skeleton className="aspect-video w-full rounded-lg" />}
+        </DialogContent>
+      </Dialog>
     </ClipContext.Provider>
   );
 }

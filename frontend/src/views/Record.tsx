@@ -1,11 +1,22 @@
+import { CircleDotIcon, PictureInPicture2Icon, SquareIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createSession, sheetSnapshot } from "../api/client";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+import { Checkbox } from "../components/ui/checkbox";
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "../components/ui/field";
+import { Input } from "../components/ui/input";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Separator } from "../components/ui/separator";
+import { Switch } from "../components/ui/switch";
 import { startLive, type LiveProbe, type LiveStatus } from "../live/live";
 import { PipPortal, pipSupported, usePip } from "../pip/pip";
 import { startCapture, uploadAndProcess, type Capture } from "../recorder/recorder";
 import { readInvoices, requestSheetsToken, sheetsConfigured } from "../recorder/sheets";
 import type { Session } from "../types/contract";
-import { Empty, fmtDuration, go, useWs } from "../ui";
+import { Empty, ErrorNote, PageHeader, fmtDuration, go, useWs } from "../ui";
 
 type Phase = "idle" | "starting" | "recording" | "uploading" | "done" | "error";
 
@@ -30,56 +41,61 @@ function Companion(props: {
 }) {
   const { phase, elapsed, live, liveNote, probe, answered, error } = props;
   return (
-    <div className="companion">
-      <div className="companion-bar">
+    <div className="flex min-h-full flex-1 flex-col gap-3 p-4">
+      <div className="flex items-center gap-2">
         {phase === "recording" ? (
           <>
             <span className="rec-dot" aria-hidden />
             <strong>Recording</strong>
-            <span className="companion-timer">{fmtDuration(elapsed)}</span>
+            <span className="ml-auto font-semibold tabular-nums">{fmtDuration(elapsed)}</span>
           </>
         ) : (
           <strong>Apprentice</strong>
         )}
       </div>
+      <Separator />
 
       {phase === "recording" && live && (
-        <p className="faint" style={{ fontSize: "var(--t-sm)" }}>
+        <p className="text-sm text-muted-foreground" aria-live="polite">
           {LIVE_LABEL[live]}
           {liveNote ? `. ${liveNote}` : ""}
         </p>
       )}
 
       {probe ? (
-        <div className="companion-probe">
-          <span className="sop">SOP {probe.sopRule}</span>
-          {probe.invoiceId && <span className="faint">, {probe.invoiceId}</span>}
-          <p style={{ fontSize: "var(--t-lg)", marginTop: 6 }}>
-            <span className="why">{probe.question}</span>
-          </p>
-          <p className="faint" style={{ fontSize: "var(--t-sm)", marginTop: 6 }}>
+        <div className="flex flex-col gap-2 border-l-2 border-primary pl-3" aria-live="assertive">
+          <div className="flex items-center gap-2 text-sm">
+            <Badge variant="outline" className="font-mono">
+              SOP {probe.sopRule}
+            </Badge>
+            {probe.invoiceId && <span className="text-muted-foreground">{probe.invoiceId}</span>}
+          </div>
+          <p className="text-lg font-medium">{probe.question}</p>
+          <p className="text-sm text-muted-foreground">
             {answered ? "Answer saved. You can edit it later under Questions." : "Answer out loud, or later under Questions."}
           </p>
           {answered && <p className="quote">{answered}</p>}
         </div>
       ) : phase === "recording" ? (
-        <p className="muted">Work as you normally would. If something departs from the SOP, a question appears here.</p>
+        <p className="text-muted-foreground">Work as you normally would. If something departs from the SOP, a question appears here.</p>
       ) : null}
 
-      {phase === "uploading" && <p className="muted">Uploading the recording…</p>}
-      {error && <p className="error">{error}</p>}
+      {phase === "uploading" && <p className="text-muted-foreground">Uploading the recording…</p>}
+      {error && <ErrorNote>{error}</ErrorNote>}
 
-      <div style={{ marginTop: "auto" }}>
+      <div className="mt-auto">
         {phase === "recording" ? (
-          <button className="btn quiet" style={{ width: "100%", justifyContent: "center" }} onClick={props.onStop}>
+          <Button variant="outline" size="lg" className="w-full" onClick={props.onStop}>
+            <SquareIcon data-icon="inline-start" />
             Stop and upload
-          </button>
+          </Button>
         ) : phase === "idle" || phase === "error" ? (
-          <button className="btn record" style={{ width: "100%", justifyContent: "center" }} onClick={props.onStart}>
+          <Button size="lg" className="w-full bg-live text-background hover:bg-live/85" onClick={props.onStart}>
+            <CircleDotIcon data-icon="inline-start" />
             Start recording
-          </button>
+          </Button>
         ) : phase === "starting" ? (
-          <p className="faint">Pick the Sheets or Gmail tab to share…</p>
+          <p className="text-sm text-muted-foreground">Pick the Sheets or Gmail tab to share…</p>
         ) : null}
       </div>
     </div>
@@ -188,11 +204,15 @@ export function Record() {
 
   if (readOnly)
     return (
-      <Empty title="Recording is off in the demo">
-        <p className="muted">Sign in with the expert account to record a session.</p>
-        <a className="btn quiet" href="/">
-          Sign in
-        </a>
+      <Empty
+        title="Recording is off in the demo"
+        action={
+          <Button variant="outline" asChild>
+            <a href="/">Sign in</a>
+          </Button>
+        }
+      >
+        Sign in with the expert account to record a session.
       </Empty>
     );
 
@@ -213,98 +233,101 @@ export function Record() {
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Record a session</h1>
-          <p>
-            Share the tab where you work the invoice queue. Apprentice records the tab and your microphone. Nothing is
-            written to your Sheet or mailbox.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Record a session"
+        description="Share the tab where you work the invoice queue. Apprentice records the tab and your microphone. Nothing is written to your Sheet or mailbox."
+      />
 
-      <div className="grid-2">
-        <section className="sheet" style={{ display: "grid", gap: 18 }}>
-          <label style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <input type="checkbox" checked={consent} disabled={busy} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 5 }} />
-            <span>
-              I agree to record my screen and voice for this session, to capture how I make decisions. I can stop at any
-              time.
-            </span>
-          </label>
-
-          <fieldset disabled={busy} style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 14 }}>
-            <label style={{ display: "grid", gap: 4 }}>
-              <span>Use this session for</span>
-              <select value={kind} onChange={(e) => setKind(e.target.value as Session["kind"])}>
-                <option value="training">Training: learn from it</option>
-                <option value="heldout">Held out: keep it for the successor exam</option>
-              </select>
-            </label>
-            <label style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-              <input type="checkbox" checked={liveOn} onChange={(e) => setLiveOn(e.target.checked)} style={{ marginTop: 5 }} />
-              <span>
-                Ask me questions while I work
-                <span className="faint" style={{ display: "block", fontSize: "var(--t-sm)" }}>
-                  At most one every 45 seconds, three per session.
-                </span>
-              </span>
-            </label>
-
-            {sheetsConfigured() && (
-              <div style={{ display: "grid", gap: 6 }}>
-                <span>Connect the invoice Sheet (optional)</span>
-                <span className="faint" style={{ fontSize: "var(--t-sm)" }}>
-                  Apprentice reads the Invoices tab before and after the session to see what changed. Read-only.
-                </span>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input type="text" placeholder="Spreadsheet ID from the Sheet's URL" value={sheetId} onChange={(e) => setSheetId(e.target.value.trim())} aria-label="Spreadsheet ID" />
-                  <button
-                    type="button"
-                    className="btn quiet"
-                    disabled={!sheetId}
-                    onClick={() =>
-                      requestSheetsToken().then(
-                        (t) => (setSheetToken(t), setSheetMsg("Sheet connected.")),
-                        (e: Error) => setSheetMsg(e.message),
-                      )
-                    }
-                  >
-                    {sheetToken ? "Connected" : "Connect"}
-                  </button>
-                </div>
-                {sheetMsg && <span className="muted" style={{ fontSize: "var(--t-sm)" }}>{sheetMsg}</span>}
-              </div>
-            )}
-          </fieldset>
-
-          {pipSupported() ? (
-            <button className="btn" disabled={!consent || Boolean(pip.win)} onClick={() => void pip.open()}>
-              {pip.win ? "Companion window is open" : "Open companion window"}
-            </button>
-          ) : (
-            <p className="faint" style={{ fontSize: "var(--t-sm)" }}>
-              This browser can't open an always-on-top companion. Use Chrome 116 or later, or record from the panel here.
-            </p>
-          )}
-        </section>
-
-        <aside>
-          {pip.win ? (
-            <>
-              <PipPortal win={pip.win}>{companion}</PipPortal>
-              <p className="muted sheet">
-                The companion window floats above your other tabs. Start and stop from there; questions appear there too.
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Before you start</CardTitle>
+            <CardDescription>Settings apply to this session only.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup>
+              <Field orientation="horizontal">
+                <Checkbox id="consent" checked={consent} disabled={busy} onCheckedChange={(v) => setConsent(v === true)} />
+                <FieldContent>
+                  <FieldLabel htmlFor="consent">I agree to record my screen and voice for this session</FieldLabel>
+                  <FieldDescription>It captures how I make decisions. I can stop at any time.</FieldDescription>
+                </FieldContent>
+              </Field>
+              <Separator />
+              <Field data-disabled={busy || undefined}>
+                <FieldLabel htmlFor="kind">Use this session for</FieldLabel>
+                <Select value={kind} disabled={busy} onValueChange={(v) => setKind(v as Session["kind"])}>
+                  <SelectTrigger id="kind" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="training">Training: learn from it</SelectItem>
+                      <SelectItem value="heldout">Held out: keep it for the successor exam</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field orientation="horizontal" data-disabled={busy || undefined}>
+                <FieldContent>
+                  <FieldLabel htmlFor="live">Ask me questions while I work</FieldLabel>
+                  <FieldDescription>At most one every 45 seconds, three per session.</FieldDescription>
+                </FieldContent>
+                <Switch id="live" checked={liveOn} disabled={busy} onCheckedChange={setLiveOn} />
+              </Field>
+              {sheetsConfigured() && (
+                <Field data-disabled={busy || undefined}>
+                  <FieldLabel htmlFor="sheet">Connect the invoice Sheet (optional)</FieldLabel>
+                  <div className="flex gap-2">
+                    <Input id="sheet" placeholder="Spreadsheet ID from the Sheet's URL" value={sheetId} disabled={busy} onChange={(e) => setSheetId(e.target.value.trim())} />
+                    <Button
+                      variant="outline"
+                      disabled={busy || !sheetId}
+                      onClick={() =>
+                        requestSheetsToken().then(
+                          (t) => (setSheetToken(t), setSheetMsg("Sheet connected.")),
+                          (e: Error) => setSheetMsg(e.message),
+                        )
+                      }
+                    >
+                      {sheetToken ? "Connected" : "Connect"}
+                    </Button>
+                  </div>
+                  <FieldDescription>
+                    {sheetMsg ?? "Apprentice reads the Invoices tab before and after the session to see what changed. Read-only."}
+                  </FieldDescription>
+                </Field>
+              )}
+            </FieldGroup>
+          </CardContent>
+          <CardFooter>
+            {pipSupported() ? (
+              <Button disabled={!consent || Boolean(pip.win)} onClick={() => void pip.open()}>
+                <PictureInPicture2Icon data-icon="inline-start" />
+                {pip.win ? "Companion window is open" : "Open companion window"}
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                This browser can't open an always-on-top companion. Use Chrome 116 or later, or record from the panel here.
               </p>
-            </>
-          ) : consent ? (
-            <div className="sheet" style={{ minHeight: 320, display: "flex" }}>
-              {companion}
-            </div>
-          ) : (
-            <p className="faint sheet">Tick the consent box to continue.</p>
-          )}
-        </aside>
+            )}
+          </CardFooter>
+        </Card>
+
+        {pip.win ? (
+          <>
+            <PipPortal win={pip.win}>{companion}</PipPortal>
+            <Alert>
+              <AlertDescription>
+                The companion window floats above your other tabs. Start and stop from there; questions appear there too.
+              </AlertDescription>
+            </Alert>
+          </>
+        ) : consent ? (
+          <Card className="min-h-80 py-0">{companion}</Card>
+        ) : (
+          <Empty title="Companion">Tick the consent box to continue.</Empty>
+        )}
       </div>
     </>
   );
