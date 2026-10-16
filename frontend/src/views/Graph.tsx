@@ -2,7 +2,11 @@ import cytoscape from "cytoscape";
 import { useEffect, useRef, useState } from "react";
 import { buildGraph, getGraph, listProbes, type ProbeWithAnswer } from "../api/client";
 import type { DecisionGraph, DecisionNode } from "../types/contract";
-import { ClipButton, Empty, Loadable, Sop, fmtDate, useAsync, useWs } from "../ui";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { Button } from "../components/ui/button";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Separator } from "../components/ui/separator";
+import { ClipButton, Empty, Loadable, PageHeader, Sop, fmtDate, useAsync, useWs } from "../ui";
 
 export const KIND: Record<DecisionNode["kind"], string> = {
   cue: "Cue",
@@ -20,8 +24,28 @@ const RELATION = {
   requires: "requires",
 } as const;
 
+// Cytoscape can't parse oklch(): paint the token onto a 1px canvas and read back sRGB.
+let probe: CanvasRenderingContext2D | null | undefined;
 function css(name: string) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#333";
+  if (probe === undefined) probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  if (!probe || !v) return "#888888";
+  probe.clearRect(0, 0, 1, 1);
+  probe.fillStyle = v;
+  probe.fillRect(0, 0, 1, 1);
+  const [r, g, b, a] = probe.getImageData(0, 0, 1, 1).data;
+  return `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(3)})`;
+}
+
+// Re-read colours when the theme class on <html> flips.
+function useThemeKey() {
+  const [key, setKey] = useState(0);
+  useEffect(() => {
+    const mo = new MutationObserver(() => setKey((k) => k + 1));
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => mo.disconnect();
+  }, []);
+  return key;
 }
 
 // Columns read left to right: what's noticed → the exception → what it serves / requires / overrides → options weighed.
@@ -73,14 +97,15 @@ export function layout(graph: DecisionGraph): Map<string, { x: number; y: number
 
 function Canvas({ graph, onSelect }: { graph: DecisionGraph; onSelect: (id: string | null) => void }) {
   const box = useRef<HTMLDivElement>(null);
+  const themeKey = useThemeKey();
 
   useEffect(() => {
     if (!box.current) return;
-    const ink = css("--ink");
-    const sheet = css("--sheet");
-    const reject = css("--reject");
-    const soft = css("--ink-soft");
-    const rule = css("--rule-strong");
+    const ink = css("--foreground");
+    const sheet = css("--card");
+    const reject = css("--destructive");
+    const soft = css("--muted-foreground");
+    const rule = css("--border");
     const pos = layout(graph);
     const cy = cytoscape({
       container: box.current,
@@ -96,7 +121,7 @@ function Canvas({ graph, onSelect }: { graph: DecisionGraph; onSelect: (id: stri
           selector: "node",
           style: {
             label: "data(label)",
-            "font-family": "Roboto, system-ui, sans-serif",
+            "font-family": "Geist Variable, system-ui, sans-serif",
             "font-size": 11,
             color: ink,
             "text-wrap": "wrap",
@@ -114,12 +139,12 @@ function Canvas({ graph, onSelect }: { graph: DecisionGraph; onSelect: (id: stri
         { selector: 'node[kind = "goal"]', style: { shape: "ellipse" } },
         { selector: 'node[kind = "option"]', style: { "border-style": "dashed", color: soft, "border-color": soft } },
         { selector: 'node[kind = "cue"]', style: { shape: "tag" } },
-        { selector: "node[sop = 1]", style: { shape: "rectangle", "border-color": rule, color: soft, "background-color": css("--paper") } },
+        { selector: "node[sop = 1]", style: { shape: "rectangle", "border-color": rule, color: soft, "background-color": css("--muted") } },
         {
           selector: 'node[kind = "exception"]',
           style: { "border-width": 3, "border-color": reject, "font-weight": "bold", width: 170, height: 60 },
         },
-        { selector: "node:selected", style: { "background-color": css("--highlight"), "border-width": 3 } },
+        { selector: "node:selected", style: { "background-color": css("--accent"), "border-color": css("--primary"), "border-width": 3 } },
         {
           selector: "edge",
           style: {
@@ -150,14 +175,14 @@ function Canvas({ graph, onSelect }: { graph: DecisionGraph; onSelect: (id: stri
       if (e.target === cy) onSelect(null);
     });
     return () => cy.destroy();
-  }, [graph, onSelect]);
+  }, [graph, onSelect, themeKey]);
 
   return (
     <div
       ref={box}
       role="img"
       aria-label={`Decision graph with ${graph.nodes.length} nodes. Node details are listed beside it.`}
-      style={{ height: "min(70vh, 640px)", background: "var(--sheet)", border: "1px solid var(--rule-strong)", borderRadius: 12 }}
+      className="h-[min(70vh,640px)] rounded-xl bg-card ring-1 ring-foreground/10"
     />
   );
 }
@@ -165,41 +190,38 @@ function Canvas({ graph, onSelect }: { graph: DecisionGraph; onSelect: (id: stri
 function NodePanel({ node, probes }: { node: DecisionNode; probes: ProbeWithAnswer[] }) {
   const linked = probes.filter((p) => node.probe_ids.includes(p.id));
   return (
-    <aside className="sheet" style={{ display: "grid", gap: 12 }}>
-      <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
-        <span className="muted" style={{ fontSize: "var(--t-sm)", fontWeight: 500 }}>
-          {KIND[node.kind]}
-        </span>
-        {node.kind === "exception" && <Sop rule={node.sop_rule} />}
-        <span className="faint" style={{ marginLeft: "auto", fontSize: "var(--t-xs)" }}>
-          {Math.round(node.confidence * 100)}% confident
-        </span>
-      </div>
-      <h2 style={{ fontSize: "var(--t-lg)", fontWeight: 500 }}>{node.label}</h2>
-      <p>{node.detail}</p>
-      {node.evidence.length > 0 && (
-        <div>
-          <h3 style={{ fontSize: "var(--t-sm)", marginBottom: 6 }} className="muted">
-            Seen in
-          </h3>
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            {node.evidence.map((c) => (
-              <ClipButton key={`${c.session_id}-${c.start_ts}`} clip={c}>
-                {c.session_id} at {c.start_ts}
-              </ClipButton>
-            ))}
+    <Card>
+      <CardHeader>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="eyebrow">{KIND[node.kind]}</span>
+          {node.kind === "exception" && <Sop rule={node.sop_rule} />}
+        </div>
+        <CardAction className="text-xs text-muted-foreground">{Math.round(node.confidence * 100)}% confident</CardAction>
+        <CardTitle className="mt-1 text-lg">{node.label}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <p>{node.detail}</p>
+        {node.evidence.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <h3 className="eyebrow">Seen in</h3>
+            <div className="flex flex-wrap gap-x-4">
+              {node.evidence.map((c) => (
+                <ClipButton key={`${c.session_id}-${c.start_ts}`} clip={c}>
+                  {c.session_id} at {c.start_ts}
+                </ClipButton>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-      {linked.map((p) => (
-        <div key={p.id} style={{ borderTop: "1px solid var(--rule)", paddingTop: 10 }}>
-          <p className="muted" style={{ fontSize: "var(--t-sm)" }}>
-            Asked: {p.question}
-          </p>
-          {p.answer ? <p className="quote">{p.answer.text}</p> : <p className="faint">Waiting for an answer.</p>}
-        </div>
-      ))}
-    </aside>
+        )}
+        {linked.map((p) => (
+          <div key={p.id} className="flex flex-col gap-2">
+            <Separator />
+            <p className="text-sm text-muted-foreground">Asked: {p.question}</p>
+            {p.answer ? <p className="quote">{p.answer.text}</p> : <p className="text-muted-foreground">Waiting for an answer.</p>}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -220,64 +242,69 @@ export function GraphView() {
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Decision graph</h1>
-          <p>
-            What the expert notices, what they're protecting, and where they knowingly step outside the SOP. Every node
-            links to the moment it was seen.
-          </p>
-        </div>
-        {!readOnly && (
-          <div className="actions">
-            <button className="btn" onClick={() => void rebuild()}>
-              Rebuild graph
-            </button>
-          </div>
-        )}
-      </div>
-      {msg && <p className="muted" style={{ marginBottom: 16 }}>{msg}</p>}
+      <PageHeader
+        title="Decision graph"
+        description="What the expert notices, what they're protecting, and where they knowingly step outside the SOP. Every node links to the moment it was seen."
+        actions={!readOnly && <Button onClick={() => void rebuild()}>Rebuild graph</Button>}
+      />
+      {msg && (
+        <Alert className="mb-4">
+          <AlertDescription>{msg}</AlertDescription>
+        </Alert>
+      )}
       <Loadable state={state}>
         {([graph, probes]) => {
           if (!graph || graph.nodes.length === 0)
             return (
-              <Empty title="No graph yet">
-                <p className="muted">The graph is built from answered questions. Answer a few, then rebuild.</p>
-                <a className="btn quiet" href="#/probes">
-                  Go to questions
-                </a>
+              <Empty
+                title="No graph yet"
+                action={
+                  <Button variant="outline" asChild>
+                    <a href="#/probes">Go to questions</a>
+                  </Button>
+                }
+              >
+                The graph is built from answered questions. Answer a few, then rebuild.
               </Empty>
             );
           const node = graph.nodes.find((n) => n.id === selected);
           const exceptions = graph.nodes.filter((n) => n.kind === "exception");
           return (
-            <>
-              <p className="faint" style={{ fontSize: "var(--t-sm)", marginBottom: 10 }}>
-                Version {graph.version}, built {fmtDate(graph.built_at)}. {exceptions.length} exceptions,{" "}
-                {graph.nodes.length} nodes.
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground">
+                Version {graph.version}, built {fmtDate(graph.built_at)}. {exceptions.length} exceptions, {graph.nodes.length} nodes.
               </p>
-              <div className="grid-2">
+              <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
                 <Canvas graph={graph} onSelect={setSelected} />
                 {node ? (
                   <NodePanel node={node} probes={probes} />
                 ) : (
-                  <aside className="sheet" style={{ display: "grid", gap: 12 }}>
-                    <p className="muted">Select a node to see the expert's reason and the clip it came from.</p>
-                    <h3 style={{ fontSize: "var(--t-md)" }}>Exceptions to the SOP</h3>
-                    <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 6 }}>
-                      {exceptions.map((n) => (
-                        <li key={n.id}>
-                          <button className="linkish" onClick={() => setSelected(n.id)}>
-                            {n.label}
-                          </button>{" "}
-                          <Sop rule={n.sop_rule} />
-                        </li>
-                      ))}
-                    </ul>
-                  </aside>
+                  <Card>
+                    <CardHeader>
+                      <CardDescription className="eyebrow">Exceptions to the SOP</CardDescription>
+                      <CardDescription>Select a node to see the expert's reason and the clip it came from.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="flex flex-col gap-1">
+                        {exceptions.map((n) => (
+                          <li key={n.id}>
+                            <Button
+                              variant="ghost"
+                              className="h-auto w-full justify-start gap-2 py-2 text-left whitespace-normal"
+                              onClick={() => setSelected(n.id)}
+                            >
+                              <span className="size-2 shrink-0 rounded-full bg-destructive" aria-hidden />
+                              <span className="flex-1">{n.label}</span>
+                              <Sop rule={n.sop_rule} />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
-            </>
+            </div>
           );
         }}
       </Loadable>

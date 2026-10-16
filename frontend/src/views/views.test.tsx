@@ -5,6 +5,7 @@ import { rowsToInvoices } from "../recorder/sheets";
 import { ClipProvider, WsContext } from "../ui";
 import { Discovery } from "./Discovery";
 import { Exam } from "./Exam";
+import { Overview } from "./Overview";
 import { GraphView } from "./Graph";
 import { Probes } from "./Probes";
 import { Record } from "./Record";
@@ -30,6 +31,12 @@ const demo = (ui: ReactNode) =>
 afterEach(cleanup);
 
 describe("views render against fixtures", () => {
+  it("Overview", async () => {
+    demo(<Overview />);
+    expect(await screen.findByText("Most repeated departures")).toBeTruthy();
+    expect(screen.getByText("Instructions hidden in an email")).toBeTruthy();
+  });
+
   it("Sessions", async () => {
     demo(<Sessions />);
     expect(await screen.findByText("s-01")).toBeTruthy();
