@@ -17,8 +17,8 @@ from backend.app.contract import (
     Session,
     SheetDiff,
 )
+from backend.app.localdb import FakeDb
 from backend.app.store import Store, Ws
-from backend.tests.fake_firestore import FakeDb
 
 IST = timezone(timedelta(hours=5, minutes=30))
 T0 = datetime(2026, 10, 14, 10, 5, tzinfo=IST)

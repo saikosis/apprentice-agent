@@ -1,7 +1,13 @@
-"""In-memory stand-in for the slice of firestore.AsyncClient that store.py uses."""
+"""Stand-in for the slice of firestore.AsyncClient that store.py uses.
+
+In memory for tests; with a path (env LOCAL_DB=data/local.json) it is saved to disk after every
+write, so the whole pipeline runs on a laptop with only a Gemini key, before Firestore exists.
+"""
 
 import copy
+import json
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any
 
 
@@ -27,9 +33,11 @@ class DocRef:
     async def set(self, data: dict[str, Any], merge: bool = False) -> None:
         base = self._db.docs.get(self.path, {}) if merge else {}
         self._db.docs[self.path] = {**copy.deepcopy(base), **copy.deepcopy(data)}
+        self._db.save()
 
     async def delete(self) -> None:
         self._db.docs.pop(self.path, None)
+        self._db.save()
 
 
 class CollRef:
@@ -62,8 +70,20 @@ class Batch:
 
 
 class FakeDb:
-    def __init__(self) -> None:
-        self.docs: dict[str, dict[str, Any]] = {}
+    def __init__(self, path: str | Path | None = None) -> None:
+        self.path = Path(path) if path else None
+        self.docs: dict[str, dict[str, Any]] = (
+            json.loads(self.path.read_text(encoding="utf-8"))
+            if self.path and self.path.exists()
+            else {}
+        )
+
+    def save(self) -> None:
+        if self.path:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(
+                json.dumps(self.docs, indent=1, ensure_ascii=False), encoding="utf-8"
+            )
 
     def document(self, path: str) -> DocRef:
         return DocRef(self, path)

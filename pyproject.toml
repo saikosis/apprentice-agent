@@ -14,7 +14,13 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest", "httpx", "ruff", "mypy"]
+dev = [
+    "pytest",
+    "httpx",
+    "ruff",
+    "mypy",
+    "matplotlib>=3.11.2",
+]
 
 [tool.ruff]
 line-length = 100

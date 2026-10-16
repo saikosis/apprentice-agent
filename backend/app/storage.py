@@ -50,3 +50,7 @@ async def signed_url(
 
 async def exists(gcs_uri: str) -> bool:
     return bool(await run_in_threadpool(_blob(gcs_uri).exists))
+
+
+async def download(gcs_uri: str, path: str) -> None:
+    await run_in_threadpool(_blob(gcs_uri).download_to_filename, path)
