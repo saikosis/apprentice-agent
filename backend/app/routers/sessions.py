@@ -6,7 +6,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app import errors, jobs
+from backend.app import errors, jobs, ts
 from backend.app.contract import ClipRef, Deviation, Probe, Segment, Session
 from backend.app.pipeline import segment
 from backend.app.routers.auth import CurrentUser
@@ -33,21 +33,6 @@ class LiveDeviation(Req):
     invoice_id: str | None = Field(default=None, max_length=40)
     t_seconds: int
     model_timestamp: str | None = None
-
-
-def mmss(seconds: int) -> str:
-    m, s = divmod(max(0, seconds), 60)
-    return f"{m // 60}:{m % 60:02d}:{s:02d}" if m >= 60 else f"{m:02d}:{s:02d}"
-
-
-def ts_seconds(ts: str) -> int:
-    """MM:SS or H:MM:SS to seconds. Model-written stamps can be malformed: those sort last."""
-    if not _valid_ts(ts):
-        return 10**9
-    n = 0
-    for part in ts.split(":"):
-        n = n * 60 + int(part)
-    return n
 
 
 def _now() -> datetime:
@@ -87,7 +72,7 @@ async def session_detail(session_id: str, store: ReadStore) -> dict[str, object]
     deviations: list[Deviation] = await store.deviations(session_id).list()
     return {
         "session": s,
-        "segments": sorted(segments, key=lambda x: ts_seconds(x.start_ts)),
+        "segments": sorted(segments, key=lambda x: ts.seconds(x.start_ts)),
         "deviations": sorted(deviations, key=lambda x: x.t_seconds),
         "diff": await store.get_sheet_diff(session_id),
     }
@@ -108,7 +93,9 @@ async def process(session_id: str, store: LiveStore, force: bool = False) -> dic
         cur = await store.sessions.get(session_id)
         if cur:
             await store.sessions.put(
-                cur.model_copy(update={"status": "failed", "error": str(e)[:300]})
+                cur.model_copy(
+                    update={"status": "failed", "error": str(getattr(e, "detail", e))[:300]}
+                )
             )
 
     jobs.spawn(f"process {session_id}", segment.process_session(store, session_id), failed)
@@ -141,8 +128,8 @@ async def _live_deviation(session_id: str, body: LiveDeviation, store: Store) ->
 
     stamp = (
         body.model_timestamp
-        if body.model_timestamp and _valid_ts(body.model_timestamp)
-        else mmss(t)
+        if body.model_timestamp and ts.valid(body.model_timestamp)
+        else ts.mmss(t)
     )
     dev = Deviation(
         id=new_id("d"),
@@ -165,14 +152,9 @@ async def _live_deviation(session_id: str, body: LiveDeviation, store: Store) ->
         cdm_type="cue",
         question=body.question,
         sop_rule=body.sop_rule,
-        clip=ClipRef(session_id=session_id, start_ts=mmss(t - 10), end_ts=mmss(t + 20)),
+        clip=ClipRef(session_id=session_id, start_ts=ts.mmss(t - 10), end_ts=ts.mmss(t + 20)),
         created_at=now,
     )
     await store.deviations(session_id).put(dev)
     await store.probes.put(probe)
     return {"deviation": dev, "probe": probe}
-
-
-def _valid_ts(ts: str) -> bool:
-    parts = ts.split(":")
-    return 2 <= len(parts) <= 3 and all(p.isdigit() for p in parts)

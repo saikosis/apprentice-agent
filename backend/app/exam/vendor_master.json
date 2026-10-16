@@ -1,0 +1,82 @@
+[
+  {
+    "vendor_id": "V-001",
+    "name": "Sahyadri Office Supplies",
+    "type": "standard",
+    "bank_last4": "6305",
+    "gstin_fake": "FAKE290013471Z",
+    "contact_email": "billing@sahyadri-office.test"
+  },
+  {
+    "vendor_id": "V-002",
+    "name": "Malabar Packaging Pvt Ltd",
+    "type": "standard",
+    "bank_last4": "7468",
+    "gstin_fake": "FAKE290021791Z",
+    "contact_email": "billing@malabar-pack.test"
+  },
+  {
+    "vendor_id": "V-003",
+    "name": "Deccan Precision Castings",
+    "type": "critical",
+    "bank_last4": "2186",
+    "gstin_fake": "FAKE290039779Z",
+    "contact_email": "billing@deccan-castings.test"
+  },
+  {
+    "vendor_id": "V-004",
+    "name": "Godavari Logistics",
+    "type": "standard",
+    "bank_last4": "2542",
+    "gstin_fake": "FAKE290046991Z",
+    "contact_email": "billing@godavari-logistics.test"
+  },
+  {
+    "vendor_id": "V-005",
+    "name": "Nilgiri Facility Services",
+    "type": "standard",
+    "bank_last4": "1950",
+    "gstin_fake": "FAKE290059313Z",
+    "contact_email": "billing@nilgiri-fs.test"
+  },
+  {
+    "vendor_id": "V-006",
+    "name": "Konkan Electricals",
+    "type": "standard",
+    "bank_last4": "4517",
+    "gstin_fake": "FAKE290061614Z",
+    "contact_email": "billing@konkan-elec.test"
+  },
+  {
+    "vendor_id": "V-007",
+    "name": "Kaveri Consignment Stores",
+    "type": "consignment",
+    "bank_last4": "2408",
+    "gstin_fake": "FAKE290078104Z",
+    "contact_email": "billing@kaveri-stores.test"
+  },
+  {
+    "vendor_id": "V-008",
+    "name": "Vindhya Chemicals",
+    "type": "standard",
+    "bank_last4": "7851",
+    "gstin_fake": "FAKE290082144Z",
+    "contact_email": "billing@vindhya-chem.test"
+  },
+  {
+    "vendor_id": "V-009",
+    "name": "Narmada IT Services",
+    "type": "standard",
+    "bank_last4": "4943",
+    "gstin_fake": "FAKE290092486Z",
+    "contact_email": "billing@narmada-it.test"
+  },
+  {
+    "vendor_id": "V-011",
+    "name": "Kaveri Consolidated Traders",
+    "type": "standard",
+    "bank_last4": "7955",
+    "gstin_fake": "FAKE290111968Z",
+    "contact_email": "billing@kaveri-traders.test"
+  }
+]

@@ -97,9 +97,9 @@ def test_a_failing_pipeline_marks_the_session_failed(api: Api) -> None:
     sid = new_session(api)["id"]
     upload(api, sid)
     assert api.client.post(f"/api/sessions/{sid}/process").status_code == 202
-    api.drain()  # the real seam still raises NotImplementedError until A4
+    api.drain()  # no SOP stored yet, so the real pipeline stops at once
     s = api.client.get(f"/api/sessions/{sid}").json()["session"]
-    assert s["status"] == "failed" and "A4" in s["error"]
+    assert s["status"] == "failed" and s["error"].startswith("No SOP")
 
 
 def test_upload_rejects_wrong_type_and_oversize(api: Api) -> None:
@@ -288,7 +288,9 @@ def test_exam_flow(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
     s = asyncio.run(api.store().sessions.get(held))
     asyncio.run(api.store().sessions.put(s.model_copy(update={"status": "processed"})))  # type: ignore[union-attr]
     r = api.client.post("/api/exam/generate", json={"heldout_session_ids": [held]})
-    assert r.status_code == 501 and r.json()["error"]["code"] == "not_implemented"
+    assert (
+        r.status_code == 409 and "SOP" in r.json()["error"]["message"]
+    )  # nothing to build cases from yet
 
     async def fake_generate(store: Any, ids: list[str], n: int) -> list[ExamCase]:
         cases = [case("c-01"), case("c-02")]
@@ -529,7 +531,7 @@ def test_a_failed_exam_run_stops_the_poller(api: Api) -> None:
     rid = api.client.post("/api/exam/run", json={"runs_per_arm": 1}).json()["report_id"]
     api.drain()  # real seam raises NotImplementedError
     r = api.client.get(f"/api/exam/report/{rid}")
-    assert r.status_code == 500 and "A6" in r.json()["error"]["message"]
+    assert r.status_code == 500 and "decision graph" in r.json()["error"]["message"]
 
 
 def test_sheet_diff_survives_reordered_snapshots_and_duplicate_ids(api: Api) -> None:
@@ -545,3 +547,36 @@ def test_sheet_diff_survives_reordered_snapshots_and_duplicate_ids(api: Api) -> 
         ("INV-1", "Approved"),
         ("INV-1#2", "Rejected"),
     ]
+
+
+# ---- A3: live token ----
+def test_live_token_locks_the_whole_setup(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    from types import SimpleNamespace
+
+    from backend.app.routers import live
+    from scripts.make_synthetic import build_sop
+
+    asyncio.run(api.store().sop.put(build_sop()))
+    made: list[Any] = []
+
+    async def create(config: Any) -> Any:
+        made.append(config)
+        return SimpleNamespace(name="auth_tokens/abc")
+
+    fake = SimpleNamespace(aio=SimpleNamespace(auth_tokens=SimpleNamespace(create=create)))
+    monkeypatch.setattr(live, "_client", lambda: fake)
+    sid = new_session(api)["id"]
+    r = api.client.post("/api/live/token", json={"session_id": sid, "resume_handle": "h-1"})
+    assert r.status_code == 200, r.text
+    assert r.json()["token"] == "auth_tokens/abc" and r.json()["model"] == "gemini-3.8-live"
+    cfg = made[0]
+    assert cfg.uses == 1 and cfg.lock_additional_fields is None
+    assert (cfg.expire_time - cfg.new_session_expire_time).total_seconds() == 29 * 60
+    c = cfg.live_connect_constraints.config
+    assert "§3.2" in c.system_instruction and "Thanks, noted." in c.system_instruction
+    assert c.tools[0].function_declarations[0].name == "log_deviation"
+    assert c.session_resumption.handle == "h-1"
+    assert c.context_window_compression.trigger_tokens == 25000
+
+    off = new_session(api, live=False)["id"]
+    assert api.client.post("/api/live/token", json={"session_id": off}).status_code == 409

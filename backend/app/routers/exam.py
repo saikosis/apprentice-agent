@@ -70,7 +70,7 @@ async def run(body: RunReq, store: LiveStore) -> dict[str, str]:
     await store.put_job(report_id, "running")
 
     async def failed(e: Exception) -> None:
-        await store.put_job(report_id, "failed", str(e)[:300])
+        await store.put_job(report_id, "failed", str(getattr(e, "detail", e))[:300])
 
     jobs.spawn(f"exam {report_id}", report.run_exam(store, report_id, body.runs_per_arm), failed)
     return {"report_id": report_id}
@@ -96,9 +96,16 @@ async def latest_report(store: ReadStore) -> ExamReport:
 
 
 @router.get("/exam/runs")
-async def list_runs(store: ReadStore, case_id: str | None = None) -> list[AgentRun]:
+async def list_runs(
+    store: ReadStore, case_id: str | None = None, report_id: str | None = None
+) -> list[AgentRun]:
     runs = await store.agent_runs.list()
     return sorted(
-        (r for r in runs if case_id is None or r.case_id == case_id),
+        (
+            r
+            for r in runs
+            if (case_id is None or r.case_id == case_id)
+            and (report_id is None or r.id.startswith(f"{report_id}-"))
+        ),
         key=lambda r: (r.case_id, r.arm, r.run_index),
     )

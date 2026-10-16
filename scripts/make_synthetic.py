@@ -22,6 +22,9 @@ from typing import Any
 from backend.app.contract import SOP, Email, InvoiceRow, SOPSection
 
 COMPANY = "apprentice-demo.test"
+VENDOR_MASTER_JSON = (
+    Path(__file__).resolve().parents[1] / "backend" / "app" / "exam" / "vendor_master.json"
+)
 SESSION_IDS = [f"s-{n:02d}" for n in range(1, 9)]
 FIRST_INVOICE = 1031  # s-01 handles INV-1031..1035, s-02 INV-1036..1040, ... s-08 INV-1066..1070
 PER_SESSION = 5
@@ -420,6 +423,10 @@ def write(w: World, out: Path) -> None:
     (out / "sop.json").write_text(w.sop.model_dump_json(indent=2), encoding="utf-8")
     (out / "sop.md").write_text(w.sop.full_text + "\n", encoding="utf-8")
     (out / "sessions.json").write_text(json.dumps(w.sessions, indent=2), encoding="utf-8")
+    # the exam scenario generator reads the Vendor Master from inside the backend (it ships in the image)
+    VENDOR_MASTER_JSON.write_text(
+        json.dumps(w.vendors, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 async def upload_sop(sop: SOP) -> None:

@@ -1,9 +1,11 @@
 """Model Armor screen_input/screen_output -> ModerationResult. docs/SPEC.md §6."""
 
+import asyncio
 import hashlib
 import logging
 import os
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Any, Literal
@@ -106,3 +108,19 @@ async def screen_output(
     text: str, kind: TargetKind, target_id: str, *, client: Any = None
 ) -> ModerationResult:
     return await _screen("out", text, kind, target_id, client)
+
+
+async def keep_clean[X](
+    store: Any, items: list[X], text: Callable[[X], str], kind: TargetKind
+) -> list[X]:
+    """Screen each item's text (8 at a time, results stored) and return only the unflagged items."""
+    gate = asyncio.Semaphore(8)
+
+    async def ok(x: X) -> bool:
+        async with gate:
+            m = await screen_input(text(x), kind, str(getattr(x, "id", "")))
+        await store.moderation.put(m)
+        return not m.match_found
+
+    flags = await asyncio.gather(*(ok(x) for x in items))
+    return [x for x, good in zip(items, flags, strict=True) if good]

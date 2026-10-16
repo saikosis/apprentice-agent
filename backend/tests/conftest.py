@@ -6,9 +6,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import jobs, storage, store
+from backend.app.localdb import FakeDb
 from backend.app.main import app
 from backend.app.routers import auth
-from backend.tests.fake_firestore import FakeDb
 
 
 @dataclass
@@ -50,3 +50,43 @@ def api(monkeypatch: pytest.MonkeyPatch) -> Iterator[Api]:
         a.client = c
         yield a
     app.dependency_overrides.clear()
+
+
+class FakeLLM:
+    """Replaces gemini.structured: returns canned output per prompt id and records every call."""
+
+    def __init__(self) -> None:
+        self.replies: dict[str, list[Any]] = {}
+        self.calls: list[dict[str, Any]] = []
+
+    def reply(self, prompt_id: str, *outputs: Any) -> None:
+        self.replies.setdefault(prompt_id, []).extend(outputs)
+
+    async def __call__(
+        self, model: str, prompt_id: str, parts: list[Any], schema: Any, **kw: Any
+    ) -> Any:
+        from backend.app.gemini import Structured
+
+        self.calls.append(
+            {"prompt_id": prompt_id, "parts": parts, "values": kw.get("values") or {}}
+        )
+        queue = self.replies.get(prompt_id) or []
+        out = queue.pop(0) if len(queue) > 1 else queue[0]
+        return Structured(schema.model_validate(out), f"{prompt_id}@1", model)
+
+    def seen(self, prompt_id: str | None = None) -> str:
+        """Everything a model was shown (instructions + data) as one string, for leakage checks."""
+        import json
+
+        return json.dumps(
+            [c for c in self.calls if prompt_id is None or c["prompt_id"] == prompt_id], default=str
+        )
+
+
+@pytest.fixture
+def llm(monkeypatch: pytest.MonkeyPatch) -> FakeLLM:
+    from backend.app import gemini
+
+    fake = FakeLLM()
+    monkeypatch.setattr(gemini, "structured", fake)
+    return fake

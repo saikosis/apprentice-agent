@@ -1,6 +1,6 @@
 # Apprentice: task list and status
 
-Status as of **Oct 13, 2026**. Done items are ~~struck through~~. Section numbers point to `docs/SPEC.md`.
+Status as of **Oct 17, 2026**. Done items are ~~struck through~~. Section numbers point to `docs/SPEC.md`.
 
 Split:
 - **Person A (ML/backend):** the Gemini pipeline (segment → deviations/variants → probes → graph → scenarios → two arms → judge), the REST API and Firestore behind it, Model Armor, and the evaluation numbers.
@@ -14,9 +14,10 @@ Split:
 | Data contract (`contract.py`) + JSON Schema + generated TS types | Done |
 | Fixtures (8 files, validated by `test_fixtures.py`) | Done (synthetic; replace with the real demo seed on Oct 16) |
 | Frontend: all views, recorder, PiP, Live client, demo mode | Done against fixtures; not yet tested against a real backend |
-| Backend: routers, store, `gemini.py`, pipeline, exam, safety | **Stubs only** (empty routers, one-line docstrings) |
-| Prompts (`/prompts/*.md`) | Front-matter only; every body is `TODO` |
-| Scripts (`make_synthetic`, `run_exam`, `seed_demo`, `export_demo`) | Stubs only |
+| Backend: routers, store, `gemini.py`, pipeline, exam, safety | Done and tested offline; pipeline + exam verified end to end on real Gemini (text dry run) |
+| Prompts (`/prompts/*.md`) | All 10 written |
+| Scripts (`make_synthetic`, `local`, `run_exam`, `seed_demo`, `export_demo`) | Done; `local.py` runs everything on a laptop before A0 |
+| Real recording through the segmenter; expert answers and labels; real exam numbers | Not yet |
 | GCP / Firebase / Model Armor setup | Not started (`gcloud` isn't installed on this machine) |
 | Dockerfile + `deploy.sh` | Written, never run. **The Dockerfile build will fail** (see B, Deploy) |
 
@@ -73,76 +74,76 @@ Split:
 - [x] ~~`POST /api/exam/generate`, `PUT /api/exam/cases/{id}/label`, `POST /api/exam/run`, `GET /api/exam/report/{id}`, `GET /api/exam/reports/latest?ws=`~~
 - [x] ~~`POST /api/sheets/snapshot` (+ SheetDiff when `phase=after`)~~
 - [x] ~~`GET /api/demo/bundle` (public), `POST /api/admin/seed-demo` (admin uid only)~~ (`ADMIN_UIDS` env; `scripts/seed_demo.py` loads the same seed directly)
-- Background work runs through seams that A4–A6 fill in: `pipeline.segment.process_session`, `pipeline.variants.discover`, `pipeline.graph.build`, `exam.scenarios.generate`, `exam.report.run_exam`. Until then they raise `NotImplementedError`: `/exam/generate` returns 501, a processed session goes `failed`, an exam run's `GET /exam/report/{id}` returns 500 with the error, and discover/build only log it.
+- Background work runs through: `pipeline.segment.process_session`, `pipeline.variants.discover`, `pipeline.graph.build`, `exam.scenarios.generate`, `exam.report.run_exam`. Background failures: a processed session goes `failed` with the error, an exam run's `GET /exam/report/{id}` returns 500 with the error, and discover/build only log it.
 - Access: everything except `/api/me`, `/api/health` and the demo routes requires the expert (`EXPERT_EMAIL`, verified email; unset = refuse all). Set `EXPERT_EMAIL` and `ADMIN_UIDS` in the deploy env.
 - `POST /api/sessions/{id}/process?force=true` restarts a session stuck in `processing`.
 
 ### A3. Live backend (SPEC §4)
-- [ ] `prompts/live_system.md` (persona, SOP verbatim, rules, "Thanks, noted.", guardrail)
-- [ ] `POST /api/live/token`:
-  - [ ] `uses: 1`, 30 min expiry, 1 min new-session window
-  - [ ] Full `live_connect_constraints`: SOP system prompt, `LOG_DEVIATION` tool, transcription on, sliding-window compression, session resumption handle
-- [ ] If the SDK rejects a field, run the fallback ladder in SPEC §4
-- [ ] **AC (Oct 14):** an end-to-end live session on the deployed URL logs a deviation and the PiP shows the question
-- [ ] **Oct 14, 22:00 kill switch:** if fewer than 2 of 3 planted deviations trigger the tool, go batch-only
+- [x] ~~`prompts/live_system.md` (persona, SOP verbatim, rules, "Thanks, noted.", guardrail)~~
+- [x] ~~`POST /api/live/token`:~~
+  - [x] ~~`uses: 1`, 30 min expiry, 1 min new-session window~~
+  - [x] ~~Full `live_connect_constraints`: SOP system prompt, `LOG_DEVIATION` tool, transcription on, sliding-window compression, session resumption handle~~
+- [x] ~~If the SDK rejects a field, run the fallback ladder in SPEC §4~~ Not needed: a real token with the full config opens a Live session (`test_live_smoke.py`, Oct 16).
+- [ ] **AC (Oct 14):** an end-to-end live session on the deployed URL logs a deviation and the PiP shows the question (needs A0 + a deploy)
+- [ ] **Oct 14, 22:00 kill switch:** if fewer than 2 of 3 planted deviations trigger the tool, go batch-only (needs a real screen-share test)
 
 ### A4. Batch pipeline (SPEC §5, ARCHITECTURE §2)
-- [ ] `pipeline/files.py`: GCS → Gemini Files API; poll until ACTIVE
-- [ ] `segmenter.md` + `segment.py` (fps 1, media_resolution high) → SegmentList
-- [ ] `safety/armor.py` (SPEC §6):
-  - [ ] `screen_input` / `screen_output` → ModerationResult
-  - [ ] Cache by sha256; `asyncio.gather` with a limit of 8
-  - [ ] Treat `skipped` as not flagged, but log it
-- [ ] Model Armor on each segment's text; flagged segments get `quarantined=true` and are excluded from the graph
-- [ ] `deviations.md` + `deviations.py`: SOP + segments + sheet diff + live deviations; dedup (same rule within 20 s, or same invoice)
-- [ ] `variants.md` + `variants.py`: one call over all sessions; runs once 3 or more sessions are processed
-- [ ] `probes.md` + `probes.py`: CDM types, at most 4 probes per item, at most 20 words each, few-shot examples from SPEC §5
-- [ ] Session status flow `processing → processed | failed` with `error`
-- [ ] **AC (Oct 14):** all 3 planted exception types are detected on the dry-run recording
+- [x] ~~`pipeline/files.py`: GCS → Gemini Files API; poll until ACTIVE~~ (also `upload_path` for local recordings)
+- [x] ~~`segmenter.md` + `segment.py` (fps 1, media_resolution high) → SegmentList~~
+- [x] ~~`safety/armor.py` (SPEC §6):~~
+  - [x] ~~`screen_input` / `screen_output` → ModerationResult~~
+  - [x] ~~Cache by sha256; `asyncio.gather` with a limit of 8~~
+  - [x] ~~Treat `skipped` as not flagged, but log it~~
+- [x] ~~Model Armor on each segment's text; flagged segments get `quarantined=true` and are excluded from the graph~~ (their text is withheld from every later prompt)
+- [x] ~~`deviations.md` + `deviations.py`: SOP + segments + sheet diff + live deviations; dedup (same rule within 20 s, or same invoice)~~ (dedup decided in code)
+- [x] ~~`variants.md` + `variants.py`: one call over all sessions; runs once 3 or more sessions are processed~~ (auto after each processed session; counts from code)
+- [x] ~~`probes.md` + `probes.py`: CDM types, at most 4 probes per item, at most 20 words each, few-shot examples from SPEC §5~~
+- [x] ~~Session status flow `processing → processed | failed` with `error`~~
+- [ ] **AC (Oct 14):** all 3 planted exception types are detected on the dry-run recording. Text-only dry run on real Gemini (synthetic steps, no video) detected all planted E1/E2/E3 and the injection session; still to do on a real recording (`scripts/local.py process`).
 
 ### A5. Graph (SPEC §5)
-- [ ] `graph.md` + `graph.py`. Inputs are clean (moderated) answers only.
-- [ ] Every exception node has an `overrides` edge to its SOP rule
-- [ ] Every cue / rule / exception node cites at least one clip
-- [ ] Keep `graph/current` and `graph_history/{version}`
-- [ ] Use `PRO_MODEL` only if Flash quality is poor
+- [x] ~~`graph.md` + `graph.py`. Inputs are clean (moderated) answers only.~~
+- [x] ~~Every exception node has an `overrides` edge to its SOP rule~~ (enforced in code; SOP node created if missing)
+- [x] ~~Every cue / rule / exception node cites at least one clip~~ (uncited nodes dropped)
+- [x] ~~Keep `graph/current` and `graph_history/{version}`~~
+- [x] ~~Use `PRO_MODEL` only if Flash quality is poor~~ (`GRAPH_MODEL=pro`; Flash produced the 3 exceptions with the right conditions in the dry run)
 - [ ] Answer the batch probes with the expert
-- [ ] **AC (Oct 15):** at least 3 exception nodes, each linked to an SOP section and a clip; the injection email is flagged
+- [ ] **AC (Oct 15):** at least 3 exception nodes, each linked to an SOP section and a clip; the injection email is flagged (flagging needs the Model Armor template from A0)
 
 ### A6. Exam and evaluation (SPEC §5, §9)
-- [ ] `scenarios.md` + `scenarios.py`:
-  - [ ] 8 generated cases, with all 3 trap types and at least one case per exception
-  - [ ] Plus 2 held-out cases
-  - [ ] No labels in the generated cases
-- [ ] Expert labels all 10 cases (through the exam page)
-- [ ] `arm_sop.md`, `arm_graph.md`, `arms.py`:
-  - [ ] Model Armor on inputs and outputs; blocked runs recorded
-  - [ ] 3 runs per arm
-  - [ ] Concurrency 6
-- [ ] `judge.md` + `judge.py`:
-  - [ ] Blind to the arm
-  - [ ] Rubric weights 0.5 / 0.25 / 0.25
-  - [ ] `decision_match` computed in code
-- [ ] `report.py` → ExamReport:
-  - [ ] Majority decision, stability, judge means, traps handled
-  - [ ] Every graph-arm miss creates a `Probe(source="exam_miss")`
-- [ ] `scripts/run_exam.py --ws live --runs 3` → stored report + `eval/pilot_chart.png`
+- [x] ~~`scenarios.md` + `scenarios.py`:~~
+  - [x] ~~8 generated cases, with all 3 trap types and at least one case per exception~~ (one retry if a trap is missing)
+  - [x] ~~Plus 2 held-out cases~~ (copied from the session's Sheet snapshot when there is one)
+  - [x] ~~No labels in the generated cases~~ (stripped in code)
+- [ ] Expert labels all 10 cases (through the exam page, or `scripts/local.py label`)
+- [x] ~~`arm_sop.md`, `arm_graph.md`, `arms.py`:~~
+  - [x] ~~Model Armor on inputs and outputs; blocked runs recorded~~ (flagged inputs get the same warning in both arms; flagged outputs count as blocked)
+  - [x] ~~3 runs per arm~~
+  - [x] ~~Concurrency 6~~
+- [x] ~~`judge.md` + `judge.py`:~~
+  - [x] ~~Blind to the arm~~ (no arm, no graph citations, opaque run id)
+  - [x] ~~Rubric weights 0.5 / 0.25 / 0.25~~
+  - [x] ~~`decision_match` computed in code~~
+- [x] ~~`report.py` → ExamReport:~~
+  - [x] ~~Majority decision, stability, judge means, traps handled~~
+  - [x] ~~Every graph-arm miss creates a `Probe(source="exam_miss")`~~ (describes the case, never the answer; not re-asked)
+- [x] ~~`scripts/run_exam.py --ws live --runs 3` → stored report + `eval/pilot_chart.png`~~ (works with `LOCAL_DB` before Firestore)
 - [ ] Hand-check 3 cases (1 trap, 1 agree, 1 disagree); if any differs by more than 1 point, tighten the rubric and re-run
 - [ ] Write up the results and the hand-check in `eval/`
-- [ ] **AC (Oct 16):** ExamReport stored. Targets: graph arm at least 80% agreement and at least 30 points above SOP-only, or documented actuals.
+- [ ] **AC (Oct 16):** ExamReport stored. Targets: graph arm at least 80% agreement and at least 30 points above SOP-only, or documented actuals. (Machinery verified end to end on real Gemini with placeholder labels: not reportable numbers.)
 
 ### A7. Tests (AGENTS.md)
 - [x] ~~Contract round-trip, fixture validation~~
-- [ ] `test_no_label_leakage`: graph builder, probe generator and arms never receive `expert_label`
-- [ ] Dedup unit test (deviations)
-- [ ] Mocked Model Armor client test
-- [ ] Live smoke test behind `RUN_LIVE_TESTS=1`
-- [ ] A `pytest -k demo` test that `/api/demo/bundle` returns data
+- [x] ~~`test_no_label_leakage`: graph builder, probe generator and arms never receive `expert_label`~~ (also no trap hints; judge blind to the arm)
+- [x] ~~Dedup unit test (deviations)~~
+- [x] ~~Mocked Model Armor client test~~
+- [x] ~~Live smoke test behind `RUN_LIVE_TESTS=1`~~ (structured call + ephemeral token → Live session; passing)
+- [x] ~~A `pytest -k demo` test that `/api/demo/bundle` returns data~~
 
 ### A8. Demo seed and wrap-up
-- [ ] `scripts/export_demo.py --from live` → `fixtures/demo_seed.json` (SPEC §8)
-- [ ] `scripts/seed_demo.py` / `make seed-demo` into workspace `demo`
-- [ ] README (setup, architecture, eval results); bug fixes only after Oct 17, 18:00
+- [x] ~~`scripts/export_demo.py --from live` → `fixtures/demo_seed.json` (SPEC §8)~~ (round-trip tested)
+- [x] ~~`scripts/seed_demo.py` / `make seed-demo` into workspace `demo`~~ (running it needs A0)
+- [ ] README (setup, architecture, eval results); bug fixes only after Oct 17, 18:00. Setup and architecture done; eval results pending the real run.
 
 ---
 

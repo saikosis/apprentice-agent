@@ -4,6 +4,7 @@ All access is server-side through the Admin SDK. Workspace `demo` is read-only t
 only the seed script opens it with `allow_demo_writes=True`.
 """
 
+import builtins
 import os
 import uuid
 from functools import lru_cache
@@ -38,6 +39,10 @@ Ws = Literal["demo", "live"]
 
 @lru_cache
 def default_db() -> Any:
+    if local := os.getenv("LOCAL_DB"):  # laptop runs before Firestore exists (localdb.py)
+        from backend.app.localdb import FakeDb
+
+        return FakeDb(local)
     return firestore.AsyncClient(project=os.getenv("GCP_PROJECT"))
 
 
@@ -75,6 +80,20 @@ class Coll[T: BaseModel]:
     async def delete(self, id: str) -> None:
         self._store.check_writable()
         await self._ref(id).delete()
+
+    async def replace(self, objs: builtins.list[T]) -> builtins.list[T]:
+        """Make the collection exactly `objs` in one atomic batch: stale docs deleted, the rest written.
+        ponytail: one batch caps at 500 writes; per-session collections are far smaller."""
+        self._store.check_writable()
+        keep = {getattr(o, self.key) for o in objs}
+        batch = self._store.db.batch()
+        async for s in self._store.db.collection(self.path).stream():
+            if s.id not in keep:
+                batch.delete(self._ref(s.id))
+        for o in objs:
+            batch.set(self._ref(getattr(o, self.key)), _dump(o))
+        await batch.commit()
+        return objs
 
 
 class Probes(Coll[Probe]):
@@ -133,6 +152,13 @@ class Store:
         self.judge_scores = Coll(self, f"{root}/judge_scores", JudgeScore, key="run_id")
         self.exam_reports = Coll(self, f"{root}/exam_reports", ExamReport)
         self.moderation = Coll(self, f"{root}/moderation", ModerationResult)
+
+    async def current_sop(self) -> SOP:
+        """The newest SOP version. 409 until `make_synthetic --upload-sop` (or a seed) stores one."""
+        sops = await self.sop.list()
+        if not sops:
+            raise HTTPException(409, f"No SOP in workspace {self.ws} yet. Store one first.")
+        return max(sops, key=lambda s: s.version)
 
     def check_writable(self) -> None:
         if not self.writable:

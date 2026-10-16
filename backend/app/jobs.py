@@ -18,7 +18,7 @@ def lock(key: str) -> asyncio.Lock:
 
 def spawn(
     name: str,
-    work: Coroutine[Any, Any, None],
+    work: Coroutine[Any, Any, Any],
     on_error: Callable[[Exception], Awaitable[None]] | None = None,
 ) -> None:
     async def run() -> None:
