@@ -1,0 +1,41 @@
+invoice_id,vendor_id,vendor_name,invoice_no,invoice_date,amount_inr,gst_inr,po_number,grn_number,due_date,category,status,approver_1,approver_2,notes
+INV-1031,V-006,Konkan Electricals,KON/2026/0418,2026-10-01,47750.0,8595.0,PO-1031,GRN-1031,2026-10-31,Electrical,Pending,,,"Items: 38 × cable 4 sq mm, 100 m"
+INV-1032,V-007,Kaveri Consignment Stores,KAV/2026/0409,2026-10-01,38640.0,6955.2,,,2026-10-31,Canteen stock,Pending,,,Items: 38 × packaged snacks
+INV-1033,V-002,Malabar Packaging Pvt Ltd,MAL/2026/0417,2026-10-01,25050.0,4509.0,PO-1033,GRN-1033,2026-10-31,Packaging,Pending,,,Items: 15 × stretch film roll
+INV-1034,V-008,Vindhya Chemicals,VIN/2026/0419,2026-10-02,95750.0,17235.0,PO-1034,GRN-1034,2026-11-01,Chemicals,Pending,,,Items: 31 × coolant 50 L
+INV-1035,V-004,Godavari Logistics,GOD/2026/0403,2026-10-01,18700.0,3366.0,PO-1035,GRN-1035,2026-10-31,Freight,Pending,,,Items: 38 × LTL Bengaluru–Hosur
+INV-1036,V-006,Konkan Electricals,KON/2026/0425,2026-10-03,87150.0,15687.0,PO-1036,GRN-1036,2026-11-02,Electrical,Pending,,,Items: 6 × LED panel 2x2
+INV-1037,V-003,Deccan Precision Castings,DEC/2026/0404,2026-10-02,185000.0,33300.0,PO-1037,GRN-1037,2026-11-01,Production parts,Pending,,,Items: 42 × bearing housing BH-220
+INV-1038,V-006,Konkan Electricals,KON/2026/0431,2026-10-02,68850.0,12393.0,PO-1038,GRN-1038,2026-11-01,Electrical,Pending,,,Items: 28 × LED panel 2x2
+INV-1039,V-008,Vindhya Chemicals,VIN/2026/0427,2026-10-03,130250.0,23445.0,PO-1039,GRN-1039,2026-11-02,Chemicals,Pending,,,Items: 24 × coolant 50 L
+INV-1040,V-006,Konkan Electricals,KON/2026/0436,2026-10-02,46800.0,8424.0,PO-1040,GRN-1040,2026-11-01,Electrical,Pending,,,"Items: 32 × cable 4 sq mm, 100 m"
+INV-1041,V-008,Vindhya Chemicals,VIN/2026/0432,2026-10-04,58200.0,10476.0,PO-1041,GRN-1041,2026-11-03,Chemicals,Pending,,,Items: 47 × coolant 50 L
+INV-1042,V-008,Vindhya Chemicals,VIN/2026/0436,2026-10-04,54300.0,9774.0,PO-1042,GRN-1042,2026-11-03,Chemicals,Pending,,,Items: 41 × degreaser 20 L
+INV-1043,V-011,Kaveri Consolidated Traders,KAV/2026/0407,2026-10-03,46900.0,8442.0,PO-1043,GRN-1043,2026-11-02,Trading goods,Pending,,,Items: 39 × hand tools
+INV-1044,V-005,Nilgiri Facility Services,NIL/2026/0408,2026-10-03,74300.0,13374.0,PO-1044,GRN-1044,2026-11-02,Facilities,Pending,,,Items: 17 × pest control visit
+INV-1045,V-005,Nilgiri Facility Services,NIL/2026/0414,2026-10-04,31400.0,5652.0,PO-1045,GRN-1045,2026-11-03,Facilities,Pending,,,Items: 37 × pest control visit
+INV-1046,V-002,Malabar Packaging Pvt Ltd,MAL/2026/0403,2026-10-04,27400.0,4932.0,PO-1046,GRN-1046,2026-11-03,Packaging,Pending,,,Items: 40 × corrugated box 40x30
+INV-1047,V-002,Malabar Packaging Pvt Ltd,MAL/2026/0422,2026-10-05,96050.0,17289.0,PO-1047,GRN-1047,2026-11-04,Packaging,Pending,,,Items: 45 × stretch film roll
+INV-1048,V-002,Malabar Packaging Pvt Ltd,MAL/2026/0410,2026-10-08,27400.0,4932.0,PO-1046,GRN-1046,2026-11-07,Packaging,Pending,,,Items: 40 × corrugated box 40x30
+INV-1049,V-002,Malabar Packaging Pvt Ltd,MAL/2026/0426,2026-10-04,13700.0,2466.0,PO-1049,GRN-1049,2026-11-03,Packaging,Pending,,,Items: 44 × corrugated box 40x30
+INV-1050,V-006,Konkan Electricals,KON/2026/0404,2026-10-05,33150.0,5967.0,PO-1050,GRN-1050,2026-11-04,Electrical,Pending,,,Items: 25 × LED panel 2x2
+INV-1051,V-001,Sahyadri Office Supplies,SAH/2026/0405,2026-10-06,30800.0,5544.0,PO-1051,GRN-1051,2026-11-05,Office supplies,Pending,,,Items: 2 × A4 paper ream
+INV-1052,V-007,Kaveri Consignment Stores,KAV/2026/0412,2026-10-06,41275.0,7429.5,,,2026-11-05,Canteen stock,Pending,,,Items: 37 × packaged snacks
+INV-1053,V-005,Nilgiri Facility Services,NIL/2026/0422,2026-10-05,89800.0,16164.0,PO-1053,GRN-1053,2026-11-04,Facilities,Pending,,,"Items: 56 × housekeeping, monthly"
+INV-1054,V-005,Nilgiri Facility Services,NIL/2026/0428,2026-10-06,121650.0,21897.0,PO-1054,GRN-1054,2026-11-05,Facilities,Pending,,,"Items: 27 × housekeeping, monthly"
+INV-1055,V-005,Nilgiri Facility Services,NIL/2026/0431,2026-10-05,38450.0,6921.0,PO-1055,GRN-1055,2026-11-04,Facilities,Pending,,,Items: 15 × pest control visit
+INV-1056,V-003,Deccan Precision Castings,DEC/2026/0409,2026-10-07,142500.0,25650.0,PO-1056,GRN-1056,2026-11-06,Production parts,Pending,,,Items: 28 × bearing housing BH-220
+INV-1057,V-006,Konkan Electricals,KON/2026/0411,2026-10-11,33150.0,5967.0,PO-1050,GRN-1050,2026-11-10,Electrical,Pending,,,Items: 25 × LED panel 2x2
+INV-1058,V-002,Malabar Packaging Pvt Ltd,MAL/2026/0429,2026-10-06,11600.0,2088.0,PO-1058,GRN-1058,2026-11-05,Packaging,Pending,,,Items: 38 × corrugated box 40x30
+INV-1059,V-006,Konkan Electricals,KON/2026/0445,2026-10-06,11150.0,2007.0,PO-1059,GRN-1059,2026-11-05,Electrical,Pending,,,"Items: 15 × cable 4 sq mm, 100 m"
+INV-1060,V-005,Nilgiri Facility Services,NIL/2026/0438,2026-10-07,116950.0,21051.0,PO-1060,GRN-1060,2026-11-06,Facilities,Pending,,,Items: 25 × pest control visit
+INV-1061,V-001,Sahyadri Office Supplies,SAH/2026/0411,2026-10-08,138900.0,25002.0,PO-1061,GRN-1061,2026-11-07,Office supplies,Pending,,,Items: 32 × toner cartridge TN-760
+INV-1062,V-007,Kaveri Consignment Stores,KAV/2026/0419,2026-10-09,36980.0,6656.4,,,2026-11-08,Canteen stock,Pending,,,Items: 9 × tea and coffee
+INV-1063,V-001,Sahyadri Office Supplies,SAH/2026/0417,2026-10-08,62450.0,11241.0,PO-1063,GRN-1063,2026-11-07,Office supplies,Pending,,,Items: 55 × file folder
+INV-1064,V-002,Malabar Packaging Pvt Ltd,MAL/2026/0433,2026-10-08,32400.0,5832.0,PO-1064,GRN-1064,2026-11-07,Packaging,Pending,,,Items: 46 × pallet strap
+INV-1065,V-001,Sahyadri Office Supplies,SAH/2026/0425,2026-10-07,106050.0,19089.0,PO-1065,GRN-1065,2026-11-06,Office supplies,Pending,,,Items: 56 × toner cartridge TN-760
+INV-1066,V-008,Vindhya Chemicals,VIN/2026/0405,2026-10-10,21600.0,3888.0,PO-1066,GRN-1066,2026-11-09,Chemicals,Pending,,,Items: 12 × coolant 50 L
+INV-1067,V-006,Konkan Electricals,KON/2026/0452,2026-10-08,69100.0,12438.0,PO-1067,GRN-1067,2026-11-07,Electrical,Pending,,,"Items: 36 × cable 4 sq mm, 100 m"
+INV-1068,V-008,Vindhya Chemicals,VIN/2026/0412,2026-10-13,21600.0,3888.0,PO-1066,GRN-1066,2026-11-12,Chemicals,Pending,,,Items: 12 × coolant 50 L
+INV-1069,V-004,Godavari Logistics,GOD/2026/0412,2026-10-08,38550.0,6939.0,PO-1069,GRN-1069,2026-11-07,Freight,Pending,,,Items: 27 × FTL Pune–Chennai
+INV-1070,V-002,Malabar Packaging Pvt Ltd,MAL/2026/0436,2026-10-08,102450.0,18441.0,PO-1070,GRN-1070,2026-11-07,Packaging,Pending,,,Items: 52 × stretch film roll

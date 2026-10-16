@@ -1,0 +1,152 @@
+{
+  "s-01": {
+    "kind": "training",
+    "invoices": [
+      "INV-1031",
+      "INV-1032",
+      "INV-1033",
+      "INV-1034",
+      "INV-1035"
+    ],
+    "planted": [
+      "E1"
+    ],
+    "planted_invoices": {
+      "E1": [
+        "INV-1032"
+      ]
+    },
+    "notes": "Expert narrates lightly; the why comes from probes, not narration."
+  },
+  "s-02": {
+    "kind": "training",
+    "invoices": [
+      "INV-1036",
+      "INV-1037",
+      "INV-1038",
+      "INV-1039",
+      "INV-1040"
+    ],
+    "planted": [
+      "E2"
+    ],
+    "planted_invoices": {
+      "E2": [
+        "INV-1037"
+      ]
+    },
+    "notes": "Expert narrates lightly; the why comes from probes, not narration."
+  },
+  "s-03": {
+    "kind": "training",
+    "invoices": [
+      "INV-1041",
+      "INV-1042",
+      "INV-1043",
+      "INV-1044",
+      "INV-1045"
+    ],
+    "planted": [],
+    "planted_invoices": {},
+    "notes": "Expert narrates lightly; the why comes from probes, not narration."
+  },
+  "s-04": {
+    "kind": "training",
+    "invoices": [
+      "INV-1046",
+      "INV-1047",
+      "INV-1048",
+      "INV-1049",
+      "INV-1050"
+    ],
+    "planted": [
+      "E3"
+    ],
+    "planted_invoices": {
+      "E3": [
+        "INV-1048"
+      ]
+    },
+    "notes": "Expert narrates lightly; the why comes from probes, not narration."
+  },
+  "s-05": {
+    "kind": "training",
+    "invoices": [
+      "INV-1051",
+      "INV-1052",
+      "INV-1053",
+      "INV-1054",
+      "INV-1055"
+    ],
+    "planted": [
+      "E1"
+    ],
+    "planted_invoices": {
+      "E1": [
+        "INV-1052"
+      ]
+    },
+    "notes": "Expert narrates lightly; the why comes from probes, not narration."
+  },
+  "s-06": {
+    "kind": "training",
+    "invoices": [
+      "INV-1056",
+      "INV-1057",
+      "INV-1058",
+      "INV-1059",
+      "INV-1060"
+    ],
+    "planted": [
+      "E2",
+      "E3"
+    ],
+    "planted_invoices": {
+      "E2": [
+        "INV-1056"
+      ],
+      "E3": [
+        "INV-1057"
+      ]
+    },
+    "notes": "Expert narrates lightly; the why comes from probes, not narration."
+  },
+  "s-07": {
+    "kind": "heldout",
+    "invoices": [
+      "INV-1061",
+      "INV-1062",
+      "INV-1063",
+      "INV-1064",
+      "INV-1065"
+    ],
+    "planted": [
+      "E1"
+    ],
+    "planted_invoices": {
+      "E1": [
+        "INV-1062"
+      ]
+    },
+    "notes": "Expert narrates lightly; the why comes from probes, not narration."
+  },
+  "s-08": {
+    "kind": "heldout",
+    "invoices": [
+      "INV-1066",
+      "INV-1067",
+      "INV-1068",
+      "INV-1069",
+      "INV-1070"
+    ],
+    "planted": [
+      "E3"
+    ],
+    "planted_invoices": {
+      "E3": [
+        "INV-1068"
+      ]
+    },
+    "notes": "Expert narrates lightly; the why comes from probes, not narration."
+  }
+}
