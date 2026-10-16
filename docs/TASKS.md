@@ -47,22 +47,22 @@ Split:
 ### A1. Backend foundation
 - [x] ~~`contract.py` (SPEC §1), `scripts/export_schema.py`, `make types`~~
 - [x] ~~Contract round-trip and fixture validation tests~~
-- [ ] `app/gemini.py`:
-  - [ ] Client from `GEMINI_API_KEY`
-  - [ ] `structured(model, prompt_id, parts, schema)`: JSON mime type + `response_schema`, validate, retry once, record `prompt_id@version` + model
-- [ ] `app/prompts.py`: load front-matter and body, fill `{{SOP}}` / `{{SEGMENTS}}`-style placeholders
-- [ ] `app/store.py`: Firestore Admin client, workspace-scoped helpers for every collection in SPEC §2. Writes to `demo` return 403.
-- [ ] Auth dependency: verify the Firebase ID token (`firebase-admin`); public routes are `/api/health` and `/api/demo/bundle`
-- [ ] Error shape `{error: {code, message}}`; 409 on state violations
-- [ ] `scripts/make_synthetic.py`:
-  - [ ] SOP AP-SOP-07
-  - [ ] 10 vendors (incl. V-007 / V-011 lookalike, V-003 critical)
-  - [ ] ~40 invoices; POs; Consignment Statement
-  - [ ] ~14 emails, incl. the injection email (SPEC §7)
-- [ ] Store the SOP in `workspaces/live/sop/`
+- [x] ~~`app/gemini.py`:~~
+  - [x] ~~Client from `GEMINI_API_KEY`~~
+  - [x] ~~`structured(model, prompt_id, parts, schema)`: JSON mime type + schema, validate, retry once, record `prompt_id@version` + model~~ (sends `response_json_schema`; the SDK's `response_schema` rejects the contract's `dict` fields in Developer API mode)
+- [x] ~~`app/prompts.py`: load front-matter and body, fill `{{SOP}}` / `{{SEGMENTS}}`-style placeholders~~
+- [x] ~~`app/store.py`: Firestore Admin client, workspace-scoped helpers for every collection in SPEC §2. Writes to `demo` return 403.~~
+- [x] ~~Auth dependency: verify the Firebase ID token (`firebase-admin`); public routes are `/api/health` and `/api/demo/bundle`~~
+- [x] ~~Error shape `{error: {code, message}}`; 409 on state violations~~ (`errors.conflict()`)
+- [x] ~~`scripts/make_synthetic.py`:~~ output in `data/synthetic/` (CSV per Sheet tab, emails, SOP, session plan)
+  - [x] ~~SOP AP-SOP-07~~
+  - [x] ~~10 vendors (incl. V-007 / V-011 lookalike, V-003 critical)~~
+  - [x] ~~About 40 invoices; POs; Consignment Statement~~
+  - [x] ~~About 14 emails, incl. the injection email (SPEC §7)~~
+- [ ] Store the SOP in `workspaces/live/sop/`: run `uv run python -m scripts.make_synthetic --upload-sop` once A0 (Firestore + ADC) is done
 
 ### A2. REST API (SPEC §3). The frontend already calls all of these.
-- [ ] `GET /api/me`
+- [x] ~~`GET /api/me`~~ (`is_demo_expert` = email matches `EXPERT_EMAIL` env)
 - [ ] `POST /api/sessions`, `GET /api/sessions?ws=`, `GET /api/sessions/{id}` (session + segments + deviations + diff)
 - [ ] `POST /api/sessions/{id}/upload-url` (V4 signed PUT, 15 min), `/finalize`, `/process` (202 + `asyncio.create_task`)
 - [ ] `GET /api/sessions/{id}/video-url` (signed GET, 1 h). Must also work **without login for workspace `demo`**.
