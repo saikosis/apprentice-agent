@@ -35,6 +35,7 @@ export function usePip() {
     const w = await window.documentPictureInPicture!.requestWindow({ width: 360, height: 460 });
     copyStyles(w.document);
     w.document.title = "Apprentice";
+    w.document.documentElement.className = document.documentElement.className; // carry light/dark
     w.document.body.className = "pip-body";
     w.addEventListener("pagehide", () => setWin(null), { once: true });
     setWin(w);
