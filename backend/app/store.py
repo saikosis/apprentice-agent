@@ -5,10 +5,11 @@ only the seed script opens it with `allow_demo_writes=True`.
 """
 
 import os
+import uuid
 from functools import lru_cache
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
 from google.cloud import firestore
 from pydantic import BaseModel
 
@@ -157,6 +158,15 @@ class Store:
             _dump(diff)
         )
 
+    # ---- background job status (not part of the contract; lets pollers stop on failure) ----
+    async def put_job(self, job_id: str, status: str, error: str | None = None) -> None:
+        self.check_writable()
+        await self.db.document(f"{self.root}/jobs/{job_id}").set({"status": status, "error": error})
+
+    async def get_job(self, job_id: str) -> dict[str, Any] | None:
+        snap = await self.db.document(f"{self.root}/jobs/{job_id}").get()
+        return snap.to_dict() if snap.exists else None
+
     # ---- decision graph: graph/current meta + nodes/edges subcollections, history per version ----
     async def get_graph(self) -> DecisionGraph | None:
         base = f"{self.root}/graph/current"
@@ -196,3 +206,20 @@ class Store:
                 batch.set(self.db.document(f"{base}/{sub}/{item['id']}"), item)
         batch.set(self.db.document(f"{self.root}/graph_history/{graph.version}"), data)
         await batch.commit()
+
+
+def new_id(prefix: str) -> str:
+    return f"{prefix}-{uuid.uuid4().hex[:8]}"
+
+
+# ---- FastAPI dependencies: reads take ?ws= (default live); writes always go to live ----
+def _read_store(ws: Ws = "live") -> Store:
+    return Store(ws)
+
+
+def _live_store() -> Store:
+    return Store("live")
+
+
+ReadStore = Annotated[Store, Depends(_read_store)]
+LiveStore = Annotated[Store, Depends(_live_store)]

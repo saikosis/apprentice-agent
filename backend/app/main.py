@@ -11,9 +11,11 @@ VERSION = "0.1.0"
 app = FastAPI(title="Apprentice", version=VERSION)
 errors.install(app)
 
-# Public: /api/health (below) and the demo router (/api/demo/bundle). Everything else needs sign-in.
-for r in (auth, live, uploads, sessions, probes, graph, exam, sheets):
-    app.include_router(r.router, prefix="/api", dependencies=[Depends(auth.require_user)])
+# Public: /api/health (below) and the demo router (bundle, demo playback; seed checks admin).
+# /api/me: any signed-in user, so the UI can explain a refusal. Everything else: the expert only.
+app.include_router(auth.router, prefix="/api", dependencies=[Depends(auth.require_user)])
+for r in (live, uploads, sessions, probes, graph, exam, sheets):
+    app.include_router(r.router, prefix="/api", dependencies=[Depends(auth.require_expert)])
 app.include_router(demo.router, prefix="/api")
 
 

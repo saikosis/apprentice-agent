@@ -49,7 +49,35 @@ async def require_user(
     )
 
 
+async def optional_user(
+    cred: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> User | None:
+    """For routes that also serve the public demo: a missing or stale token means anonymous."""
+    try:
+        return await require_user(cred) if cred else None
+    except HTTPException:
+        return None
+
+
+def _experts() -> set[str]:
+    return {e.strip().lower() for e in os.getenv("EXPERT_EMAIL", "").split(",") if e.strip()}
+
+
+def is_expert(user: User) -> bool:
+    return user.email_verified and user.email.lower() in _experts()
+
+
 CurrentUser = Annotated[User, Depends(require_user)]
+MaybeUser = Annotated[User | None, Depends(optional_user)]
+
+
+async def require_expert(user: CurrentUser) -> User:
+    """The live workspace belongs to the expert: any other Google account is refused (fails closed)."""
+    if not _experts():
+        raise HTTPException(403, "EXPERT_EMAIL isn't configured on this server.")
+    if not is_expert(user):
+        raise HTTPException(403, "Only the expert's account can use the live workspace.")
+    return user
 
 
 @router.get("/me")
@@ -57,5 +85,5 @@ async def me(user: CurrentUser) -> dict[str, object]:
     return {
         "uid": user.uid,
         "email": user.email,
-        "is_demo_expert": user.email_verified and user.email == os.getenv("EXPERT_EMAIL"),
+        "is_demo_expert": is_expert(user),
     }
