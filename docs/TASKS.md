@@ -63,16 +63,19 @@ Split:
 
 ### A2. REST API (SPEC §3). The frontend already calls all of these.
 - [x] ~~`GET /api/me`~~ (`is_demo_expert` = email matches `EXPERT_EMAIL` env)
-- [ ] `POST /api/sessions`, `GET /api/sessions?ws=`, `GET /api/sessions/{id}` (session + segments + deviations + diff)
-- [ ] `POST /api/sessions/{id}/upload-url` (V4 signed PUT, 15 min), `/finalize`, `/process` (202 + `asyncio.create_task`)
-- [ ] `GET /api/sessions/{id}/video-url` (signed GET, 1 h). Must also work **without login for workspace `demo`**.
-- [ ] `POST /api/sessions/{id}/deviations` (live deviation → Deviation + Probe)
-- [ ] `GET /api/probes`, `POST` / `PATCH /api/probes/{id}/answer` (Model Armor before storing)
-- [ ] `POST /api/variants/discover`, `GET /api/variants`
-- [ ] `POST /api/graph/build`, `GET /api/graph?ws=`
-- [ ] `POST /api/exam/generate`, `PUT /api/exam/cases/{id}/label`, `POST /api/exam/run`, `GET /api/exam/report/{id}`, `GET /api/exam/reports/latest?ws=`
-- [ ] `POST /api/sheets/snapshot` (+ SheetDiff when `phase=after`)
-- [ ] `GET /api/demo/bundle` (public), `POST /api/admin/seed-demo` (admin uid only)
+- [x] ~~`POST /api/sessions`, `GET /api/sessions?ws=`, `GET /api/sessions/{id}` (session + segments + deviations + diff)~~
+- [x] ~~`POST /api/sessions/{id}/upload-url` (V4 signed PUT, 15 min), `/finalize`, `/process` (202 + `asyncio.create_task`)~~ (finalize checks the object exists; real signing needs A0's bucket + `iam.serviceAccountTokenCreator`)
+- [x] ~~`GET /api/sessions/{id}/video-url` (signed GET, 1 h). Must also work **without login for workspace `demo`**.~~ (anonymous → demo only; signed in → live)
+- [x] ~~`POST /api/sessions/{id}/deviations` (live deviation → Deviation + Probe)~~ (server enforces 45 s / 3 per session → 429)
+- [x] ~~`GET /api/probes`, `POST` / `PATCH /api/probes/{id}/answer` (Model Armor before storing)~~ (`safety/armor.py` client done; skipped when `MA_TEMPLATE` unset)
+- [x] ~~`POST /api/variants/discover`, `GET /api/variants`~~
+- [x] ~~`POST /api/graph/build`, `GET /api/graph?ws=`~~
+- [x] ~~`POST /api/exam/generate`, `PUT /api/exam/cases/{id}/label`, `POST /api/exam/run`, `GET /api/exam/report/{id}`, `GET /api/exam/reports/latest?ws=`~~
+- [x] ~~`POST /api/sheets/snapshot` (+ SheetDiff when `phase=after`)~~
+- [x] ~~`GET /api/demo/bundle` (public), `POST /api/admin/seed-demo` (admin uid only)~~ (`ADMIN_UIDS` env; `scripts/seed_demo.py` loads the same seed directly)
+- Background work runs through seams that A4–A6 fill in: `pipeline.segment.process_session`, `pipeline.variants.discover`, `pipeline.graph.build`, `exam.scenarios.generate`, `exam.report.run_exam`. Until then they raise `NotImplementedError`: `/exam/generate` returns 501, a processed session goes `failed`, an exam run's `GET /exam/report/{id}` returns 500 with the error, and discover/build only log it.
+- Access: everything except `/api/me`, `/api/health` and the demo routes requires the expert (`EXPERT_EMAIL`, verified email; unset = refuse all). Set `EXPERT_EMAIL` and `ADMIN_UIDS` in the deploy env.
+- `POST /api/sessions/{id}/process?force=true` restarts a session stuck in `processing`.
 
 ### A3. Live backend (SPEC §4)
 - [ ] `prompts/live_system.md` (persona, SOP verbatim, rules, "Thanks, noted.", guardrail)
@@ -194,10 +197,10 @@ Split:
 ## Shared: decisions needed between A and B
 
 Four API gaps the frontend already works around. Agree on each, then update `contract.py` or SPEC §3 and run `make types`.
-- [ ] `GET /api/probes` should include each probe's `answer` (ProbeAnswer). The UI reads an optional `answer` field.
-- [ ] Add `GET /api/exam/cases` so labelled cases survive a page reload.
-- [ ] `GET /api/demo/bundle` should also return `segments` and `deviations` keyed by session id, so demo session pages aren't empty.
-- [ ] Expose agent runs (for example `GET /api/exam/runs?case_id=`) so the exam page can show both agents' reasoning side by side (PRD §13 beat 2:00–2:25).
+- [x] ~~`GET /api/probes` should include each probe's `answer` (ProbeAnswer). The UI reads an optional `answer` field.~~ Done in A2 (response shape only, no contract change).
+- [ ] Add `GET /api/exam/cases` so labelled cases survive a page reload. Backend done in A2; the Exam page doesn't call it yet (B).
+- [x] ~~`GET /api/demo/bundle` should also return `segments` and `deviations` keyed by session id, so demo session pages aren't empty.~~ Done in A2.
+- [ ] Expose agent runs (for example `GET /api/exam/runs?case_id=`) so the exam page can show both agents' reasoning side by side (PRD §13 beat 2:00–2:25). Backend done in A2 (`GET /api/exam/runs?case_id=`); UI not yet (B).
 - [ ] Contract freeze v1 at Oct 14, 09:30. `contract.py` already exists; freeze it after the four gaps above are settled.
 
 ## Cut order if behind (SPEC §11)

@@ -16,7 +16,9 @@ CODES = {
     404: "not_found",
     409: "conflict",
     422: "invalid_request",
+    429: "rate_limited",
     500: "internal",
+    501: "not_implemented",
 }
 
 
@@ -38,6 +40,10 @@ def install(app: FastAPI) -> None:
     async def invalid(_: Request, exc: RequestValidationError) -> JSONResponse:
         msg = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
         return JSONResponse(_body(422, msg), 422)
+
+    @app.exception_handler(NotImplementedError)
+    async def not_built(_: Request, exc: NotImplementedError) -> JSONResponse:
+        return JSONResponse(_body(501, str(exc) or "Not built yet."), 501)
 
     @app.exception_handler(Exception)
     async def crashed(_: Request, exc: Exception) -> JSONResponse:

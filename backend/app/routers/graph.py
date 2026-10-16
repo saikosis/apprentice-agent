@@ -1,3 +1,35 @@
-from fastapi import APIRouter
+"""Variants and the decision graph: read them, or start a rebuild in the background."""
+
+from fastapi import APIRouter, HTTPException
+
+from backend.app import jobs
+from backend.app.contract import DecisionGraph, Variant
+from backend.app.pipeline import graph, variants
+from backend.app.store import LiveStore, ReadStore
 
 router = APIRouter(tags=["graph"])
+
+
+@router.post("/variants/discover", status_code=202)
+async def discover(store: LiveStore) -> dict[str, str]:
+    jobs.spawn("discover variants", variants.discover(store))
+    return {"status": "discovering"}
+
+
+@router.get("/variants")
+async def list_variants(store: ReadStore) -> list[Variant]:
+    return sorted(await store.variants.list(), key=lambda v: v.frequency, reverse=True)
+
+
+@router.post("/graph/build", status_code=202)
+async def build(store: LiveStore) -> dict[str, str]:
+    jobs.spawn("build graph", graph.build(store))
+    return {"status": "building"}
+
+
+@router.get("/graph")
+async def get_graph(store: ReadStore) -> DecisionGraph:
+    g = await store.get_graph()
+    if g is None:
+        raise HTTPException(404, "No decision graph yet.")
+    return g
