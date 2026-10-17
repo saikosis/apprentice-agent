@@ -290,14 +290,14 @@ Security: all Firestore access is server-side (Admin SDK). Firestore rules deny 
 | Method & path | Request | Response |
 |---|---|---|
 | GET /api/health (public) | – | `{ok, version, models}` |
-| GET /api/me | – | `{uid, email, is_demo_expert}` |
+| GET /api/me | – | `{uid, email, is_demo_expert, role: "expert"\|"judge"\|"none", is_admin}` |
 | POST /api/live/token | `{session_id, resume_handle?}` | `{token, model, expires_at, new_session_expires_at}` |
 | POST /api/sessions | `{kind: "training"\|"heldout", live_enabled}` | `Session` |
 | POST /api/sessions/{id}/upload-url | `{content_type:"video/webm", size_bytes}` | `{url, method:"PUT", headers:{"Content-Type":"video/webm"}, gcs_uri, expires_at}` |
 | POST /api/sessions/{id}/finalize | `{duration_s, ended_at}` | `Session` (status=uploaded) |
 | POST /api/sessions/{id}/process | `{}` | 202 `{session_id, status:"processing"}` |
 | GET /api/sessions | `?ws=live\|demo` | `Session[]` |
-| GET /api/sessions/{id} | – | `{session: Session, segments: Segment[], deviations: Deviation[], diff: SheetDiff\|null}` |
+| GET /api/sessions/{id} | – | `{session: Session, segments: Segment[], deviations: Deviation[], diff: SheetDiff\|null, summary: SessionSummary\|null}` |
 | GET /api/sessions/{id}/video-url | – | `{url}` (signed GET, 1 h) |
 | POST /api/sessions/{id}/deviations | `{sop_rule, question, invoice_id?, t_seconds, model_timestamp?}` | `{deviation: Deviation, probe: Probe}` |
 | POST /api/variants/discover | `{}` | 202; then GET /api/variants → `Variant[]` |
@@ -311,8 +311,18 @@ Security: all Firestore access is server-side (Admin SDK). Firestore rules deny 
 | POST /api/exam/run | `{runs_per_arm: 3}` | 202 `{report_id}` |
 | GET /api/exam/report/{id} | – | `ExamReport` |
 | GET /api/exam/reports/latest | `?ws=` | `ExamReport` |
-| POST /api/sheets/snapshot | `{session_id, phase, rows: InvoiceRow[]}` | `SheetSnapshot` (+ `SheetDiff` when phase=after) |
-| GET /api/demo/bundle (public) | – | `{sessions, variants, probes, graph, report}` from workspace demo |
+| POST /api/sheets/snapshot | `{session_id, phase, rows: {header: text}[]}` (the scenario's `sheet_tab`) | `SheetSnapshot` (+ `SheetDiff` when phase=after, keyed by the scenario's `id_column`) |
+| GET /api/demo/bundle (public) | – | `{sessions, segments, deviations, summaries, variants, probes, graph, observed_workflow, report, exam_cases, agent_runs}` from workspace demo |
+| GET /api/observed-workflow | – | `ObservedWorkflow\|null` (display only) |
+| POST /api/sandbox/join | `{code}` | `SandboxInfo` (first join copies each workflow's sample run) |
+| GET /api/sandbox | – | `SandboxInfo` (usage, limits, today's global count) |
+| POST /api/sandbox/reset | `{mode: "sample"\|"empty"}` | `SandboxInfo` |
+| DELETE /api/sandbox | – | `{ok}` |
+| GET /api/admin/sandboxes | – | `SandboxInfo[]` (ADMIN_UIDS only); admins read any sandbox with `?ws=sandbox&uid=` |
+| GET /api/packs/{scenario}/{name} (public) | – | a judge download file (xlsx / txt / zip) |
+
+> Every data route takes `?scenario=ap\|essays\|volunteers` (default ap). Writes go to the caller's own workspace: the
+> expert's live one or a judge's sandbox (`backend/app/workspace.py`). Sandbox limits answer `429 rate_limited`.
 | POST /api/admin/seed-demo | `{bundle}` (admin uid only) | `{ok}` |
 Errors: `{error: {code, message}}`; 409 for state violations (e.g., process before upload).
 

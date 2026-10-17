@@ -1,5 +1,7 @@
 # 12. Docs, deploy settings, judge guide
 
+Status: done in code; the deployed check (docs/Judge_Guide.md step 5) is yours to run
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: `05-limits-and-off-switch`, `08-sandbox-lifecycle`, `10-retention-and-consent`, `11-admin-page`

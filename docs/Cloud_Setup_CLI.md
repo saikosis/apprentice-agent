@@ -256,9 +256,14 @@ GCP_PROJECT=$PROJECT uv run python -m scripts.make_synthetic --upload-sop
 
 `ADMIN_UIDS` isn't known until you sign in once (step 15); use a placeholder for now.
 
+The judge code (`SANDBOX_CODE`) opens judges' private sandboxes (docs/Judge_Guide.md). Make it once, keep it somewhere
+private, and use the same one on every deploy.
+
 ```bash
 export ADMIN_UIDS=none
+export SANDBOX_CODE=$(openssl rand -hex 6)   # once; afterwards reuse the same value
 PROJECT=$PROJECT BUCKET=$BUCKET MA_LOCATION=$MA_LOCATION EXPERT_EMAIL=$EXPERT_EMAIL ADMIN_UIDS=$ADMIN_UIDS \
+  SANDBOX_CODE=$SANDBOX_CODE \
   VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN \
   VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
   bash scripts/deploy.sh

@@ -170,7 +170,7 @@ From the repo in a bash shell, with the values from steps 1, 8, 10 and 11 (`ADMI
 
 ```bash
 PROJECT=aibuildercup-india-2026 BUCKET=apprentice-recordings-aibc2026 MA_LOCATION=asia-south1 \
-  EXPERT_EMAIL="you@example.com" ADMIN_UIDS=none \
+  EXPERT_EMAIL="you@example.com" ADMIN_UIDS=none SANDBOX_CODE="<judge code, e.g. from openssl rand -hex 6>" \
   VITE_FIREBASE_API_KEY="..." VITE_FIREBASE_AUTH_DOMAIN="aibuildercup-india-2026.firebaseapp.com" \
   VITE_FIREBASE_PROJECT_ID="aibuildercup-india-2026" VITE_GOOGLE_CLIENT_ID="..." \
   bash scripts/deploy.sh

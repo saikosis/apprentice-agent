@@ -17,7 +17,9 @@ Apprentice watches an expert work in Google Sheets + Gmail (screen + voice), ask
   app/safety/armor.py
   app/store.py       # Firestore access (workspace-scoped)
   app/gemini.py      # client, model IDs, structured-call helper
-  app/domains/       # one pack per scenario (ap, essays, volunteers): domain.md, config.json, reference.json
+  app/domains/       # one pack per scenario (ap, essays, volunteers): domain.md, config.json, reference.json, quick_plan.json, files/
+  app/workspace.py   # which workspace a request reads/writes: expert -> live, judge -> own sandbox
+  app/sandbox.py     # judge sandbox: code, limits, sample copy, reset/delete, 14-day sweep
   tests/
 /frontend/           # Person B owns (Vite + React + TS)
   src/types/contract.ts   # GENERATED from backend contract — do not hand-edit
@@ -47,7 +49,7 @@ make build        # pnpm --dir frontend build → backend/app/static
 make seed-demo    # uv run python scripts/seed_demo.py fixtures/demo_seed.json
 make deploy       # scripts/deploy.sh (gcloud run deploy --source .)
 ````
-Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --region asia-south1 --allow-unauthenticated --min-instances 1 --no-cpu-throttling --timeout 900 --memory 1Gi --service-account apprentice-run@aibuildercup-india-2026.iam.gserviceaccount.com --set-secrets GEMINI_API_KEY=gemini-api-key:latest --set-env-vars GCP_PROJECT=aibuildercup-india-2026,BUCKET=apprentice-recordings-aibc2026,MA_LOCATION=asia-south1,MA_TEMPLATE=apprentice-default,EXPERT_EMAIL=...,ADMIN_UIDS=...`. One-time Google Cloud setup: `docs/Cloud_Setup.md`.
+Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --region asia-south1 --allow-unauthenticated --min-instances 1 --no-cpu-throttling --timeout 900 --memory 1Gi --service-account apprentice-run@aibuildercup-india-2026.iam.gserviceaccount.com --set-secrets GEMINI_API_KEY=gemini-api-key:latest --set-env-vars GCP_PROJECT=aibuildercup-india-2026,BUCKET=apprentice-recordings-aibc2026,MA_LOCATION=asia-south1,MA_TEMPLATE=apprentice-default,EXPERT_EMAIL=...,ADMIN_UIDS=...,SANDBOX_CODE=...`. One-time Google Cloud setup: `docs/Cloud_Setup.md`. Judge sandbox: `docs/Judge_Sandbox.md`, `docs/Judge_Guide.md`.
 
 ## Coding conventions
 - Python: full type hints; Pydantic v2 models only (`model_config = ConfigDict(extra="forbid")`); async FastAPI handlers; ruff defaults + isort; no bare `except`; log with `structlog`/`logging` JSON.

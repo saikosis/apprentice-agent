@@ -74,7 +74,7 @@ Each prints `stored SOP ENG-MK-02 in workspaces/essays-live/sop/` (or `VOL-SOP-0
 **2. Redeploy** with the same values as Cloud_Setup step 14 (the new prompts and screens ship in the image):
 
 ```bash
-EXPERT_EMAIL="<expert's gmail>" ADMIN_UIDS="<your uid>" \
+EXPERT_EMAIL="<expert's gmail>" ADMIN_UIDS="<your uid>" SANDBOX_CODE="<judge code>" \
   VITE_FIREBASE_API_KEY="<apiKey>" \
   VITE_FIREBASE_AUTH_DOMAIN="aibuildercup-india-2026.firebaseapp.com" \
   VITE_FIREBASE_PROJECT_ID="aibuildercup-india-2026" \
