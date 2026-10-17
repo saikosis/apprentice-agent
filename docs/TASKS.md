@@ -152,7 +152,7 @@ Split:
 ### B0. Setup (Oct 13)
 - [x] ~~Repo, AGENTS.md / CLAUDE.md, docs~~
 - [x] ~~Vite + React + TS skeleton, FastAPI skeleton~~
-- [ ] Install pnpm globally (`npm i -g pnpm`) so `make setup` / `make dev` work
+- [x] ~~Install pnpm globally (`npm i -g pnpm`) so `make setup` / `make dev` work~~
 - [ ] Firebase project + Google sign-in; set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID` at build time
 - [ ] Demo Google account; OAuth consent screen (External, Testing, test user = demo account); OAuth client ID → `VITE_GOOGLE_CLIENT_ID` (Connect Sheet)
 - [ ] Bucket `apprentice-recordings-<suffix>` in `asia-south1` + CORS (PUT/GET from the service URL and `localhost:5173`)
@@ -172,17 +172,18 @@ Split:
 - [x] ~~Exam: arm summary, pilot charts, per-case table, labelling, run exam~~
 - [x] ~~Demo mode at `/demo/` (no login, read-only, falls back to fixtures)~~
 - [x] ~~Connect Sheet (GIS token client → Invoices tab → snapshot)~~
-- [x] ~~Google-style theme (Roboto, Material colours, status chips), light/dark, responsive~~
+- [x] ~~shadcn/ui redesign (dark dashboard, sidebar, Overview page), light/dark, responsive~~
 - [x] ~~Render test per view + parser and graph-layout checks (`pnpm test`)~~
-- [ ] Switch off fixtures and run each view against A's live endpoints as they land
+- [ ] Switch off fixtures and run each view against A's live endpoints as they land. Possible before A0: local backend with `LOCAL_DB` + `DEV_USER_EMAIL`, frontend with `VITE_DEV_AUTH=1` (README).
 - [ ] Manual Chrome checklist: PiP opens; recording indicator; Stop uploads within 30 s for a 4-minute session; live probe appears within 15 s
 - [ ] Test Connect Sheet with the real demo Sheet (drop it if it doesn't work by Oct 15, 18:00)
-- [ ] Polish empty and error states with real backend errors
+- [x] ~~Polish empty and error states with real backend errors~~ (backend messages shown as-is; 403 → "this account can't open the live workspace" screen via `/api/me`; exam poller stops on any error but 404; no bucket → 503 with the reason)
+- [x] ~~Exam: labelled cases survive a reload (`GET /api/exam/cases`); "Compare reasoning" shows both agents' runs side by side (`GET /api/exam/runs`), also in the demo (bundle + `fixtures/exam_cases.json`, `agent_runs.json`)~~
 
 ### B2. Deploy (Cloud Run)
 - [x] ~~`Dockerfile` and `scripts/deploy.sh` written~~
-- [ ] **Fix the Dockerfile:** the web stage must `COPY fixtures fixtures`. Demo mode imports `../fixtures/*.json`, so the frontend build fails without it.
-- [ ] Pass the `VITE_*` values into the web build stage (build args or a non-secret `.env.production`)
+- [x] ~~**Fix the Dockerfile:** the web stage must `COPY fixtures fixtures`.~~ Also: `.dockerignore` / `.gcloudignore` (no `.env`, no host `node_modules`), pnpm 9 + uv 0.9.26 pinned to the lockfiles, non-root user. Built and smoke-tested locally (`/api/health`, `/`, `/demo/` → 200).
+- [x] ~~Pass the `VITE_*` values into the web build stage~~ (`scripts/deploy.sh` writes the git-ignored `frontend/.env.production`; it now also requires `EXPERT_EMAIL` and `ADMIN_UIDS`)
 - [ ] First deploy with `BUCKET=... make deploy`; confirm `/api/health`, `/`, `/demo/` on the service URL
 - [ ] Deploy every day at end of day IST and post the URL in team chat
 - [ ] **AC (Oct 16):** `/demo/` works logged-out in incognito and loads in under 3 s

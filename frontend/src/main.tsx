@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { StrictMode, Suspense, lazy, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { me } from "./api/client";
 import { authConfigured, signIn, signOut, watchUser } from "./auth";
 import { Avatar, AvatarFallback } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
@@ -50,6 +51,11 @@ const Overview = lazy(() => import("./views/Overview").then((m) => ({ default: m
 
 const IS_DEMO = location.pathname.startsWith("/demo");
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === "1";
+// Laptop-only: talk to a local backend running with LOCAL_DB + DEV_USER_EMAIL, no Firebase.
+// import.meta.env.DEV is false in every production build, so this can't ship.
+const DEV_AUTH = import.meta.env.DEV && import.meta.env.VITE_DEV_AUTH === "1";
+const SKIP_AUTH = IS_DEMO || USE_FIXTURES;
+type Me = Awaited<ReturnType<typeof me>>;
 
 const NAV: [string, string, LucideIcon][] = [
   ["", "Overview", LayoutDashboardIcon],
@@ -134,6 +140,35 @@ function SignIn() {
   );
 }
 
+function NotExpert({ email, error }: { email?: string; error?: string }) {
+  return (
+    <main className="flex min-h-svh items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="items-center gap-3 text-center">
+          <div className="flex justify-center">
+            <Brand />
+          </div>
+          <CardTitle className="text-xl">{error ? "Couldn't open the live workspace" : "This account can't open the live workspace"}</CardTitle>
+          <CardDescription>
+            {error ??
+              `The live workspace belongs to the expert being recorded. ${email ?? "This account"} isn't that account. The demo shows a full run on synthetic data.`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <Button size="lg" asChild>
+            <a href="/demo/">Open the demo</a>
+          </Button>
+          {!DEV_AUTH && (
+            <Button size="lg" variant="outline" onClick={() => void signOut()}>
+              Sign in with another account
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
+
 function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean }) {
   return (
     <Sidebar>
@@ -174,20 +209,42 @@ function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean 
 
 function App() {
   const parts = useRoute();
-  const [user, setUser] = useState<User | null | undefined>(IS_DEMO || USE_FIXTURES ? null : undefined);
-  useEffect(() => (IS_DEMO || USE_FIXTURES ? undefined : watchUser(setUser)), []);
+  const [user, setUser] = useState<User | null | undefined>(SKIP_AUTH || DEV_AUTH ? null : undefined);
+  useEffect(() => (SKIP_AUTH || DEV_AUTH ? undefined : watchUser(setUser)), []);
+  const signedIn = DEV_AUTH || Boolean(user);
+  // Only the expert's account may use the live workspace; ask the backend who we are. The answer is
+  // tied to the account it was asked for, so a late reply or an account switch can't gate the wrong one.
+  const account = DEV_AUTH ? "dev" : (user?.uid ?? null);
+  const [answer, setAnswer] = useState<{ account: string; who: Me | { error: string } } | null>(null);
+  useEffect(() => {
+    if (SKIP_AUTH || !account) return;
+    let current = true;
+    me().then(
+      (who) => current && setAnswer({ account, who }),
+      (e: unknown) => current && setAnswer({ account, who: { error: e instanceof Error ? e.message : String(e) } }),
+    );
+    return () => {
+      current = false;
+    };
+  }, [account]);
+  const who = answer && answer.account === account ? answer.who : undefined;
 
   const ws = IS_DEMO ? "demo" : "live";
-  const needsLogin = !IS_DEMO && !USE_FIXTURES && !user;
   const current = parts[0] ?? "";
 
-  if (user === undefined)
-    return (
-      <main className="flex min-h-svh items-center justify-center p-4">
-        <Skeleton className="h-72 w-full max-w-md rounded-xl" aria-label="Checking sign-in" />
-      </main>
-    );
-  if (needsLogin) return <SignIn />;
+  const checking = (label: string) => (
+    <main className="flex min-h-svh items-center justify-center p-4">
+      <Skeleton className="h-72 w-full max-w-md rounded-xl" aria-label={label} />
+    </main>
+  );
+  if (!SKIP_AUTH) {
+    if (user === undefined) return checking("Checking sign-in");
+    if (!signedIn) return <SignIn />;
+    if (who === undefined) return checking("Checking access");
+    if ("error" in who) return <NotExpert error={who.error} />;
+    if (!who.is_demo_expert) return <NotExpert email={who.email} />;
+  }
+  const email = user?.email ?? (who && "email" in who ? who.email : undefined);
 
   return (
     <WsContext.Provider value={{ ws, readOnly: IS_DEMO }}>
@@ -214,17 +271,21 @@ function App() {
                   <Button variant="outline" asChild>
                     <a href="/">Sign in to record</a>
                   </Button>
-                ) : user ? (
+                ) : signedIn ? (
                   <>
                     <Avatar className="size-8">
                       <AvatarFallback className="bg-accent text-xs text-accent-foreground">
-                        {(user.displayName ?? user.email ?? "?").slice(0, 2).toUpperCase()}
+                        {(user?.displayName ?? email ?? "?").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden text-sm md:inline">{user.email}</span>
-                    <Button variant="ghost" size="sm" onClick={() => void signOut()}>
-                      Sign out
-                    </Button>
+                    <span className="hidden text-sm md:inline">{email}</span>
+                    {DEV_AUTH ? (
+                      <Badge variant="outline">Local dev</Badge>
+                    ) : (
+                      <Button variant="ghost" size="sm" onClick={() => void signOut()}>
+                        Sign out
+                      </Button>
+                    )}
                   </>
                 ) : null}
               </div>

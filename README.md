@@ -56,6 +56,24 @@ LOCAL_DB=data/local.json uv run --env-file .env python -m scripts.run_exam --run
 
 Real-API smoke tests: `RUN_LIVE_TESTS=1 uv run --env-file .env pytest -q backend/tests/test_live_smoke.py`.
 
+### Use the UI against the real backend (still no Google Cloud)
+
+A laptop-only sign-in bypass: the backend accepts requests without a token when `LOCAL_DB` and
+`DEV_USER_EMAIL` are set (never on Cloud Run), and a Vite dev server with `VITE_DEV_AUTH=1` skips Firebase.
+Recording upload still needs the bucket (the API says so with a 503).
+
+```
+LOCAL_DB=data/local.json DEV_USER_EMAIL=expert@example.com EXPERT_EMAIL=expert@example.com \
+  uv run --env-file .env uvicorn backend.app.main:app --reload --port 8080
+VITE_DEV_AUTH=1 pnpm --dir frontend dev      # http://localhost:5173
+```
+
+### Container
+
+`docker build -t apprentice:local . && docker run -p 8080:8080 apprentice:local` serves `/api/health`, `/`
+and `/demo/` (the demo falls back to fixtures without Firestore credentials). Public `VITE_*` values go in
+`frontend/.env.production`, which `scripts/deploy.sh` writes.
+
 ### Deploy
 
 `make deploy` (see `scripts/deploy.sh` and AGENTS.md). Environment: `GCP_PROJECT`, `BUCKET`, `MA_LOCATION`,

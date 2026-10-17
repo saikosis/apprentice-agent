@@ -18,6 +18,7 @@ CODES = {
     422: "invalid_request",
     429: "rate_limited",
     500: "internal",
+    503: "unavailable",
 }
 
 
