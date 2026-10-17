@@ -13,12 +13,13 @@ import {
 } from "lucide-react";
 import { StrictMode, Suspense, lazy, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { me } from "./api/client";
+import { SCENARIOS, currentScenario, me, switchScenario } from "./api/client";
 import { authConfigured, signIn, signOut, watchUser } from "./auth";
 import { Avatar, AvatarFallback } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./components/ui/card";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
 import { Separator } from "./components/ui/separator";
 import {
   Sidebar,
@@ -26,6 +27,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -176,6 +178,27 @@ function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean 
         <Brand />
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <label htmlFor="scenario">Workflow</label>
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <Select value={currentScenario().id} onValueChange={(v) => switchScenario(v as (typeof SCENARIOS)[number]["id"])}>
+              <SelectTrigger id="scenario" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {SCENARIOS.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.title}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </SidebarGroupContent>
+        </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>

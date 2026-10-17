@@ -1,4 +1,4 @@
-"""Connect Sheet: before/after snapshots of the Invoices tab, and the diff between them.
+"""Connect Sheet: before/after snapshots of the scenario's work tab, and the diff between them.
 
 The browser reads the Sheet with the expert's read-only OAuth token and posts the rows here.
 Nothing is ever written back to Sheets.
@@ -10,7 +10,8 @@ from typing import Literal
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app.contract import CellChange, InvoiceRow, SheetDiff, SheetSnapshot
+from backend.app import domains
+from backend.app.contract import CellChange, SheetDiff, SheetSnapshot
 from backend.app.routers.sessions import get_or_404
 from backend.app.store import LiveStore
 
@@ -21,23 +22,29 @@ class SnapshotReq(BaseModel):
     model_config = ConfigDict(extra="forbid")
     session_id: str
     phase: Literal["before", "after"]
-    rows: list[InvoiceRow] = Field(max_length=1000)
+    rows: list[dict[str, str]] = Field(max_length=1000)
 
 
-def _keyed(rows: list[InvoiceRow]) -> dict[str, dict[str, object]]:
-    """invoice_id, with "#2", "#3"... for repeats so duplicate rows aren't merged away."""
-    out: dict[str, dict[str, object]] = {}
+def _keyed(rows: list[dict[str, str]], id_column: str) -> dict[str, dict[str, str]]:
+    """By the id column, with "#2", "#3"... for repeats so duplicate rows aren't merged away."""
+    out: dict[str, dict[str, str]] = {}
     for r in rows:
-        key, n = r.invoice_id, 1
+        base = r.get(id_column) or "(no id)"
+        key, n = base, 1
         while key in out:
             n += 1
-            key = f"{r.invoice_id}#{n}"
-        out[key] = r.model_dump()
+            key = f"{base}#{n}"
+        out[key] = r
     return out
 
 
-def diff_rows(session_id: str, before: list[InvoiceRow], after: list[InvoiceRow]) -> SheetDiff:
-    old, new = _keyed(before), _keyed(after)
+def diff_rows(
+    session_id: str,
+    before: list[dict[str, str]],
+    after: list[dict[str, str]],
+    id_column: str = "invoice_id",
+) -> SheetDiff:
+    old, new = _keyed(before, id_column), _keyed(after, id_column)
     changes: list[CellChange] = []
     for inv in sorted(old.keys() | new.keys()):
         if inv not in old:
@@ -45,8 +52,8 @@ def diff_rows(session_id: str, before: list[InvoiceRow], after: list[InvoiceRow]
         elif inv not in new:
             changes.append(CellChange(invoice_id=inv, column="row", before="present", after=None))
         else:
-            for col, was in old[inv].items():
-                now = new[inv][col]
+            for col in sorted(old[inv].keys() | new[inv].keys()):
+                was, now = old[inv].get(col), new[inv].get(col)
                 if was != now:
                     changes.append(
                         CellChange(
@@ -76,5 +83,6 @@ async def snapshot(body: SnapshotReq, store: LiveStore) -> SheetSnapshot:
     before = await snaps.get(f"{body.session_id}-before")
     after = await snaps.get(f"{body.session_id}-after")
     if before and after:
-        await store.put_sheet_diff(diff_rows(body.session_id, before.rows, after.rows))
+        id_column = domains.load(store.scenario).info.id_column
+        await store.put_sheet_diff(diff_rows(body.session_id, before.rows, after.rows, id_column))
     return snap

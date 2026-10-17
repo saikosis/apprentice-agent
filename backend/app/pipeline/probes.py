@@ -7,7 +7,7 @@ never read here.
 from datetime import UTC, datetime
 from typing import Any
 
-from backend.app import gemini, ts
+from backend.app import domains, gemini, ts
 from backend.app.contract import SOP, ClipRef, Deviation, Probe, ProbeList, Segment, Variant
 from backend.app.pipeline.deviations import segment_for_prompt
 from backend.app.safety import armor
@@ -76,7 +76,7 @@ async def _generate(store: Store, items: dict[str, dict[str, Any]], sop: SOP) ->
         "probes",
         [gemini.data("Items", payload)],
         ProbeList,
-        values={"SOP": sop.full_text},
+        values=domains.values(store.scenario, SOP=sop.full_text),
     )
     probes = normalize(out.output.probes, items)
     for p in probes:

@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Meera Pillai (SUB-206)
+
+Automated decisions promise speed and consistency, and they often deliver both. The cost of an automated mistake is rarely paid by the people who chose to automate.
+
+Consistency is only a virtue when the rule being applied consistently is a fair one. When a decision goes wrong, a person can explain and apologise; a system can only be audited.
+
+Machines should advise, and people should decide when the stakes are high.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

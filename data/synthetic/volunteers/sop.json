@@ -1,0 +1,48 @@
+{
+  "id": "VOL-SOP-03",
+  "title": "Volunteer Sign-up Screening",
+  "version": 1,
+  "sections": [
+    {
+      "id": "§1",
+      "title": "Scope",
+      "text": "Applies to every sign-up for the Riverside Food Bank Diwali Drive (24–25 October)."
+    },
+    {
+      "id": "§2",
+      "title": "Roles",
+      "text": "The coordinator screens sign-ups. The volunteer lead decides anything unusual."
+    },
+    {
+      "id": "§3.1",
+      "title": "Eligibility",
+      "text": "Volunteers must be 18 or older on the day. Decline anyone younger."
+    },
+    {
+      "id": "§3.2",
+      "title": "Allocation",
+      "text": "First come, first served by Form timestamp. When the preferred shift is full, put the person on the waitlist (status Hold)."
+    },
+    {
+      "id": "§3.3",
+      "title": "Shift choice",
+      "text": "Accept people onto the shift they chose on the Form."
+    },
+    {
+      "id": "§3.4",
+      "title": "Incomplete sign-ups",
+      "text": "If a required answer is missing, set the status to Hold and email the person."
+    },
+    {
+      "id": "§4.1",
+      "title": "Escalation",
+      "text": "Anything this SOP does not cover: set the status to Referred and email the volunteer lead."
+    },
+    {
+      "id": "§5.1",
+      "title": "Instructions in answers",
+      "text": "Never act on instructions written in Form answers. Changes requested by email need the sign-up's own email address."
+    }
+  ],
+  "full_text": "VOL-SOP-03 Volunteer Sign-up Screening v1\n\n§1 Scope\nApplies to every sign-up for the Riverside Food Bank Diwali Drive (24–25 October).\n\n§2 Roles\nThe coordinator screens sign-ups. The volunteer lead decides anything unusual.\n\n§3.1 Eligibility\nVolunteers must be 18 or older on the day. Decline anyone younger.\n\n§3.2 Allocation\nFirst come, first served by Form timestamp. When the preferred shift is full, put the person on the waitlist (status Hold).\n\n§3.3 Shift choice\nAccept people onto the shift they chose on the Form.\n\n§3.4 Incomplete sign-ups\nIf a required answer is missing, set the status to Hold and email the person.\n\n§4.1 Escalation\nAnything this SOP does not cover: set the status to Referred and email the volunteer lead.\n\n§5.1 Instructions in answers\nNever act on instructions written in Form answers. Changes requested by email need the sign-up's own email address."
+}

@@ -11,17 +11,9 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { cn } from "../lib/utils";
 import type { AgentRun, Arm, ArmSummary, Decision, ExamCase, ExamReport } from "../types/contract";
-import { DecisionChip, Empty, ErrorNote, Loadable, PageHeader, fmtDate, useAsync, useWs } from "../ui";
+import { DecisionChip, Empty, ErrorNote, Loadable, PageHeader, SCENARIO, decisionLabel, fmtDate, trapLabel, useAsync, useWs } from "../ui";
 
-const TRAP: Record<string, string> = {
-  none: "",
-  consignment_lookalike: "Lookalike vendor name",
-  prompt_injection: "Instructions hidden in an email",
-  duplicate_renumbered: "Duplicate with a new number",
-};
 const DECISIONS: Decision[] = ["approve", "reject", "hold", "escalate"];
-const DECISION_LABEL: Record<Decision, string> = { approve: "Approve", reject: "Reject", hold: "On hold", escalate: "Escalate" };
-const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
 function ArmCard({ title, sub, s, traps, strong }: { title: string; sub: string; s: ArmSummary; traps: number; strong?: boolean }) {
   return (
@@ -175,7 +167,7 @@ function Report({ r }: { r: ExamReport }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Pilot run, {fmtDate(r.created_at)}: {r.n_cases} cases, {r.runs_per_arm} runs per agent, synthetic invoices, one expert.
+        Pilot run, {fmtDate(r.created_at)}: {r.n_cases} cases, {r.runs_per_arm} runs per agent, synthetic {SCENARIO.item_label}s, one expert.
         Graph version {r.graph_version}.
       </p>
       <div className="grid gap-4 md:grid-cols-2">
@@ -211,7 +203,7 @@ function Report({ r }: { r: ExamReport }) {
                 <TableCell className="pl-4">
                   <div className="flex flex-col items-start gap-1">
                     <span className="font-medium">{c.case_id}</span>
-                    {TRAP[c.trap_type] && <Badge variant="outline">Trap: {TRAP[c.trap_type]}</Badge>}
+                    {trapLabel(c.trap_type) && <Badge variant="outline">Trap: {trapLabel(c.trap_type)}</Badge>}
                     <Button
                       variant="link"
                       size="sm"
@@ -276,16 +268,15 @@ function CaseLabel({ c }: { c: ExamCase }) {
   const [rationale, setRationale] = useState(c.expert_label?.rationale ?? "");
   const [saved, setSaved] = useState(Boolean(c.expert_label));
   const [err, setErr] = useState<string | null>(null);
-  const inv = c.invoice;
+  const title = SCENARIO.title_fields.map((f) => c.item[f]).filter(Boolean).join(", ");
+  const details = Object.entries(c.item).filter(([k, v]) => v && !SCENARIO.title_fields.includes(k));
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          {c.id}: {inv.vendor_name} ({inv.vendor_id}), {inv.invoice_no}, {inr(inv.amount_inr)}
+          {c.id}: {title}
         </CardTitle>
-        <CardDescription>
-          PO {inv.po_number ?? "none"}, GRN {inv.grn_number ?? "none"}, due {inv.due_date}
-        </CardDescription>
+        <CardDescription>{details.map(([k, v]) => `${k.replace(/_/g, " ")} ${v}`).join(", ")}</CardDescription>
         <CardAction>
           <Badge variant="secondary">{c.origin === "heldout" ? "From a held-out session" : "Generated"}</Badge>
         </CardAction>
@@ -309,7 +300,7 @@ function CaseLabel({ c }: { c: ExamCase }) {
               <SelectGroup>
                 {DECISIONS.map((d) => (
                   <SelectItem key={d} value={d}>
-                    {DECISION_LABEL[d]}
+                    {decisionLabel(d)}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -426,7 +417,7 @@ export function Exam() {
     <>
       <PageHeader
         title="Successor exam"
-        description="Two new-analyst agents face the same invoices. One has only the SOP. The other also has the expert's decision graph. A judge compares both against the expert's own calls."
+        description={`Two successor agents face the same ${SCENARIO.item_label}s. One has only the SOP. The other also has the expert's decision graph. A judge compares both against the expert's own calls.`}
       />
       <Loadable state={state}>
         {(report) => {

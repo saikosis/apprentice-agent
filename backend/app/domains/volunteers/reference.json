@@ -1,0 +1,92 @@
+[
+  {
+    "kind": "shift",
+    "shift_id": "SH-1",
+    "day": "2026-10-24",
+    "time": "09:00–13:00",
+    "area": "Warehouse intake",
+    "floor": "ground",
+    "capacity": "6"
+  },
+  {
+    "kind": "shift",
+    "shift_id": "SH-2",
+    "day": "2026-10-24",
+    "time": "13:00–17:00",
+    "area": "Warehouse intake",
+    "floor": "ground",
+    "capacity": "6"
+  },
+  {
+    "kind": "shift",
+    "shift_id": "SH-3",
+    "day": "2026-10-24",
+    "time": "09:00–13:00",
+    "area": "Sorting room",
+    "floor": "first",
+    "capacity": "5"
+  },
+  {
+    "kind": "shift",
+    "shift_id": "SH-4",
+    "day": "2026-10-25",
+    "time": "09:00–13:00",
+    "area": "Packing hall",
+    "floor": "ground",
+    "capacity": "6"
+  },
+  {
+    "kind": "shift",
+    "shift_id": "SH-5",
+    "day": "2026-10-25",
+    "time": "13:00–17:00",
+    "area": "Sorting room",
+    "floor": "first",
+    "capacity": "5"
+  },
+  {
+    "kind": "shift",
+    "shift_id": "SH-6",
+    "day": "2026-10-25",
+    "time": "13:00–17:00",
+    "area": "Distribution",
+    "floor": "ground",
+    "capacity": "8"
+  },
+  {
+    "kind": "returning_volunteer",
+    "name": "Rohan Das",
+    "email": "rohan.r-305@mail.test",
+    "past_events": "Diwali Drive 2025"
+  },
+  {
+    "kind": "returning_volunteer",
+    "name": "Arjun Nair",
+    "email": "arjun.r-307@mail.test",
+    "past_events": "Diwali Drive 2025"
+  },
+  {
+    "kind": "returning_volunteer",
+    "name": "Nisha Verma",
+    "email": "nisha.r-314@mail.test",
+    "past_events": "Diwali Drive 2025"
+  },
+  {
+    "kind": "returning_volunteer",
+    "name": "Dev Malhotra",
+    "email": "dev.r-323@mail.test",
+    "past_events": "Diwali Drive 2025"
+  },
+  {
+    "kind": "returning_volunteer",
+    "name": "Zara Ali",
+    "email": "zara.r-326@mail.test",
+    "past_events": "Diwali Drive 2025"
+  },
+  {
+    "kind": "returning_volunteer",
+    "name": "Anjali Desai",
+    "email": "anjali.r-332@mail.test",
+    "past_events": "Diwali Drive 2025"
+  }
+]

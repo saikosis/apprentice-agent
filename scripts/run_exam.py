@@ -16,7 +16,7 @@ from backend.app.store import Store, new_id
 CHART = Path("eval/pilot_chart.png")
 
 
-def chart(report: ExamReport, out: Path = CHART) -> Path:
+def chart(report: ExamReport, out: Path = CHART, scenario: str = "ap") -> Path:
     import matplotlib
 
     matplotlib.use("Agg")
@@ -34,7 +34,7 @@ def chart(report: ExamReport, out: Path = CHART) -> Path:
         ax.set_title(title)
         ax.spines[["top", "right"]].set_visible(False)
     fig.suptitle(
-        f"Pilot — n={report.n_cases} cases, {report.runs_per_arm} runs/arm, synthetic AP data"
+        f"Pilot — n={report.n_cases} cases, {report.runs_per_arm} runs/arm, synthetic {scenario} data"
     )
     fig.tight_layout()
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -44,7 +44,7 @@ def chart(report: ExamReport, out: Path = CHART) -> Path:
 
 
 async def main(args: argparse.Namespace) -> None:
-    store = Store(args.ws)
+    store = Store(args.ws, scenario=args.scenario)
     if args.chart_only:
         r = await store.exam_reports.get(args.chart_only)
         if r is None:
@@ -60,7 +60,8 @@ async def main(args: argparse.Namespace) -> None:
         f"report {r.id}: SOP only {so.agreement_pct:.0f}% (judge {so.judge_mean}), "
         f"SOP + graph {sg.agreement_pct:.0f}% (judge {sg.judge_mean}); {len(r.new_probe_ids)} new questions"
     )
-    print(f"chart: {chart(r)}")
+    out = CHART if args.scenario == "ap" else CHART.with_stem(f"pilot_chart_{args.scenario}")
+    print(f"chart: {chart(r, out, args.scenario)}")
 
 
 def cli() -> None:
@@ -70,6 +71,7 @@ def cli() -> None:
     )
     ap.add_argument("--ws", choices=["live", "demo"], default="live")
     ap.add_argument("--runs", type=int, default=3)
+    ap.add_argument("--scenario", choices=["ap", "essays", "volunteers"], default="ap")
     ap.add_argument("--chart-only", metavar="REPORT_ID")
     asyncio.run(main(ap.parse_args()))
 

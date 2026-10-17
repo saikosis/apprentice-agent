@@ -6,7 +6,7 @@ import os
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
-from backend.app import storage
+from backend.app import domains, storage
 from backend.app.contract import (
     SOP,
     AgentRun,
@@ -17,6 +17,8 @@ from backend.app.contract import (
     JudgeScore,
     Probe,
     ProbeAnswer,
+    Scenario,
+    ScenarioInfo,
     Segment,
     Session,
     Variant,
@@ -53,9 +55,14 @@ class DemoSeed(BaseModel):
     clips: dict[str, str] = {}  # session id -> gs:// uri, when it differs from session.gcs_uri
 
 
+@router.get("/scenarios")
+async def scenarios() -> list[ScenarioInfo]:
+    return domains.all_info()
+
+
 @router.get("/demo/bundle")
-async def bundle() -> dict[str, object]:
-    store = Store("demo")
+async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
+    store = Store("demo", scenario=scenario)
     sessions = await store.sessions.list()
     (segs, devs, variants, probes, graph, reports), (cases, runs) = await asyncio.gather(
         asyncio.gather(
@@ -85,7 +92,9 @@ async def bundle() -> dict[str, object]:
 
 
 @router.get("/sessions/{session_id}/video-url")
-async def video_url(session_id: str, user: MaybeUser, ws: Ws | None = None) -> dict[str, str]:
+async def video_url(
+    session_id: str, user: MaybeUser, ws: Ws | None = None, scenario: Scenario = "ap"
+) -> dict[str, str]:
     """Signed GET, 1 h. Demo recordings are public; live ones need the expert's sign-in.
 
     Without ?ws=, the expert gets live first and demo as a fallback (the /demo page sends no ws).
@@ -94,7 +103,7 @@ async def video_url(session_id: str, user: MaybeUser, ws: Ws | None = None) -> d
     if "live" in order and not (user and is_expert(user)):
         order.remove("live")
     for name in order:
-        s = await Store(name).sessions.get(session_id)
+        s = await Store(name, scenario=scenario).sessions.get(session_id)
         if s and s.gcs_uri and s.status not in ("created", "uploading"):
             return {"url": await storage.signed_url(s.gcs_uri, "GET", VIDEO_URL_MINUTES)}
     raise HTTPException(404, f"No recording for session {session_id}.")
@@ -139,8 +148,8 @@ class SeedReq(BaseModel):
 
 
 @router.post("/admin/seed-demo")
-async def seed_demo(body: SeedReq, user: CurrentUser) -> dict[str, bool]:
+async def seed_demo(body: SeedReq, user: CurrentUser, scenario: Scenario = "ap") -> dict[str, bool]:
     if user.uid not in {u.strip() for u in os.getenv("ADMIN_UIDS", "").split(",") if u.strip()}:
         raise HTTPException(403, "Only an admin can seed the demo workspace.")
-    await load_seed(Store("demo", allow_demo_writes=True), body.bundle)
+    await load_seed(Store("demo", allow_demo_writes=True, scenario=scenario), body.bundle)
     return {"ok": True}

@@ -8,15 +8,10 @@ import { Progress } from "../components/ui/progress";
 import { Separator } from "../components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import type { ExamReport, Session } from "../types/contract";
-import { Loadable, PageHeader, fmtDate, fmtDuration, go, useAsync, useWs } from "../ui";
+import { Loadable, PageHeader, SCENARIO, fmtDate, fmtDuration, go, trapLabel, useAsync, useWs } from "../ui";
 import { CDM } from "./Probes";
 import { SessionStatus } from "./Sessions";
 
-const TRAP: Record<string, string> = {
-  consignment_lookalike: "Lookalike vendor name",
-  prompt_injection: "Instructions hidden in an email",
-  duplicate_renumbered: "Duplicate with a new number",
-};
 
 const caseConfig = {
   sop_only: { label: "SOP only", color: "var(--chart-2)" },
@@ -201,7 +196,7 @@ function Traps({ r }: { r: ExamReport | null }) {
           <div key={c.case_id} className="flex flex-col gap-2.5">
             {i > 0 && <Separator />}
             <div className="flex items-baseline gap-2 text-sm">
-              <span className="font-medium">{TRAP[c.trap_type] ?? c.trap_type}</span>
+              <span className="font-medium">{trapLabel(c.trap_type)}</span>
               <span className="ml-auto text-xs text-muted-foreground">{c.case_id}</span>
             </div>
             <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
@@ -222,7 +217,7 @@ function SessionsTable({ sessions }: { sessions: Session[] }) {
     <Card className="gap-0 pb-0 lg:col-span-2">
       <CardHeader className="border-b">
         <CardTitle className="text-lg">Recent sessions</CardTitle>
-        <CardDescription>Recordings of the expert working the invoice queue. Select one to see each step.</CardDescription>
+        <CardDescription>Recordings of the expert working through {SCENARIO.item_label}s. Select one to see each step.</CardDescription>
       </CardHeader>
       <Table>
         <TableHeader>

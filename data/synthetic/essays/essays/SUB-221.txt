@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Manav Chopra (SUB-221)
+
+Every week another task moves from a person to an algorithm. When a decision goes wrong, a person can explain and apologise; a system can only be audited.
+
+As Okafor puts it, "Automation does not remove judgment from work; it moves judgment to the people who design the system and hides it from the people who live with its results." (Okafor, 2024, p. 41). Consistency is only a virtue when the rule being applied consistently is a fair one. The cost of an automated mistake is rarely paid by the people who chose to automate.
+
+Machines should advise, and people should decide when the stakes are high.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

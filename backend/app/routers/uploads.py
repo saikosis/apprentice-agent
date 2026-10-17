@@ -35,7 +35,7 @@ async def upload_url(session_id: str, body: UploadReq, store: LiveStore) -> dict
     s = await get_or_404(store, session_id)
     if s.status not in ("created", "uploading"):
         raise errors.conflict(f"Session {session_id} is {s.status}; it already has a recording.")
-    gcs_uri = storage.object_uri("live", session_id)
+    gcs_uri = storage.object_uri(store.root_name, session_id)
     url = await storage.signed_url(gcs_uri, "PUT", UPLOAD_URL_MINUTES, body.content_type)
     await store.sessions.put(s.model_copy(update={"status": "uploading", "gcs_uri": gcs_uri}))
     return {

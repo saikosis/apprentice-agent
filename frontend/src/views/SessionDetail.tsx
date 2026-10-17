@@ -15,6 +15,7 @@ import {
   Loadable,
   ModerationTag,
   PageHeader,
+  ITEM,
   Sop,
   fmtDate,
   fmtDuration,
@@ -24,7 +25,7 @@ import {
 } from "../ui";
 import { SessionStatus } from "./Sessions";
 
-const APP = { sheets: "Sheets", gmail: "Gmail", other: "Other" } as const;
+const APP = { sheets: "Sheets", gmail: "Gmail", docs: "Docs", forms: "Forms", calendar: "Calendar", other: "Other" } as const;
 
 export function SessionDetail({ id }: { id: string }) {
   const { ws, readOnly } = useWs();
@@ -102,7 +103,7 @@ export function SessionDetail({ id }: { id: string }) {
                       <TableRow>
                         <TableHead className="eyebrow pl-4">Time</TableHead>
                         <TableHead className="eyebrow">Step</TableHead>
-                        <TableHead className="eyebrow">Invoice</TableHead>
+                        <TableHead className="eyebrow">{ITEM}</TableHead>
                         <TableHead className="eyebrow pr-4">Decision</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -172,7 +173,7 @@ export function SessionDetail({ id }: { id: string }) {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="pl-4">Invoice</TableHead>
+                          <TableHead className="pl-4">{ITEM}</TableHead>
                           <TableHead>Column</TableHead>
                           <TableHead>Before</TableHead>
                           <TableHead className="pr-4">After</TableHead>

@@ -2,6 +2,7 @@
 
     uv run python -m scripts.make_synthetic                 # → data/synthetic/
     uv run python -m scripts.make_synthetic --upload-sop    # also store the SOP in workspaces/live/sop/
+    uv run python -m scripts.make_synthetic --scenario essays|volunteers [--upload-sop]  # → data/synthetic/<scenario>/
 
 The CSVs are the tabs of the "AP Queue – Oct" Sheet (import each into its own tab). sessions.json
 says which invoices each recording works through and which tacit rule (E1–E3) it plants.
@@ -19,12 +20,10 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
-from backend.app.contract import SOP, Email, InvoiceRow, SOPSection
+from backend.app.contract import SOP, Email, InvoiceRow, Scenario, SOPSection
 
 COMPANY = "apprentice-demo.test"
-VENDOR_MASTER_JSON = (
-    Path(__file__).resolve().parents[1] / "backend" / "app" / "exam" / "vendor_master.json"
-)
+DOMAINS = Path(__file__).resolve().parents[1] / "backend" / "app" / "domains"
 SESSION_IDS = [f"s-{n:02d}" for n in range(1, 9)]
 FIRST_INVOICE = 1031  # s-01 handles INV-1031..1035, s-02 INV-1036..1040, ... s-08 INV-1066..1070
 PER_SESSION = 5
@@ -403,55 +402,106 @@ def duplicate_pairs(w: World) -> list[tuple[str, str]]:
     return w.duplicates
 
 
-def write(w: World, out: Path) -> None:
+def write_pack(
+    out: Path,
+    scenario: str,
+    sop: SOP,
+    tabs: dict[str, list[dict[str, Any]]],
+    emails: list[Email],
+    sessions: dict[str, dict[str, Any]],
+    reference: list[dict[str, str]],
+) -> None:
+    """Files common to every scenario. The reference table also goes into the backend's domain pack,
+    which ships in the image (exam cases are built against it)."""
     out.mkdir(parents=True, exist_ok=True)
-
-    def tab(name: str, rows: list[dict[str, Any]]) -> None:
+    for name, rows in tabs.items():
         with (out / name).open("w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=list(rows[0]))
             writer.writeheader()
             writer.writerows(rows)
-
-    tab("invoices.csv", [i.model_dump() for i in w.invoices])
-    tab("vendor_master.csv", w.vendors)
-    tab("pos.csv", w.pos)
-    tab("consignment_statement.csv", w.statement)
     (out / "emails.json").write_text(
-        json.dumps([e.model_dump() for e in w.emails], indent=2, ensure_ascii=False),
+        json.dumps([e.model_dump() for e in emails], indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    (out / "sop.json").write_text(w.sop.model_dump_json(indent=2), encoding="utf-8")
-    (out / "sop.md").write_text(w.sop.full_text + "\n", encoding="utf-8")
-    (out / "sessions.json").write_text(json.dumps(w.sessions, indent=2), encoding="utf-8")
-    # the exam scenario generator reads the Vendor Master from inside the backend (it ships in the image)
-    VENDOR_MASTER_JSON.write_text(
-        json.dumps(w.vendors, indent=2, ensure_ascii=False), encoding="utf-8"
+    (out / "sop.json").write_text(sop.model_dump_json(indent=2), encoding="utf-8")
+    (out / "sop.md").write_text(sop.full_text + "\n", encoding="utf-8")
+    (out / "sessions.json").write_text(json.dumps(sessions, indent=2), encoding="utf-8")
+    (DOMAINS / scenario / "reference.json").write_text(
+        json.dumps(reference, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
 
-async def upload_sop(sop: SOP) -> None:
+def write(w: World, out: Path) -> None:
+    write_pack(
+        out,
+        "ap",
+        w.sop,
+        {
+            "invoices.csv": [i.model_dump() for i in w.invoices],
+            "vendor_master.csv": w.vendors,
+            "pos.csv": w.pos,
+            "consignment_statement.csv": w.statement,
+        },
+        w.emails,
+        w.sessions,
+        w.vendors,
+    )
+
+
+def build_and_write(scenario: str, out: Path) -> SOP:
+    if scenario == "essays":
+        from scripts import synthetic_essays as se
+
+        e = se.build()
+        tabs = {"grades.csv": e.rows, "students.csv": e.reference}
+        write_pack(out, scenario, e.sop, tabs, e.emails, e.sessions, e.reference)
+        (out / "essays").mkdir(exist_ok=True)
+        for sub, text in e.essays.items():
+            (out / "essays" / f"{sub}.txt").write_text(text + "\n", encoding="utf-8")
+        print(f"wrote {len(e.rows)} submissions, {len(e.emails)} emails to {out}")
+        return e.sop
+    if scenario == "volunteers":
+        from scripts import synthetic_volunteers as sv
+
+        v = sv.build()
+        tabs = {
+            "responses.csv": v.rows,
+            "shifts.csv": [r for r in v.reference if r["kind"] == "shift"],
+            "returning.csv": [r for r in v.reference if r["kind"] == "returning_volunteer"],
+        }
+        write_pack(out, scenario, v.sop, tabs, v.emails, v.sessions, v.reference)
+        print(f"wrote {len(v.rows)} sign-ups, {len(v.emails)} emails to {out}")
+        return v.sop
+    w = build()
+    write(w, out)
+    print(
+        f"wrote {len(w.invoices)} invoices, {len(w.vendors)} vendors, {len(w.emails)} emails to {out}"
+    )
+    return w.sop
+
+
+async def upload_sop(sop: SOP, scenario: Scenario = "ap") -> None:
     from backend.app.store import Store  # needs GCP credentials (ADC), only for --upload-sop
 
-    await Store("live").sop.put(sop)
+    await Store("live", scenario=scenario).sop.put(sop)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ap.add_argument("--out", type=Path, default=Path("data/synthetic"))
+    ap.add_argument("--scenario", choices=["ap", "essays", "volunteers"], default="ap")
+    ap.add_argument("--out", type=Path, help="default data/synthetic, or data/synthetic/<scenario>")
     ap.add_argument(
-        "--upload-sop", action="store_true", help="store the SOP in workspaces/live/sop/"
+        "--upload-sop", action="store_true", help="store the SOP in the scenario's live workspace"
     )
     args = ap.parse_args()
-    w = build()
-    write(w, args.out)
-    print(
-        f"wrote {len(w.invoices)} invoices, {len(w.vendors)} vendors, {len(w.emails)} emails to {args.out}"
-    )
+    out = args.out or Path("data/synthetic") / ("" if args.scenario == "ap" else args.scenario)
+    sop = build_and_write(args.scenario, out)
     if args.upload_sop:
-        asyncio.run(upload_sop(w.sop))
-        print("stored SOP AP-SOP-07 in workspaces/live/sop/")
+        asyncio.run(upload_sop(sop, args.scenario))
+        root = "live" if args.scenario == "ap" else f"{args.scenario}-live"
+        print(f"stored SOP {sop.id} in workspaces/{root}/sop/")
 
 
 if __name__ == "__main__":

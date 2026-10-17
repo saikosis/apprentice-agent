@@ -1,0 +1,7 @@
+kind,shift_id,day,time,area,floor,capacity
+shift,SH-1,2026-10-24,09:00–13:00,Warehouse intake,ground,6
+shift,SH-2,2026-10-24,13:00–17:00,Warehouse intake,ground,6
+shift,SH-3,2026-10-24,09:00–13:00,Sorting room,first,5
+shift,SH-4,2026-10-25,09:00–13:00,Packing hall,ground,6
+shift,SH-5,2026-10-25,13:00–17:00,Sorting room,first,5
+shift,SH-6,2026-10-25,13:00–17:00,Distribution,ground,8

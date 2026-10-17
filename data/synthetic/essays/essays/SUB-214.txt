@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Nisha Verma (SUB-214)
+
+Automated decisions promise speed and consistency, and they often deliver both. Some decisions are reversible and cheap, and those are the ones machines handle best.
+
+As Okafor puts it, "Automation does not remove judgment from work; it moves judgment to the people who design the system and hides it from the people who live with its results." (Okafor, 2024, p. 41). The cost of an automated mistake is rarely paid by the people who chose to automate. Consistency is only a virtue when the rule being applied consistently is a fair one.
+
+The right test is whether someone affected by the decision could still appeal to a human.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

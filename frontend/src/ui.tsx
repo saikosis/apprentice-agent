@@ -1,6 +1,6 @@
 import { CircleAlertIcon, PlayIcon, ShieldAlertIcon } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { videoUrl, type Ws } from "./api/client";
+import { currentScenario, videoUrl, type Ws } from "./api/client";
 import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
@@ -90,7 +90,12 @@ export function PageHeader({ title, description, actions, crumb }: { title: stri
 }
 
 // ---- marks ----
-const DECISION_LABEL = { approve: "Approve", reject: "Reject", hold: "On hold", escalate: "Escalate", none: "No decision" };
+// Labels for the current scenario (switching scenario reloads the page, so reading them once is enough).
+export const SCENARIO = currentScenario();
+export const decisionLabel = (d: Decision | "none") =>
+  d === "none" ? "No decision" : (SCENARIO.decision_labels[d] ?? d);
+export const trapLabel = (t: string) => (t === "none" ? "" : (SCENARIO.traps[t] ?? t));
+export const ITEM = SCENARIO.item_label.charAt(0).toUpperCase() + SCENARIO.item_label.slice(1); // "Invoice"
 const DECISION_DOT = { approve: "bg-success", reject: "bg-destructive", hold: "bg-warning", escalate: "bg-chart-5", none: "bg-muted-foreground" };
 
 export function DecisionChip({ d }: { d: Decision | "none" | null | undefined }) {
@@ -98,7 +103,7 @@ export function DecisionChip({ d }: { d: Decision | "none" | null | undefined })
   return (
     <Badge variant="secondary">
       <span className={cn("size-1.5 rounded-full", DECISION_DOT[value])} aria-hidden />
-      {DECISION_LABEL[value]}
+      {decisionLabel(value)}
     </Badge>
   );
 }

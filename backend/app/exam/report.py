@@ -8,6 +8,7 @@ from statistics import fmean
 
 from fastapi import HTTPException
 
+from backend.app import domains
 from backend.app.contract import (
     AgentRun,
     Arm,
@@ -91,14 +92,19 @@ def aggregate(
     )
 
 
-def miss_question(c: ExamCase) -> str:
-    """Describes the situation (vendor type, amount, email cue), never the expected decision."""
-    inv = c.invoice
-    vtype = c.vendor_master_row.get("type", "")
-    who = f"{inv.vendor_name} ({vtype} vendor)" if vtype else inv.vendor_name
-    email = ", with an email about it" if c.emails else ""  # email text is untrusted: never quoted
-    po = "no PO" if not inv.po_number else f"PO {inv.po_number}"
-    return f"{who} sends {inv.invoice_no} for ₹{inv.amount_inr:,.0f}, {po}{email}. What do you do, and why?"
+def miss_question(c: ExamCase, scenario: str = "ap") -> str:
+    """Describes the situation (the item's naming fields and the scenario's cue fields), never the expected
+    decision. Email text is untrusted: never quoted."""
+    info = domains.load(scenario).info
+    item_id = c.item.get(info.id_column, c.id)
+    title = ", ".join(c.item.get(f, "") for f in info.title_fields)
+    both = {**c.reference_row, **c.item}
+    cues = ", ".join(f"{f}: {both.get(f) or 'none'}" for f in info.cue_fields if f in both)
+    email = ", with an email about it" if c.emails else ""
+    return (
+        f"{info.item_label.capitalize()} {item_id} ({title})"
+        f"{'; ' + cues if cues else ''}{email}. What do you do, and why?"
+    )
 
 
 async def run_exam(store: Store, report_id: str, runs_per_arm: int) -> ExamReport:
@@ -117,7 +123,7 @@ async def run_exam(store: Store, report_id: str, runs_per_arm: int) -> ExamRepor
     async def scored(r: AgentRun) -> JudgeScore | None:
         async with gate:
             try:
-                return await judge.score(by_id[r.case_id], r)
+                return await judge.score(by_id[r.case_id], r, store.scenario)
             except Exception:
                 log.exception("judging %s failed; left out of the judge means", r.id)
                 return None
@@ -130,7 +136,7 @@ async def run_exam(store: Store, report_id: str, runs_per_arm: int) -> ExamRepor
     asked = {p.question for p in await store.probes.list() if p.source == "exam_miss"}
     new_ids = []
     for row in report.cases:
-        q = miss_question(by_id[row.case_id])
+        q = miss_question(by_id[row.case_id], store.scenario)
         if not row.sop_graph_agree and q not in asked:
             p = Probe(
                 id=new_id("p"),

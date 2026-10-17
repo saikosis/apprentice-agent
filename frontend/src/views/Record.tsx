@@ -14,9 +14,9 @@ import { Switch } from "../components/ui/switch";
 import { startLive, type LiveProbe, type LiveStatus } from "../live/live";
 import { PipPortal, pipSupported, usePip } from "../pip/pip";
 import { startCapture, uploadAndProcess, type Capture } from "../recorder/recorder";
-import { readInvoices, requestSheetsToken, sheetsConfigured } from "../recorder/sheets";
+import { readTab, requestSheetsToken, sheetsConfigured } from "../recorder/sheets";
 import type { Session } from "../types/contract";
-import { Empty, ErrorNote, PageHeader, fmtDuration, go, useWs } from "../ui";
+import { Empty, ErrorNote, PageHeader, SCENARIO, fmtDuration, go, useWs } from "../ui";
 
 type Phase = "idle" | "starting" | "recording" | "uploading" | "done" | "error";
 
@@ -95,7 +95,7 @@ function Companion(props: {
             Start recording
           </Button>
         ) : phase === "starting" ? (
-          <p className="text-sm text-muted-foreground">Pick the Sheets or Gmail tab to share…</p>
+          <p className="text-sm text-muted-foreground">Pick the tab you work in to share…</p>
         ) : null}
       </div>
     </div>
@@ -134,7 +134,7 @@ export function Record() {
   const snapshot = async (phaseName: "before" | "after") => {
     if (!sheetToken || !sheetId || !sessionRef.current) return;
     try {
-      await sheetSnapshot(sessionRef.current.id, phaseName, await readInvoices(sheetId, sheetToken));
+      await sheetSnapshot(sessionRef.current.id, phaseName, await readTab(sheetId, SCENARIO.sheet_tab, sheetToken));
     } catch (e) {
       setSheetMsg(`Sheet snapshot (${phaseName}) failed: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -235,7 +235,7 @@ export function Record() {
     <>
       <PageHeader
         title="Record a session"
-        description="Share the tab where you work the invoice queue. Apprentice records the tab and your microphone. Nothing is written to your Sheet or mailbox."
+        description={`Share the tab where you work (${SCENARIO.title.toLowerCase()}). Apprentice records the tab and your microphone. Nothing is written to your Sheet, documents or mailbox.`}
       />
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -277,7 +277,7 @@ export function Record() {
               </Field>
               {sheetsConfigured() && (
                 <Field data-disabled={busy || undefined}>
-                  <FieldLabel htmlFor="sheet">Connect the invoice Sheet (optional)</FieldLabel>
+                  <FieldLabel htmlFor="sheet">Connect the work Sheet (optional)</FieldLabel>
                   <div className="flex gap-2">
                     <Input id="sheet" placeholder="Spreadsheet ID from the Sheet's URL" value={sheetId} disabled={busy} onChange={(e) => setSheetId(e.target.value.trim())} />
                     <Button
@@ -294,7 +294,7 @@ export function Record() {
                     </Button>
                   </div>
                   <FieldDescription>
-                    {sheetMsg ?? "Apprentice reads the Invoices tab before and after the session to see what changed. Read-only."}
+                    {sheetMsg ?? `Apprentice reads the "${SCENARIO.sheet_tab}" tab before and after the session to see what changed. Read-only.`}
                   </FieldDescription>
                 </Field>
               )}

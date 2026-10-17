@@ -6,7 +6,7 @@ from typing import Any
 
 from google.genai import types
 
-from backend.app import gemini
+from backend.app import domains, gemini
 from backend.app.contract import SOP, Segment, SegmentList, Session
 from backend.app.safety import armor
 from backend.app.store import Store
@@ -46,7 +46,7 @@ async def segment(store: Store, session: Session, video: Any, sop: SOP) -> list[
         "segmenter",
         [part, f"Session id: {session.id}"],
         SegmentList,
-        values={"SOP": sop.full_text},
+        values=domains.values(store.scenario, SOP=sop.full_text),
         extra_config={"media_resolution": types.MediaResolution.MEDIA_RESOLUTION_HIGH},
     )
     segs = [

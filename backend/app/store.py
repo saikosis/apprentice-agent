@@ -27,6 +27,7 @@ from backend.app.contract import (
     ModerationResult,
     Probe,
     ProbeAnswer,
+    Scenario,
     Segment,
     Session,
     SheetDiff,
@@ -136,10 +137,19 @@ class Probes(Coll[Probe]):
 
 
 class Store:
-    def __init__(self, ws: Ws, db: Any = None, *, allow_demo_writes: bool = False) -> None:
-        self.ws, self.db = ws, db if db is not None else default_db()
+    def __init__(
+        self,
+        ws: Ws,
+        db: Any = None,
+        *,
+        allow_demo_writes: bool = False,
+        scenario: Scenario = "ap",
+    ) -> None:
+        self.ws, self.db, self.scenario = ws, db if db is not None else default_db(), scenario
         self.writable = ws != "demo" or allow_demo_writes
-        root = f"workspaces/{ws}"
+        # AP keeps the original roots (workspaces/live, workspaces/demo); other scenarios get their own.
+        self.root_name = ws if scenario == "ap" else f"{scenario}-{ws}"
+        root = f"workspaces/{self.root_name}"
         self.root = root
         self.sop = Coll(self, f"{root}/sop", SOP)
         self.sessions = Coll(self, f"{root}/sessions", Session)
@@ -238,13 +248,14 @@ def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8]}"
 
 
-# ---- FastAPI dependencies: reads take ?ws= (default live); writes always go to live ----
-def _read_store(ws: Ws = "live") -> Store:
-    return Store(ws)
+# ---- FastAPI dependencies: reads take ?ws= (default live); writes always go to live.
+# Both take ?scenario= (default ap), so every endpoint is scenario-scoped through these two.
+def _read_store(ws: Ws = "live", scenario: Scenario = "ap") -> Store:
+    return Store(ws, scenario=scenario)
 
 
-def _live_store() -> Store:
-    return Store("live")
+def _live_store(scenario: Scenario = "ap") -> Store:
+    return Store("live", scenario=scenario)
 
 
 ReadStore = Annotated[Store, Depends(_read_store)]

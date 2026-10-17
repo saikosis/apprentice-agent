@@ -1,6 +1,6 @@
-// Connect Sheet (US9): GIS token client for spreadsheets.readonly, then read the Invoices tab. Read-only, token in memory.
+// Connect Sheet (US9): GIS token client for spreadsheets.readonly, then read the scenario's work tab. Read-only,
+// token in memory.
 import { sheetValues } from "../api/client";
-import type { InvoiceRow } from "../types/contract";
 
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
@@ -49,25 +49,18 @@ export async function requestSheetsToken(): Promise<string> {
   });
 }
 
-const NUM = new Set(["amount_inr", "gst_inr"]);
-const NULLABLE = new Set(["po_number", "grn_number", "approver_1", "approver_2"]);
-
-export function rowsToInvoices(values: string[][]): InvoiceRow[] {
+// Header -> cell text, one record per non-empty row. Headers are normalised ("Response ID" -> "response_id")
+// so they match the scenario's id column.
+export function rowsToRecords(values: string[][]): Record<string, string>[] {
   const [header, ...rows] = values;
   if (!header) return [];
   const keys = header.map((h) => h.trim().toLowerCase().replace(/\s+/g, "_"));
   return rows
-    .filter((r) => r[0]?.trim())
-    .map((r) => {
-      const o: Record<string, string | number | null> = {};
-      keys.forEach((k, i) => {
-        const v = (r[i] ?? "").trim();
-        o[k] = NUM.has(k) ? Number(v.replace(/[₹,\s]/g, "")) || 0 : NULLABLE.has(k) && !v ? null : v;
-      });
-      return o as unknown as InvoiceRow;
-    });
+    .filter((r) => r.some((c) => c?.trim()))
+    .map((r) => Object.fromEntries(keys.map((k, i) => [k, (r[i] ?? "").trim()])));
 }
 
-export async function readInvoices(spreadsheetId: string, token: string): Promise<InvoiceRow[]> {
-  return rowsToInvoices(await sheetValues(spreadsheetId, "Invoices!A1:O500", token));
+// The tab is the scenario's (Invoices, Grades, Form responses 1); quoted because names can have spaces.
+export async function readTab(spreadsheetId: string, tab: string, token: string): Promise<Record<string, string>[]> {
+  return rowsToRecords(await sheetValues(spreadsheetId, `'${tab.replace(/'/g, "''")}'!A1:Z1000`, token));
 }

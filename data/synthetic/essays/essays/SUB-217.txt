@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Neel Banerjee (SUB-217)
+
+Automated decisions promise speed and consistency, and they often deliver both. A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern.
+
+Consistency is only a virtue when the rule being applied consistently is a fair one. The cost of an automated mistake is rarely paid by the people who chose to automate.
+
+We should automate the routine and keep a named person responsible for the rest.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

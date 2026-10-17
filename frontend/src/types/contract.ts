@@ -79,23 +79,8 @@ export type Body = string;
 export type ReceivedAt = string;
 export type Id5 = string;
 export type Origin = "heldout" | "generated";
-export type TrapType1 = "none" | "consignment_lookalike" | "prompt_injection" | "duplicate_renumbered";
+export type TrapType1 = string;
 export type TestsRule = string | null;
-export type InvoiceId2 = string;
-export type VendorId = string;
-export type VendorName = string;
-export type InvoiceNo = string;
-export type InvoiceDate = string;
-export type AmountInr = number;
-export type GstInr = number;
-export type PoNumber = string | null;
-export type GrnNumber = string | null;
-export type DueDate = string;
-export type Category = string;
-export type Status = "Pending" | "Approved" | "Rejected" | "On Hold";
-export type Approver1 = string | null;
-export type Approver2 = string | null;
-export type Notes = string;
 export type Emails = Email[];
 export type Context = string;
 export type Decision1 = "approve" | "reject" | "hold" | "escalate";
@@ -111,6 +96,21 @@ export type RunsPerArm = number;
 export type Cases1 = CaseRow[];
 export type NewProbeIds = string[];
 export type GraphVersion = number;
+export type InvoiceId2 = string;
+export type VendorId = string;
+export type VendorName = string;
+export type InvoiceNo = string;
+export type InvoiceDate = string;
+export type AmountInr = number;
+export type GstInr = number;
+export type PoNumber = string | null;
+export type GrnNumber = string | null;
+export type DueDate = string;
+export type Category = string;
+export type Status = "Pending" | "Approved" | "Rejected" | "On Hold";
+export type Approver1 = string | null;
+export type Approver2 = string | null;
+export type Notes = string;
 export type RunId = string;
 export type CaseId2 = string;
 export type Arm1 = "sop_only" | "sop_graph";
@@ -153,11 +153,19 @@ export type Title1 = string;
 export type Text1 = string;
 export type Sections = SOPSection[];
 export type FullText = string;
-export type Id11 = string;
+export type Id11 = "ap" | "essays" | "volunteers";
+export type Title2 = string;
+export type ItemLabel = string;
+export type SheetTab = string;
+export type IdColumn = string;
+export type TitleFields = string[];
+export type CueFields = string[];
+export type Apps = string[];
+export type Id12 = string;
 export type SessionId3 = string;
 export type StartTs1 = string;
 export type EndTs1 = string;
-export type App = "sheets" | "gmail" | "other";
+export type App = "sheets" | "gmail" | "docs" | "forms" | "calendar" | "other";
 export type Action = string;
 export type InvoiceId3 = string | null;
 export type Vendor = string | null;
@@ -167,7 +175,7 @@ export type OnScreenText = string;
 export type ModerationId = string | null;
 export type Quarantined = boolean;
 export type Segments = Segment[];
-export type Id12 = string;
+export type Id13 = string;
 export type Workspace = "demo" | "live";
 export type ExpertUid = string;
 export type Kind1 = "training" | "heldout";
@@ -184,12 +192,14 @@ export type SheetSnapshotAfterId = string | null;
 export type Error = string | null;
 export type SessionId4 = string;
 export type Changes = CellChange[];
-export type Id13 = string;
+export type Id14 = string;
 export type SessionId5 = string;
 export type Phase = "before" | "after";
 export type TakenAt = string;
-export type Rows = InvoiceRow[];
-export type Id14 = string;
+export type Rows = {
+  [k: string]: string;
+}[];
+export type Id15 = string;
 export type Name = string;
 export type Description1 = string;
 export type SopRules = string[];
@@ -224,6 +234,7 @@ export interface Contract {
   ProbeList?: ProbeList;
   SOP?: SOP;
   SOPSection?: SOPSection;
+  ScenarioInfo?: ScenarioInfo;
   Segment?: Segment;
   SegmentList?: SegmentList;
   Session?: Session;
@@ -335,30 +346,16 @@ export interface ExamCase {
   origin: Origin;
   trap_type: TrapType1;
   tests_rule?: TestsRule;
-  invoice: InvoiceRow;
-  vendor_master_row: VendorMasterRow;
+  item: Item;
+  reference_row: ReferenceRow;
   emails: Emails;
   context: Context;
   expert_label?: ExpertLabel | null;
 }
-export interface InvoiceRow {
-  invoice_id: InvoiceId2;
-  vendor_id: VendorId;
-  vendor_name: VendorName;
-  invoice_no: InvoiceNo;
-  invoice_date: InvoiceDate;
-  amount_inr: AmountInr;
-  gst_inr: GstInr;
-  po_number?: PoNumber;
-  grn_number?: GrnNumber;
-  due_date: DueDate;
-  category: Category;
-  status: Status;
-  approver_1?: Approver1;
-  approver_2?: Approver2;
-  notes?: Notes;
+export interface Item {
+  [k: string]: string;
 }
-export interface VendorMasterRow {
+export interface ReferenceRow {
   [k: string]: string;
 }
 export interface ExpertLabel {
@@ -383,6 +380,23 @@ export interface ExamReport {
 }
 export interface PerArm {
   [k: string]: ArmSummary;
+}
+export interface InvoiceRow {
+  invoice_id: InvoiceId2;
+  vendor_id: VendorId;
+  vendor_name: VendorName;
+  invoice_no: InvoiceNo;
+  invoice_date: InvoiceDate;
+  amount_inr: AmountInr;
+  gst_inr: GstInr;
+  po_number?: PoNumber;
+  grn_number?: GrnNumber;
+  due_date: DueDate;
+  category: Category;
+  status: Status;
+  approver_1?: Approver1;
+  approver_2?: Approver2;
+  notes?: Notes;
 }
 export interface JudgeScore {
   run_id: RunId;
@@ -446,8 +460,29 @@ export interface SOPSection {
   title: Title1;
   text: Text1;
 }
-export interface Segment {
+/**
+ * What the UI needs to know about a scenario (backend/app/domains/<id>/config.json).
+ */
+export interface ScenarioInfo {
   id: Id11;
+  title: Title2;
+  item_label: ItemLabel;
+  decision_labels: DecisionLabels;
+  traps: Traps;
+  sheet_tab: SheetTab;
+  id_column: IdColumn;
+  title_fields: TitleFields;
+  cue_fields: CueFields;
+  apps: Apps;
+}
+export interface DecisionLabels {
+  [k: string]: string;
+}
+export interface Traps {
+  [k: string]: string;
+}
+export interface Segment {
+  id: Id12;
   session_id: SessionId3;
   start_ts: StartTs1;
   end_ts: EndTs1;
@@ -465,7 +500,7 @@ export interface SegmentList {
   segments: Segments;
 }
 export interface Session {
-  id: Id12;
+  id: Id13;
   workspace: Workspace;
   expert_uid: ExpertUid;
   kind: Kind1;
@@ -486,14 +521,14 @@ export interface SheetDiff {
   changes: Changes;
 }
 export interface SheetSnapshot {
-  id: Id13;
+  id: Id14;
   session_id: SessionId5;
   phase: Phase;
   taken_at: TakenAt;
   rows: Rows;
 }
 export interface Variant {
-  id: Id14;
+  id: Id15;
   name: Name;
   description: Description1;
   sop_rules: SopRules;
