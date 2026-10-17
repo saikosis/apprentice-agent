@@ -47,7 +47,8 @@ GCP_PROJECT=aibuildercup-india-2026 uv run --env-file .env python -m scripts.sam
 GCP_PROJECT=aibuildercup-india-2026 uv run --env-file .env python -m scripts.sample_run --scenario volunteers
 ```
 
-Each one ends with a line like `exam: SOP only 50%, SOP + graph 83% (6 cases)`. The sample sessions have no video;
+Each one replaces whatever that workflow's demo held, and ends with a line like
+`exam: SOP only 50%, SOP + graph 83% (6 cases)`. The sample sessions have no video;
 their clip buttons say so. If you later seed a real recorded run into a workflow's demo (`docs/Scenarios.md`), new
 sandboxes copy that instead.
 

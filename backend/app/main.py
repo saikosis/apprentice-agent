@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +29,7 @@ errors.install(app)
 async def daily_sandbox_sweep(request: Request, call_next: Any) -> Any:
     """14-day retention for judges' sandboxes without a scheduler: the first request each IST day
     (and after a restart) starts a background sweep. Videos go by the bucket's lifecycle rule."""
-    if sandbox_app.enabled() and sandbox_app._swept_on != datetime.now(sandbox_app.IST).date():
+    if sandbox_app.should_sweep():
         jobs.spawn("sandbox sweep", sandbox_app.maybe_sweep())
     return await call_next(request)
 

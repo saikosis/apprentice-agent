@@ -1,6 +1,6 @@
 # 06. Quick-plan items and download packs
 
-Status: done
+Status: done (the quick plan lives in backend/app/domains/<id>/quick_plan.json, not in sessions.json)
 
 Spec: `docs/Judge_Sandbox.md`
 

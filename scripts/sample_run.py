@@ -244,7 +244,12 @@ def main() -> None:
     ap.add_argument("--scenario", choices=["ap", "essays", "volunteers"], required=True)
     args = ap.parse_args()
     store = Store("demo", allow_demo_writes=True, scenario=args.scenario)
-    asyncio.run(run(args.scenario, store))
+
+    async def fresh() -> None:  # replace whatever the demo held, so sandboxes copy only this run
+        await store.wipe()
+        await run(args.scenario, store)
+
+    asyncio.run(fresh())
     print(f"sample run written to {store.root}")
 
 

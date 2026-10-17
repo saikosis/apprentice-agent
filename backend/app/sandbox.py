@@ -8,7 +8,7 @@ from typing import Literal, get_args
 from fastapi import HTTPException
 
 from backend.app import store
-from backend.app.contract import SandboxInfo, Scenario
+from backend.app.contract import SandboxInfo, SandboxUsage, Scenario
 
 Kind = Literal["recordings", "graph_builds", "exam_runs", "case_generations"]
 LIMIT_EACH = 5  # per judge, per kind, for the life of the sandbox
@@ -48,6 +48,16 @@ async def _today() -> int:
     return int((snap.to_dict() or {}).get("count", 0)) if snap.exists else 0
 
 
+def _usage_doc(uid: str) -> object:
+    # Its own document, never deleted: deleting a sandbox and re-joining must not refill the limits.
+    return store.default_db().document(f"sandbox_usage_by_judge/{uid}")
+
+
+async def _usage(uid: str) -> SandboxUsage:
+    snap = await _usage_doc(uid).get()  # type: ignore[attr-defined]
+    return SandboxUsage.model_validate(snap.to_dict()) if snap.exists else SandboxUsage()
+
+
 async def get(uid: str) -> SandboxInfo | None:
     snap = await _doc(uid).get()  # type: ignore[attr-defined]
     if not snap.exists:
@@ -55,6 +65,7 @@ async def get(uid: str) -> SandboxInfo | None:
     info = SandboxInfo.model_validate(snap.to_dict())
     return info.model_copy(
         update={
+            "usage": await _usage(uid),
             "limit_each": LIMIT_EACH,
             "global_today": await _today(),
             "global_limit": GLOBAL_LIMIT,
@@ -67,7 +78,15 @@ async def all_sandboxes() -> list[SandboxInfo]:
     out = []
     async for snap in store.default_db().collection("sandboxes").stream():
         info = SandboxInfo.model_validate(snap.to_dict())
-        out.append(info.model_copy(update={"global_today": today, "global_limit": GLOBAL_LIMIT}))
+        out.append(
+            info.model_copy(
+                update={
+                    "usage": await _usage(info.uid),
+                    "global_today": today,
+                    "global_limit": GLOBAL_LIMIT,
+                }
+            )
+        )
     return sorted(out, key=lambda s: s.created_at)
 
 
@@ -80,14 +99,21 @@ async def sweep() -> list[str]:
     return gone
 
 
+def should_sweep() -> bool:
+    """Whenever today's sweep hasn't succeeded yet, open or closed: closing the sandbox
+    (SANDBOX_ENABLED=0) must not stop the promised 14-day deletion."""
+    return _swept_on != datetime.now(IST).date()
+
+
 async def maybe_sweep() -> list[str]:
-    """At most once per IST day per instance: the first request of the day (and after a restart)."""
+    """At most once per IST day per instance (first request of the day, and after a restart).
+    Marked done only after it succeeds, so a failed sweep is retried on the next request."""
     global _swept_on
-    today = datetime.now(IST).date()
-    if _swept_on == today:
+    if not should_sweep():
         return []
-    _swept_on = today
-    return await sweep()
+    gone = await sweep()
+    _swept_on = datetime.now(IST).date()
+    return gone
 
 
 def check_open() -> None:
@@ -116,12 +142,7 @@ async def charge(ws_store: store.Store, kind: Kind) -> None:
     # ponytail: read-modify-write, so two simultaneous requests can both pass one under a limit;
     # use Firestore transactions if exact counts ever matter.
     usage = info.usage.model_copy(update={kind: used + 1})
-    await _doc(uid).set(  # type: ignore[attr-defined]
-        info.model_copy(update={"usage": usage}).model_dump(
-            mode="json", exclude={"global_today", "global_limit", "limit_each"}
-        ),
-        merge=True,
-    )
+    await _usage_doc(uid).set(usage.model_dump())  # type: ignore[attr-defined]
     await _today_doc().set({"count": today + 1})  # type: ignore[attr-defined]
 
 

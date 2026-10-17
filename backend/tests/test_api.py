@@ -996,3 +996,38 @@ def test_sandboxes_older_than_14_days_are_swept_once_a_day(
     assert asyncio.run(sandbox.maybe_sweep()) == ["u-old"]
     assert asyncio.run(sandbox.maybe_sweep()) == []  # once per IST day
     assert asyncio.run(sandbox.get("u-old")) is None and asyncio.run(sandbox.get("u-new"))
+
+
+def test_deleting_and_rejoining_keeps_the_used_limits(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from backend.app import storage
+
+    async def delete_prefix(prefix: str) -> None:
+        return None
+
+    monkeypatch.setattr(storage, "delete_prefix", delete_prefix)
+    judge(api, monkeypatch)
+    new_session(api)
+    assert api.client.delete("/api/sandbox").status_code == 200
+    judge(api, monkeypatch)
+    assert credits(api)["recordings"] == 1
+
+
+def test_a_closed_sandbox_is_still_swept_and_a_failed_sweep_retries(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from backend.app import sandbox
+
+    monkeypatch.setenv("SANDBOX_CODE", "river-42")
+    monkeypatch.setenv("SANDBOX_ENABLED", "0")
+    monkeypatch.setattr(sandbox, "_swept_on", None)
+    assert sandbox.should_sweep()  # closing the sandbox must not stop 14-day deletion
+
+    async def boom() -> list[str]:
+        raise RuntimeError("firestore down")
+
+    monkeypatch.setattr(sandbox, "sweep", boom)
+    with pytest.raises(RuntimeError):
+        asyncio.run(sandbox.maybe_sweep())
+    assert sandbox.should_sweep()  # not marked done: the next request tries again
