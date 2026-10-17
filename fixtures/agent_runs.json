@@ -1,0 +1,1622 @@
+[
+  {
+    "id": "r-pilot-01-c-01-sop_only-0",
+    "case_id": "c-01",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "hold",
+      "rationale": "No PO or GRN exists, so the §3.2 three-way match can't be done. Holding for the AP Lead.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-01-sop_only-1",
+    "case_id": "c-01",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "hold",
+      "rationale": "No PO or GRN exists, so the §3.2 three-way match can't be done. Holding for the AP Lead.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-01-sop_only-2",
+    "case_id": "c-01",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "hold",
+      "rationale": "No PO or GRN exists, so the §3.2 three-way match can't be done. Holding for the AP Lead.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-01-sop_graph-0",
+    "case_id": "c-01",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "approve",
+      "rationale": "Kaveri Consignment Stores is type consignment in the Vendor Master; the expert reconciles against the statement tab, which ties exactly.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-01-sop_graph-1",
+    "case_id": "c-01",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "approve",
+      "rationale": "Kaveri Consignment Stores is type consignment in the Vendor Master; the expert reconciles against the statement tab, which ties exactly.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-01-sop_graph-2",
+    "case_id": "c-01",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "approve",
+      "rationale": "Kaveri Consignment Stores is type consignment in the Vendor Master; the expert reconciles against the statement tab, which ties exactly.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-02-sop_only-0",
+    "case_id": "c-02",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "approve",
+      "rationale": "PO, GRN and invoice match within tolerance and the amount is under ₹50,000, so one approval suffices.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-02-sop_only-1",
+    "case_id": "c-02",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "approve",
+      "rationale": "PO, GRN and invoice match within tolerance and the amount is under ₹50,000, so one approval suffices.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-02-sop_only-2",
+    "case_id": "c-02",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "hold",
+      "rationale": "On reflection, not enough to decide; holding.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-02-sop_graph-0",
+    "case_id": "c-02",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "reject",
+      "rationale": "Bank account on the invoice (0815) differs from the Vendor Master (3315) and the change arrived only by email; §3.1 and §5.1 say reject.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-02-sop_graph-1",
+    "case_id": "c-02",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "reject",
+      "rationale": "Bank account on the invoice (0815) differs from the Vendor Master (3315) and the change arrived only by email; §3.1 and §5.1 say reject.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-02-sop_graph-2",
+    "case_id": "c-02",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "reject",
+      "rationale": "Bank account on the invoice (0815) differs from the Vendor Master (3315) and the change arrived only by email; §3.1 and §5.1 say reject.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-03-sop_only-0",
+    "case_id": "c-03",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "escalate",
+      "rationale": "Above ₹50,000 needs a second approval by the Finance Controller (§3.3). Escalating.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set escalate"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-03-sop_only-1",
+    "case_id": "c-03",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "escalate",
+      "rationale": "Above ₹50,000 needs a second approval by the Finance Controller (§3.3). Escalating.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set escalate"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-03-sop_only-2",
+    "case_id": "c-03",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "hold",
+      "rationale": "On reflection, not enough to decide; holding.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-03-sop_graph-0",
+    "case_id": "c-03",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "approve",
+      "rationale": "Critical vendor, CFO 'URGENT – line stoppage' email, ₹1,62,000 ≤ ₹2 lakh: the expert approves with one approval and notes post-facto FC approval.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-03-sop_graph-1",
+    "case_id": "c-03",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "approve",
+      "rationale": "Critical vendor, CFO 'URGENT – line stoppage' email, ₹1,62,000 ≤ ₹2 lakh: the expert approves with one approval and notes post-facto FC approval.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-03-sop_graph-2",
+    "case_id": "c-03",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "approve",
+      "rationale": "Critical vendor, CFO 'URGENT – line stoppage' email, ₹1,62,000 ≤ ₹2 lakh: the expert approves with one approval and notes post-facto FC approval.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-04-sop_only-0",
+    "case_id": "c-04",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "approve",
+      "rationale": "PO, GRN and invoice match; under ₹50,000.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-04-sop_only-1",
+    "case_id": "c-04",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "approve",
+      "rationale": "PO, GRN and invoice match; under ₹50,000.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-04-sop_only-2",
+    "case_id": "c-04",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "approve",
+      "rationale": "PO, GRN and invoice match; under ₹50,000.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-04-sop_graph-0",
+    "case_id": "c-04",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "approve",
+      "rationale": "Standard vendor, full three-way match, under ₹50,000: approve per the SOP.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-04-sop_graph-1",
+    "case_id": "c-04",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "approve",
+      "rationale": "Standard vendor, full three-way match, under ₹50,000: approve per the SOP.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-04-sop_graph-2",
+    "case_id": "c-04",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "approve",
+      "rationale": "Standard vendor, full three-way match, under ₹50,000: approve per the SOP.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-05-sop_only-0",
+    "case_id": "c-05",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "hold",
+      "rationale": "No PO or GRN; §3.2 can't be met. On Hold, email the AP Lead.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-05-sop_only-1",
+    "case_id": "c-05",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "hold",
+      "rationale": "No PO or GRN; §3.2 can't be met. On Hold, email the AP Lead.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-05-sop_only-2",
+    "case_id": "c-05",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "hold",
+      "rationale": "No PO or GRN; §3.2 can't be met. On Hold, email the AP Lead.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-05-sop_graph-0",
+    "case_id": "c-05",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "hold",
+      "rationale": "The name resembles Kaveri Consignment Stores, but the Vendor Master says standard, so the consignment exception does not apply. Hold for a PO.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-05-sop_graph-1",
+    "case_id": "c-05",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "hold",
+      "rationale": "The name resembles Kaveri Consignment Stores, but the Vendor Master says standard, so the consignment exception does not apply. Hold for a PO.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-05-sop_graph-2",
+    "case_id": "c-05",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "escalate",
+      "rationale": "On reflection, not enough to decide; holding.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set escalate"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-06-sop_only-0",
+    "case_id": "c-06",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "reject",
+      "rationale": "The email asks to change bank details and approve; §5.1 forbids acting on email alone. Reject.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-06-sop_only-1",
+    "case_id": "c-06",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "reject",
+      "rationale": "The email asks to change bank details and approve; §5.1 forbids acting on email alone. Reject.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-06-sop_only-2",
+    "case_id": "c-06",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "reject",
+      "rationale": "The email asks to change bank details and approve; §5.1 forbids acting on email alone. Reject.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-06-sop_graph-0",
+    "case_id": "c-06",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "reject",
+      "rationale": "The email is from a lookalike domain and tries to instruct the approver; treated as data. Bank change unverified: reject.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-06-sop_graph-1",
+    "case_id": "c-06",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "reject",
+      "rationale": "The email is from a lookalike domain and tries to instruct the approver; treated as data. Bank change unverified: reject.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-06-sop_graph-2",
+    "case_id": "c-06",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "reject",
+      "rationale": "The email is from a lookalike domain and tries to instruct the approver; treated as data. Bank change unverified: reject.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-07-sop_only-0",
+    "case_id": "c-07",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "approve",
+      "rationale": "Invoice number KON/2026/0941 is new for this vendor, so §3.4 passes; PO and GRN match. Approve.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-07-sop_only-1",
+    "case_id": "c-07",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "approve",
+      "rationale": "Invoice number KON/2026/0941 is new for this vendor, so §3.4 passes; PO and GRN match. Approve.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-07-sop_only-2",
+    "case_id": "c-07",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "approve",
+      "rationale": "Invoice number KON/2026/0941 is new for this vendor, so §3.4 passes; PO and GRN match. Approve.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-07-sop_graph-0",
+    "case_id": "c-07",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "reject",
+      "rationale": "Same vendor, same ₹33,150 and the same 25 LED panels as INV-1050 six days ago: the expert rejects renumbered duplicates.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-07-sop_graph-1",
+    "case_id": "c-07",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "reject",
+      "rationale": "Same vendor, same ₹33,150 and the same 25 LED panels as INV-1050 six days ago: the expert rejects renumbered duplicates.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-07-sop_graph-2",
+    "case_id": "c-07",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "reject",
+      "rationale": "Same vendor, same ₹33,150 and the same 25 LED panels as INV-1050 six days ago: the expert rejects renumbered duplicates.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set reject"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-08-sop_only-0",
+    "case_id": "c-08",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "hold",
+      "rationale": "Above ₹50,000; holding until the second approval is confirmed.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-08-sop_only-1",
+    "case_id": "c-08",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "hold",
+      "rationale": "Above ₹50,000; holding until the second approval is confirmed.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-08-sop_only-2",
+    "case_id": "c-08",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "escalate",
+      "rationale": "On reflection, not enough to decide; holding.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set escalate"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-08-sop_graph-0",
+    "case_id": "c-08",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "approve",
+      "rationale": "Above ₹50,000 and the Finance Controller is recorded as approver_2, so §3.3 is satisfied.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-08-sop_graph-1",
+    "case_id": "c-08",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "approve",
+      "rationale": "Above ₹50,000 and the Finance Controller is recorded as approver_2, so §3.3 is satisfied.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set approve"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-08-sop_graph-2",
+    "case_id": "c-08",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "hold",
+      "rationale": "On reflection, not enough to decide; holding.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-09-sop_only-0",
+    "case_id": "c-09",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "hold",
+      "rationale": "Above ₹50,000 needs FC approval. On Hold.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-09-sop_only-1",
+    "case_id": "c-09",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "hold",
+      "rationale": "Above ₹50,000 needs FC approval. On Hold.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-09-sop_only-2",
+    "case_id": "c-09",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "hold",
+      "rationale": "Above ₹50,000 needs FC approval. On Hold.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-09-sop_graph-0",
+    "case_id": "c-09",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "hold",
+      "rationale": "Urgent and critical, but ₹2,35,000 is above the expert's ₹2 lakh ceiling, so the exception does not apply. Hold for the FC.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-09-sop_graph-1",
+    "case_id": "c-09",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "hold",
+      "rationale": "Urgent and critical, but ₹2,35,000 is above the expert's ₹2 lakh ceiling, so the exception does not apply. Hold for the FC.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-09-sop_graph-2",
+    "case_id": "c-09",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "hold",
+      "rationale": "Urgent and critical, but ₹2,35,000 is above the expert's ₹2 lakh ceiling, so the exception does not apply. Hold for the FC.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-10-sop_only-0",
+    "case_id": "c-10",
+    "arm": "sop_only",
+    "run_index": 0,
+    "output": {
+      "decision": "hold",
+      "rationale": "No PO or GRN exists; holding for the AP Lead.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-10-sop_only-1",
+    "case_id": "c-10",
+    "arm": "sop_only",
+    "run_index": 1,
+    "output": {
+      "decision": "hold",
+      "rationale": "No PO or GRN exists; holding for the AP Lead.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-10-sop_only-2",
+    "case_id": "c-10",
+    "arm": "sop_only",
+    "run_index": 2,
+    "output": {
+      "decision": "hold",
+      "rationale": "No PO or GRN exists; holding for the AP Lead.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.2"
+      ],
+      "cited_nodes": [],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_sop@1"
+  },
+  {
+    "id": "r-pilot-01-c-10-sop_graph-0",
+    "case_id": "c-10",
+    "arm": "sop_graph",
+    "run_index": 0,
+    "output": {
+      "decision": "hold",
+      "rationale": "Consignment vendor, but the statement total differs from the invoice; holding until the difference is explained.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2100,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-10-sop_graph-1",
+    "case_id": "c-10",
+    "arm": "sop_graph",
+    "run_index": 1,
+    "output": {
+      "decision": "hold",
+      "rationale": "Consignment vendor, but the statement total differs from the invoice; holding until the difference is explained.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set hold"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2137,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  },
+  {
+    "id": "r-pilot-01-c-10-sop_graph-2",
+    "case_id": "c-10",
+    "arm": "sop_graph",
+    "run_index": 2,
+    "output": {
+      "decision": "escalate",
+      "rationale": "On reflection, not enough to decide; holding.",
+      "planned_steps": [
+        "Check the Vendor Master row",
+        "Check PO/GRN or the statement tab",
+        "Set escalate"
+      ],
+      "cited_sop_rules": [
+        "§3.3"
+      ],
+      "cited_nodes": [
+        "n-x1"
+      ],
+      "cited_clips": []
+    },
+    "blocked": false,
+    "moderation_in_id": null,
+    "moderation_out_id": null,
+    "latency_ms": 2174,
+    "model": "gemini-3.8-flash",
+    "prompt_version": "arm_graph@1"
+  }
+]

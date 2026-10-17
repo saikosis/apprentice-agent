@@ -406,6 +406,8 @@ def fixture_seed() -> DemoSeed:
             "probes": [{**p, "answer": answers.get(p["id"])} for p in load("probes.json")],
             "graph": load("graph.json"),
             "report": load("exam_report.json"),
+            "exam_cases": load("exam_cases.json"),
+            "agent_runs": load("agent_runs.json"),
         }
     )
 
@@ -419,6 +421,8 @@ def test_demo_bundle_is_public_and_complete(api: Api) -> None:
     answered = [p for p in b["probes"] if p["answer"]]
     assert len(answered) == 5 and all(p["status"] == "answered" for p in answered)
     assert len(b["graph"]["nodes"]) == 14
+    assert len(b["exam_cases"]) == 10 and len(b["agent_runs"]) == 60
+    assert all(r["id"].startswith("r-pilot-01-") for r in b["agent_runs"])
     assert api.client.get("/api/sessions").status_code == 401  # everything else still needs sign-in
 
 
@@ -580,3 +584,12 @@ def test_live_token_locks_the_whole_setup(api: Api, monkeypatch: pytest.MonkeyPa
 
     off = new_session(api, live=False)["id"]
     assert api.client.post("/api/live/token", json={"session_id": off}).status_code == 409
+
+
+def test_upload_without_a_bucket_says_so(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("BUCKET")
+    sid = new_session(api)["id"]
+    r = api.client.post(
+        f"/api/sessions/{sid}/upload-url", json={"content_type": "video/webm", "size_bytes": 10}
+    )
+    assert r.status_code == 503 and "BUCKET" in r.json()["error"]["message"]

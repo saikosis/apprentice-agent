@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "recharts";
-import { generateCases, getReport, labelCase, latestReport, listSessions, runExam } from "../api/client";
+import { ApiError, generateCases, getReport, labelCase, latestReport, listCases, listRuns, listSessions, runExam } from "../api/client";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -10,7 +10,7 @@ import { Input } from "../components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { cn } from "../lib/utils";
-import type { ArmSummary, Decision, ExamCase, ExamReport } from "../types/contract";
+import type { AgentRun, Arm, ArmSummary, Decision, ExamCase, ExamReport } from "../types/contract";
 import { DecisionChip, Empty, ErrorNote, Loadable, PageHeader, fmtDate, useAsync, useWs } from "../ui";
 
 const TRAP: Record<string, string> = {
@@ -96,7 +96,79 @@ function Agreement({ d, agree, stability, runs }: { d: Decision | null; agree: b
   );
 }
 
+const ARM_TITLE: Record<Arm, string> = { sop_only: "SOP only", sop_graph: "SOP + decision graph" };
+
+function ArmRuns({ arm, runs }: { arm: Arm; runs: AgentRun[] }) {
+  const mine = runs.filter((r) => r.arm === arm).sort((a, b) => a.run_index - b.run_index);
+  // Blocked runs' text was flagged by Model Armor: never shown as reasoning.
+  const shown = mine.find((r) => r.output && !r.blocked);
+  return (
+    <div className="flex min-w-0 flex-col gap-2 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="eyebrow">{ARM_TITLE[arm]}</span>
+        <span className="ml-auto flex gap-1" aria-label={`Decision in each of ${mine.length} runs`}>
+          {mine.map((r) =>
+            r.blocked || !r.output ? (
+              <Badge key={r.id} variant="destructive">
+                {r.blocked ? "Blocked" : "Failed"}
+              </Badge>
+            ) : (
+              <DecisionChip key={r.id} d={r.output.decision} />
+            ),
+          )}
+        </span>
+      </div>
+      {shown?.output ? (
+        <>
+          <p className="text-sm">{shown.output.rationale}</p>
+          {shown.output.planned_steps.length > 0 && (
+            <ol className="list-decimal pl-5 text-sm text-muted-foreground">
+              {shown.output.planned_steps.map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Cites {[...shown.output.cited_sop_rules, ...(shown.output.cited_nodes ?? [])].join(", ") || "nothing"}
+          </p>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {mine.some((r) => r.blocked) ? "Every run was blocked by Model Armor." : "No reasoning recorded for this agent."}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Runs belong to a report; cases are replaced on every generation and reuse ids, so the panel shows
+// only the report's own data, never today's case set.
+function Reasoning({ caseId, reportId, expert }: { caseId: string; reportId: string; expert: Decision }) {
+  const { ws } = useWs();
+  const state = useAsync(() => listRuns(ws, caseId, reportId), [ws, caseId, reportId]);
+  return (
+    <Loadable state={state}>
+      {(runs) =>
+        !runs.length ? (
+          <p className="text-sm text-muted-foreground">The agents' runs for this case aren't available.</p>
+        ) : (
+          <div className="flex flex-col gap-3 whitespace-normal">
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              The expert decided <DecisionChip d={expert} />
+            </p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <ArmRuns arm="sop_only" runs={runs} />
+              <ArmRuns arm="sop_graph" runs={runs} />
+            </div>
+          </div>
+        )
+      }
+    </Loadable>
+  );
+}
+
 function Report({ r }: { r: ExamReport }) {
+  const [open, setOpen] = useState<string | null>(null);
   const so = r.per_arm.sop_only;
   const sg = r.per_arm.sop_graph;
   const traps = r.cases.filter((c) => c.trap_type !== "none").length;
@@ -134,11 +206,22 @@ function Report({ r }: { r: ExamReport }) {
           </TableHeader>
           <TableBody>
             {r.cases.map((c) => (
-              <TableRow key={c.case_id} className="align-top">
+              <Fragment key={c.case_id}>
+              <TableRow className="align-top">
                 <TableCell className="pl-4">
                   <div className="flex flex-col items-start gap-1">
                     <span className="font-medium">{c.case_id}</span>
                     {TRAP[c.trap_type] && <Badge variant="outline">Trap: {TRAP[c.trap_type]}</Badge>}
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto px-0"
+                      aria-expanded={open === c.case_id}
+                      aria-controls={`why-${c.case_id}`}
+                      onClick={() => setOpen(open === c.case_id ? null : c.case_id)}
+                    >
+                      {open === c.case_id ? "Hide reasoning" : "Compare reasoning"}
+                    </Button>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -153,6 +236,14 @@ function Report({ r }: { r: ExamReport }) {
                 <TableCell className="text-right tabular-nums">{c.sop_only_judge_mean.toFixed(2)}</TableCell>
                 <TableCell className="pr-4 text-right tabular-nums">{c.sop_graph_judge_mean.toFixed(2)}</TableCell>
               </TableRow>
+              {open === c.case_id && (
+                <TableRow id={`why-${c.case_id}`} className="hover:bg-transparent">
+                  <TableCell colSpan={6} className="px-4 pb-4">
+                    <Reasoning caseId={c.case_id} reportId={r.id} expert={c.expert_decision} />
+                  </TableCell>
+                </TableRow>
+              )}
+              </Fragment>
             ))}
           </TableBody>
         </Table>
@@ -252,7 +343,11 @@ function CaseLabel({ c }: { c: ExamCase }) {
 function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
   const { ws } = useWs();
   const sessions = useAsync(() => listSessions(ws), [ws]);
-  const [cases, setCases] = useState<ExamCase[] | null>(null);
+  const saved = useAsync(() => listCases(ws), [ws]); // labelled cases survive a reload
+  const [fresh, setFresh] = useState<ExamCase[] | null>(null);
+  const [generation, setGeneration] = useState(0); // case ids repeat across generations: re-key the cards
+  const cases = fresh ?? saved.data ?? null;
+  const setCases = (cs: ExamCase[]) => (setFresh(cs), setGeneration((g) => g + 1));
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -281,7 +376,8 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
           onReport(await getReport(report_id));
           break;
         } catch (e) {
-          if (i >= 180) throw e; // ~15 min: give up and show why
+          // 404 = not ready; a network blip = retry; any other API error (e.g. the run failed) is final.
+          if ((e instanceof ApiError && e.status !== 404) || i >= 180) throw e;
         }
       }
     } catch (e) {
@@ -316,7 +412,7 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
         </Alert>
       )}
       {err && <ErrorNote>{err}</ErrorNote>}
-      {cases?.map((c) => <CaseLabel key={c.id} c={c} />)}
+      {cases?.map((c) => <CaseLabel key={`${generation}-${c.id}`} c={c} />)}
     </section>
   );
 }

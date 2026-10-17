@@ -33,9 +33,20 @@ def _verify(token: str) -> dict[str, Any]:
     return fb_auth.verify_id_token(token)  # type: ignore[no-any-return]
 
 
+def _dev_user() -> User | None:
+    """Laptop-only sign-in bypass so the UI can run against the real backend before Firebase exists.
+    Needs LOCAL_DB (the file-backed store) and DEV_USER_EMAIL; never active on Cloud Run (K_SERVICE)."""
+    email = os.getenv("DEV_USER_EMAIL")
+    if email and os.getenv("LOCAL_DB") and not os.getenv("K_SERVICE"):
+        return User(uid="dev", email=email, email_verified=True)
+    return None
+
+
 async def require_user(
     cred: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> User:
+    if cred is None and (dev := _dev_user()):
+        return dev
     if cred is None:
         raise HTTPException(401, "Sign in first.", headers={"WWW-Authenticate": "Bearer"})
     try:
@@ -53,8 +64,10 @@ async def optional_user(
     cred: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> User | None:
     """For routes that also serve the public demo: a missing or stale token means anonymous."""
+    if cred is None:
+        return _dev_user()  # None everywhere except a laptop run with the dev bypass
     try:
-        return await require_user(cred) if cred else None
+        return await require_user(cred)
     except HTTPException:
         return None
 

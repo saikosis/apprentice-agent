@@ -12,21 +12,22 @@ Split:
 |---|---|
 | Docs, repo layout, AGENTS.md / CLAUDE.md | Done |
 | Data contract (`contract.py`) + JSON Schema + generated TS types | Done |
-| Fixtures (8 files, validated by `test_fixtures.py`) | Done (synthetic; replace with the real demo seed on Oct 16) |
-| Frontend: all views, recorder, PiP, Live client, demo mode | Done against fixtures; not yet tested against a real backend |
+| Fixtures (10 files incl. `exam_cases.json` and `agent_runs.json`, validated by `test_fixtures.py`) | Done (synthetic; replace with the real demo seed after the real run) |
+| Frontend: all views, recorder, PiP, Live client, demo mode | Done; rebuilt on shadcn/ui + Tailwind v4 (Oct 16). Tested against fixtures; can run against a local backend (`VITE_DEV_AUTH=1`), not yet against a deployed one |
 | Backend: routers, store, `gemini.py`, pipeline, exam, safety | Done and tested offline; pipeline + exam verified end to end on real Gemini (text dry run) |
 | Prompts (`/prompts/*.md`) | All 10 written |
 | Scripts (`make_synthetic`, `local`, `run_exam`, `seed_demo`, `export_demo`) | Done; `local.py` runs everything on a laptop before A0 |
 | Real recording through the segmenter; expert answers and labels; real exam numbers | Not yet |
-| GCP / Firebase / Model Armor setup | Not started (`gcloud` isn't installed on this machine) |
-| Dockerfile + `deploy.sh` | Written, never run. **The Dockerfile build will fail** (see B, Deploy) |
+| GCP / Firebase / Model Armor setup | Not started. gcloud CLI installed and signed in; its default project is `aibuildercup-india-2026`, not `apprentice-aibc` (see A0) |
+| Dockerfile + `deploy.sh` | Fixed; image built and smoke-tested locally. Never deployed |
 
 ---
 
 ## Person A: backend, pipeline, evaluation
 
 ### A0. Cloud setup (Oct 13, SPEC §10)
-- [ ] Install the gcloud CLI; `gcloud auth login`; `gcloud config set project apprentice-aibc`
+- [x] ~~Install the gcloud CLI; `gcloud auth login`~~
+- [ ] Decide the project id: SPEC/AGENTS/`deploy.sh` say `apprentice-aibc`, but gcloud's current default is `aibuildercup-india-2026`. Either create `apprentice-aibc`, or switch the docs and `deploy.sh` to the existing project. Then `gcloud config set project <id>`.
 - [ ] Create project `apprentice-aibc`, link billing
 - [ ] Enable APIs: `run`, `firestore`, `storage`, `secretmanager`, `modelarmor`, `sheets`, `iamcredentials`, `cloudbuild`, `artifactregistry`
 - [ ] Firestore (Native) in `asia-south1`; rules deny all client access (SPEC §2)
@@ -42,8 +43,9 @@ Split:
   - [ ] Sensitive Data Protection basic. Test whether bank-account numbers are caught; if not, switch to advanced with FINANCIAL_ACCOUNT_NUMBER and IBAN_CODE
   - [ ] Malicious URLs on
   - [ ] RAI, MEDIUM_AND_ABOVE
-- [ ] Local dev credentials: `gcloud auth application-default login`; put `GEMINI_API_KEY` in `.env` (never commit it)
-- [ ] **Live spike (notebook):** ephemeral token + `gemini-3.8-live` + one frame + `log_deviation` tool call. **AC:** a tool call arrives in a script.
+- [x] ~~Put `GEMINI_API_KEY` in `.env` (never commit it)~~
+- [ ] Local dev credentials: `gcloud auth application-default login`
+- [ ] **Live spike:** ephemeral token + `gemini-3.8-live` + one frame + `log_deviation` tool call. **AC:** a tool call arrives in a script. Half done: a real token with the full config opens a Live session (`test_live_smoke.py`); the frame + tool call part is still to test. Needs only the Gemini key, not A0.
 
 ### A1. Backend foundation
 - [x] ~~`contract.py` (SPEC §1), `scripts/export_schema.py`, `make types`~~
@@ -63,7 +65,7 @@ Split:
 - [ ] Store the SOP in `workspaces/live/sop/`: run `uv run python -m scripts.make_synthetic --upload-sop` once A0 (Firestore + ADC) is done
 
 ### A2. REST API (SPEC §3). The frontend already calls all of these.
-- [x] ~~`GET /api/me`~~ (`is_demo_expert` = email matches `EXPERT_EMAIL` env)
+- [x] ~~`GET /api/me`~~ (`is_demo_expert` = verified email matching `EXPERT_EMAIL`; the UI uses it to gate the live workspace)
 - [x] ~~`POST /api/sessions`, `GET /api/sessions?ws=`, `GET /api/sessions/{id}` (session + segments + deviations + diff)~~
 - [x] ~~`POST /api/sessions/{id}/upload-url` (V4 signed PUT, 15 min), `/finalize`, `/process` (202 + `asyncio.create_task`)~~ (finalize checks the object exists; real signing needs A0's bucket + `iam.serviceAccountTokenCreator`)
 - [x] ~~`GET /api/sessions/{id}/video-url` (signed GET, 1 h). Must also work **without login for workspace `demo`**.~~ (anonymous → demo only; signed in → live)
@@ -72,11 +74,13 @@ Split:
 - [x] ~~`POST /api/variants/discover`, `GET /api/variants`~~
 - [x] ~~`POST /api/graph/build`, `GET /api/graph?ws=`~~
 - [x] ~~`POST /api/exam/generate`, `PUT /api/exam/cases/{id}/label`, `POST /api/exam/run`, `GET /api/exam/report/{id}`, `GET /api/exam/reports/latest?ws=`~~
+- [x] ~~`GET /api/exam/cases`, `GET /api/exam/runs?case_id=&report_id=`~~ (the two shared gaps below)
 - [x] ~~`POST /api/sheets/snapshot` (+ SheetDiff when `phase=after`)~~
-- [x] ~~`GET /api/demo/bundle` (public), `POST /api/admin/seed-demo` (admin uid only)~~ (`ADMIN_UIDS` env; `scripts/seed_demo.py` loads the same seed directly)
+- [x] ~~`GET /api/demo/bundle` (public), `POST /api/admin/seed-demo` (admin uid only)~~ (`ADMIN_UIDS` env; `scripts/seed_demo.py` loads the same seed directly; the bundle also carries segments, deviations, the report's exam cases and agent runs)
 - Background work runs through: `pipeline.segment.process_session`, `pipeline.variants.discover`, `pipeline.graph.build`, `exam.scenarios.generate`, `exam.report.run_exam`. Background failures: a processed session goes `failed` with the error, an exam run's `GET /exam/report/{id}` returns 500 with the error, and discover/build only log it.
 - Access: everything except `/api/me`, `/api/health` and the demo routes requires the expert (`EXPERT_EMAIL`, verified email; unset = refuse all). Set `EXPERT_EMAIL` and `ADMIN_UIDS` in the deploy env.
 - `POST /api/sessions/{id}/process?force=true` restarts a session stuck in `processing`.
+- Laptop-only sign-in bypass for UI work before Firebase: `LOCAL_DB` + `DEV_USER_EMAIL` (never on Cloud Run). No `BUCKET` → upload returns 503 with the reason.
 
 ### A3. Live backend (SPEC §4)
 - [x] ~~`prompts/live_system.md` (persona, SOP verbatim, rules, "Thanks, noted.", guardrail)~~
@@ -143,7 +147,7 @@ Split:
 ### A8. Demo seed and wrap-up
 - [x] ~~`scripts/export_demo.py --from live` → `fixtures/demo_seed.json` (SPEC §8)~~ (round-trip tested)
 - [x] ~~`scripts/seed_demo.py` / `make seed-demo` into workspace `demo`~~ (running it needs A0)
-- [ ] README (setup, architecture, eval results); bug fixes only after Oct 17, 18:00. Setup and architecture done; eval results pending the real run.
+- [ ] README (setup, architecture, eval results); bug fixes only after Oct 17, 18:00. Setup, architecture, laptop pipeline, local UI and container sections done; eval results pending the real run.
 
 ---
 
@@ -152,14 +156,14 @@ Split:
 ### B0. Setup (Oct 13)
 - [x] ~~Repo, AGENTS.md / CLAUDE.md, docs~~
 - [x] ~~Vite + React + TS skeleton, FastAPI skeleton~~
-- [ ] Install pnpm globally (`npm i -g pnpm`) so `make setup` / `make dev` work
+- [x] ~~Install pnpm globally (`npm i -g pnpm`) so `make setup` / `make dev` work~~
 - [ ] Firebase project + Google sign-in; set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID` at build time
 - [ ] Demo Google account; OAuth consent screen (External, Testing, test user = demo account); OAuth client ID → `VITE_GOOGLE_CLIENT_ID` (Connect Sheet)
 - [ ] Bucket `apprentice-recordings-<suffix>` in `asia-south1` + CORS (PUT/GET from the service URL and `localhost:5173`)
-- [ ] Synthetic Sheet "AP Queue – Oct" (4 tabs) + Gmail emails from a second test account, using A's `make_synthetic.py` output
+- [ ] Synthetic Sheet "AP Queue – Oct" (4 tabs: import `data/synthetic/invoices.csv`, `vendor_master.csv`, `pos.csv`, `consignment_statement.csv`) + the 14 emails in `data/synthetic/emails.json` sent from a second test account. No cloud needed; blocks the first real recording.
 - [ ] **AC:** deployed hello page; sign-in works; the expert can do one dry-run session
 
-### B1. Frontend (built against fixtures)
+### B1. Frontend
 - [x] ~~API client (`src/api/client.ts`) for every SPEC §3 endpoint; tokens in memory only~~
 - [x] ~~Firebase Auth with in-memory persistence~~
 - [x] ~~Sessions list and session detail (steps, clip jump, departures from the SOP, sheet diff, quarantine badge)~~
@@ -172,17 +176,25 @@ Split:
 - [x] ~~Exam: arm summary, pilot charts, per-case table, labelling, run exam~~
 - [x] ~~Demo mode at `/demo/` (no login, read-only, falls back to fixtures)~~
 - [x] ~~Connect Sheet (GIS token client → Invoices tab → snapshot)~~
-- [x] ~~Google-style theme (Roboto, Material colours, status chips), light/dark, responsive~~
-- [x] ~~Render test per view + parser and graph-layout checks (`pnpm test`)~~
-- [ ] Switch off fixtures and run each view against A's live endpoints as they land
+- [x] ~~UI rebuilt on shadcn/ui (Oct 16), replacing the earlier hand-written Google/Material CSS:~~
+  - [x] ~~Tailwind v4 + shadcn (`radix-nova` preset, `components.json`), components in `src/components/ui/`, lucide icons, Geist font~~
+  - [x] ~~Theme tokens in `src/index.css`: charcoal dark by default, light mode toggle (remembered), teal brand, blue/orange chart colours~~
+  - [x] ~~Collapsible sidebar shell with a top bar; demo banner moved into the top bar~~
+  - [x] ~~New Overview dashboard (exam result + per-case chart, questions answered, graph and trap stats, question-type donut, top patterns, recent sessions, activity)~~
+  - [x] ~~Every view moved to Card / Table / Badge / Tabs / Select / Dialog / Alert / Empty~~
+  - [x] ~~Checked by screenshots at desktop, 1000 px and phone width, in dark and light~~
+- [x] ~~Render test per view + parser and graph-layout checks (`pnpm test`; 12 tests incl. Overview and the exam comparison)~~
+- [ ] Switch off fixtures and run each view against A's live endpoints as they land. Possible before A0: local backend with `LOCAL_DB` + `DEV_USER_EMAIL`, frontend with `VITE_DEV_AUTH=1` (README).
 - [ ] Manual Chrome checklist: PiP opens; recording indicator; Stop uploads within 30 s for a 4-minute session; live probe appears within 15 s
 - [ ] Test Connect Sheet with the real demo Sheet (drop it if it doesn't work by Oct 15, 18:00)
-- [ ] Polish empty and error states with real backend errors
+- [x] ~~Polish empty and error states with real backend errors~~ (backend messages shown as-is; 403 → "this account can't open the live workspace" screen via `/api/me`; exam poller stops on API errors other than 404 and retries network blips; no bucket → 503 with the reason)
+- [x] ~~Exam: labelled cases survive a reload (`GET /api/exam/cases`); "Compare reasoning" shows both agents' runs side by side (`GET /api/exam/runs`), also in the demo (bundle + `fixtures/exam_cases.json`, `agent_runs.json`); runs blocked by Model Armor are never shown as reasoning~~
+- [ ] Keep AGENTS.md in step with the UI: its stack line still lists `react-cytoscapejs` (removed; plain `cytoscape` is used) and says "no UI-kit churn" (shadcn/ui is now the UI kit). Shared file: agree the wording, then edit.
 
 ### B2. Deploy (Cloud Run)
 - [x] ~~`Dockerfile` and `scripts/deploy.sh` written~~
-- [ ] **Fix the Dockerfile:** the web stage must `COPY fixtures fixtures`. Demo mode imports `../fixtures/*.json`, so the frontend build fails without it.
-- [ ] Pass the `VITE_*` values into the web build stage (build args or a non-secret `.env.production`)
+- [x] ~~**Fix the Dockerfile:** the web stage must `COPY fixtures fixtures`.~~ Also: `.dockerignore` / `.gcloudignore` (no `.env`, no host `node_modules`), pnpm 9 + uv 0.9.26 pinned to the lockfiles, non-root user. Built and smoke-tested locally (`/api/health`, `/`, `/demo/` → 200).
+- [x] ~~Pass the `VITE_*` values into the web build stage~~ (`scripts/deploy.sh` writes the git-ignored `frontend/.env.production`; it now also requires `EXPERT_EMAIL` and `ADMIN_UIDS`)
 - [ ] First deploy with `BUCKET=... make deploy`; confirm `/api/health`, `/`, `/demo/` on the service URL
 - [ ] Deploy every day at end of day IST and post the URL in team chat
 - [ ] **AC (Oct 16):** `/demo/` works logged-out in incognito and loads in under 3 s
@@ -197,12 +209,13 @@ Split:
 
 ## Shared: decisions needed between A and B
 
-Four API gaps the frontend already works around. Agree on each, then update `contract.py` or SPEC §3 and run `make types`.
+The four API gaps are settled. All were additive response shapes, so `contract.py` didn't change and no `make types` run was needed.
 - [x] ~~`GET /api/probes` should include each probe's `answer` (ProbeAnswer). The UI reads an optional `answer` field.~~ Done in A2 (response shape only, no contract change).
-- [ ] Add `GET /api/exam/cases` so labelled cases survive a page reload. Backend done in A2; the Exam page doesn't call it yet (B).
+- [x] ~~Add `GET /api/exam/cases` so labelled cases survive a page reload.~~ Backend in A2, Exam page uses it.
 - [x] ~~`GET /api/demo/bundle` should also return `segments` and `deviations` keyed by session id, so demo session pages aren't empty.~~ Done in A2.
-- [ ] Expose agent runs (for example `GET /api/exam/runs?case_id=`) so the exam page can show both agents' reasoning side by side (PRD §13 beat 2:00–2:25). Backend done in A2 (`GET /api/exam/runs?case_id=`); UI not yet (B).
-- [ ] Contract freeze v1 at Oct 14, 09:30. `contract.py` already exists; freeze it after the four gaps above are settled.
+- [x] ~~Expose agent runs so the exam page can show both agents' reasoning side by side (PRD §13 beat 2:00–2:25).~~ `GET /api/exam/runs?case_id=&report_id=`; "Compare reasoning" on the exam page.
+- [ ] Contract freeze v1: the gaps are settled and `contract.py` hasn't changed since; confirm the freeze between A and B.
+- [ ] Project id: `apprentice-aibc` (docs) vs `aibuildercup-india-2026` (current gcloud default). Pick one before A0 (see A0).
 
 ## Cut order if behind (SPEC §11)
 Live → Connect Sheet → probe depth (1 per deviation) → scenario count (8 → 6, keep all traps).

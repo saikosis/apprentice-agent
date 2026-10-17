@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { rowsToInvoices } from "../recorder/sheets";
@@ -95,5 +95,40 @@ describe("graph layout", () => {
     expect(pos.get("n-c1")!.x).toBeLessThan(pos.get("n-x1")!.x);
     expect(pos.get("n-x1")!.x).toBeLessThan(pos.get("n-g1")!.x);
     expect(pos.get("n-x2")!.y).toBeGreaterThan(pos.get("n-x1")!.y);
+  });
+});
+
+describe("exam", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("compares both agents' reasoning on a case (demo)", async () => {
+    demo(<Exam />);
+    const buttons = await screen.findAllByRole("button", { name: "Compare reasoning" });
+    fireEvent.click(buttons[6]); // c-07, the renumbered duplicate
+    expect(await screen.findByText(/same 25 LED panels as INV-1050/)).toBeTruthy();
+    expect(screen.getByText(/so §3.4 passes/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Hide reasoning" }).getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("restores labelled cases after a reload (live)", async () => {
+    const cases = (await import("../../../fixtures/exam_cases.json")).default;
+    const reply = (status: number, body: unknown) =>
+      Promise.resolve(new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", (url: string) =>
+      url.startsWith("/api/exam/cases")
+        ? reply(200, cases.slice(0, 1))
+        : url.startsWith("/api/sessions")
+          ? reply(200, [])
+          : reply(404, { error: { code: "not_found", message: "No exam has run yet." } }),
+    );
+    render(
+      <WsContext.Provider value={{ ws: "live", readOnly: false }}>
+        <ClipProvider>
+          <Exam />
+        </ClipProvider>
+      </WsContext.Provider>,
+    );
+    expect(await screen.findByDisplayValue(/reconcile against the statement tab/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Saved" })).toBeTruthy();
   });
 });
