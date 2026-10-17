@@ -33,7 +33,7 @@ Apprentice watches an expert work in Google Sheets + Gmail (screen + voice), ask
 - Python 3.12, `uv`; FastAPI, uvicorn, pydantic v2, `google-genai` (latest 2026-10), `google-cloud-firestore`, `google-cloud-storage`, `google-cloud-modelarmor`, `firebase-admin`, `pytest`, `ruff`, `mypy` (lenient).
 - Node 22, pnpm; Vite, React 19, TypeScript strict, `@google/genai` (latest 2026-10), `firebase` (Auth), `cytoscape` + `react-cytoscapejs`, `recharts`, `json-schema-to-typescript`.
 - Models (env-overridable): `LIVE_MODEL=gemini-3.8-live`, `FLASH_MODEL=gemini-3.8-flash`, `PRO_MODEL=gemini-3.1-pro-preview` (optional, graph builder only).
-- GCP: project `apprentice-aibc`, region `asia-south1`; Cloud Run service `apprentice`; bucket `apprentice-recordings-<suffix>`; Firestore (Native) asia-south1; Model Armor template `apprentice-default` in asia-south1.
+- GCP: project `aibuildercup-india-2026`, region `asia-south1`; Cloud Run service `apprentice`; bucket `apprentice-recordings-aibc2026`; Firestore (Native) asia-south1; Model Armor template `apprentice-default` in asia-south1.
 
 ## Commands
 ````
@@ -46,7 +46,7 @@ make build        # pnpm --dir frontend build → backend/app/static
 make seed-demo    # uv run python scripts/seed_demo.py fixtures/demo_seed.json
 make deploy       # scripts/deploy.sh (gcloud run deploy --source .)
 ````
-Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --region asia-south1 --allow-unauthenticated --min-instances 1 --no-cpu-throttling --timeout 900 --memory 1Gi --service-account apprentice-run@apprentice-aibc.iam.gserviceaccount.com --set-secrets GEMINI_API_KEY=gemini-api-key:latest --set-env-vars GCP_PROJECT=apprentice-aibc,BUCKET=...,MA_LOCATION=asia-south1,MA_TEMPLATE=apprentice-default`
+Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --region asia-south1 --allow-unauthenticated --min-instances 1 --no-cpu-throttling --timeout 900 --memory 1Gi --service-account apprentice-run@aibuildercup-india-2026.iam.gserviceaccount.com --set-secrets GEMINI_API_KEY=gemini-api-key:latest --set-env-vars GCP_PROJECT=aibuildercup-india-2026,BUCKET=apprentice-recordings-aibc2026,MA_LOCATION=asia-south1,MA_TEMPLATE=apprentice-default,EXPERT_EMAIL=...,ADMIN_UIDS=...`. One-time Google Cloud setup: `docs/Cloud_Setup.md`.
 
 ## Coding conventions
 - Python: full type hints; Pydantic v2 models only (`model_config = ConfigDict(extra="forbid")`); async FastAPI handlers; ruff defaults + isort; no bare `except`; log with `structlog`/`logging` JSON.
