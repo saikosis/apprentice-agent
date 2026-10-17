@@ -70,10 +70,6 @@ async def _discover(store: Store) -> list[Variant]:
                 "deviations": [d.model_dump() for d in devs],
             }
         )
-    try:  # display only, and never a reason to lose the patterns
-        await observe(store, payload, sop)
-    except Exception:
-        log.exception("observed workflow failed")
     out = await gemini.structured(
         gemini.FLASH_MODEL,
         "variants",
@@ -84,6 +80,10 @@ async def _discover(store: Store) -> list[Variant]:
     before = {v.name.lower() for v in await store.variants.list()}
     found = await store.variants.replace(normalize(out.output.variants, known))
     await probes.for_variants(store, [v for v in found if v.name.lower() not in before], sop)
+    try:  # after the patterns, so a slow or failed call never delays or loses them; display only
+        await observe(store, payload, sop)
+    except Exception:
+        log.exception("observed workflow failed")
     return found
 
 
@@ -96,7 +96,15 @@ async def observe(store: Store, sessions: list[dict[str, object]], sop: SOP) -> 
         ObservedWorkflow,
         values=domains.values(store.scenario, SOP=sop.full_text),
     )
-    w = out.output
+    real = {str(s["session_id"]) for s in sessions}  # model-written ids: keep only real sessions
+    w = out.output.model_copy(
+        update={
+            "steps": [
+                st.model_copy(update={"session_ids": [i for i in st.session_ids if i in real]})
+                for st in out.output.steps
+            ]
+        }
+    )
     mod = await armor.screen_output("\n".join(st.text for st in w.steps), "workflow", store.root)
     await store.moderation.put(mod)
     result = w.model_copy(

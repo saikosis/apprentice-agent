@@ -337,7 +337,7 @@ def test_pattern_refresh_writes_the_observed_workflow_even_without_patterns(llm:
                     "text": "Checks the statement tab",
                     "sop_rule": None,
                     "in_sop": False,
-                    "session_ids": ["s-1"],
+                    "session_ids": ["s-1", "s-ghost"],
                 },
             ]
         },
@@ -349,3 +349,30 @@ def test_pattern_refresh_writes_the_observed_workflow_even_without_patterns(llm:
         "Checks the statement tab",
     ]
     assert w.prompt_version.startswith("observed_workflow@") and w.built_at is not None
+    assert w.steps[1].session_ids == ["s-1"]  # ids the model made up are dropped
+
+
+def test_a_failed_summary_never_fails_the_session(llm: FakeLLM, monkeypatch: Any) -> None:
+    from backend.app.pipeline import summary
+
+    store = Store("live", FakeDb())
+    asyncio.run(store.sop.put(build_sop()))
+    s = Session(
+        id="s-1",
+        workspace="live",
+        expert_uid="u",
+        kind="training",
+        status="processing",
+        started_at=NOW,
+    )
+    asyncio.run(store.sessions.put(s))
+    llm.reply("segmenter", {"segments": []})
+    llm.reply("deviations", {"deviations": []})
+
+    async def boom(*a: Any, **k: Any) -> None:
+        raise RuntimeError("summary model down")
+
+    monkeypatch.setattr(summary, "summarise", boom)
+    asyncio.run(segment.process_session(store, "s-1", video="fake video part"))
+    assert asyncio.run(store.sessions.get("s-1")).status == "processed"  # type: ignore[union-attr]
+    assert asyncio.run(store.get_summary("s-1")) is None

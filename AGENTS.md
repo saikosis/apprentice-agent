@@ -79,7 +79,7 @@ Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --reg
 - Do not add new cloud services, databases, vector stores or frameworks without both people agreeing.
 
 ## Prompts
-- One file per call in `/prompts`: `segmenter.md, deviations.md, variants.md, probes.md, graph.md, scenarios.md, arm_sop.md, arm_graph.md, judge.md, live_system.md`.
+- One file per call in `/prompts`: `segmenter.md, deviations.md, variants.md, probes.md, graph.md, scenarios.md, arm_sop.md, arm_graph.md, judge.md, live_system.md, summary.md, observed_workflow.md` (the last two are display only).
 - Front-matter: `id`, `version` (int), `model`, `thinking_level`, `output_schema` (Pydantic class name). Bump `version` on any change; outputs store `prompt_id@version`.
 - Use `{{SOP}}`, `{{SEGMENTS}}`-style placeholders filled by `app/prompts.py`.
 - Prompts are scenario-neutral: every one has `{{DOMAIN}}`, filled from `app/domains/<scenario>/domain.md` via `domains.values(...)`. The part after `<!-- exam-only` (trap definitions) goes only to `scenarios` and `judge`. Scenarios: `docs/Scenarios.md`.
