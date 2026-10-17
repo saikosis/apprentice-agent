@@ -9,6 +9,7 @@ import type {
   ObservedWorkflow,
   Probe,
   ProbeAnswer,
+  SandboxInfo,
   Segment,
   ScenarioInfo,
   Session,
@@ -257,7 +258,9 @@ export function videoUrl(sessionId: string): Promise<string> {
 }
 
 // ---- writes (live workspace only) ----
-export const me = () => api<{ uid: string; email: string; is_demo_expert: boolean }>("/api/me");
+export const me = () =>
+  api<{ uid: string; email: string; is_demo_expert: boolean; role: "expert" | "judge" | "none" }>("/api/me");
+export const joinSandbox = (code: string) => post<SandboxInfo>("/api/sandbox/join", { code });
 export const answerProbe = (id: string, text: string, source: ProbeAnswer["source"]) =>
   post<{ probe: Probe; answer: ProbeAnswer }>(`/api/probes/${id}/answer`, { text, source });
 export const editAnswer = (id: string, text: string) =>

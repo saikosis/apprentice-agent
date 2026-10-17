@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from backend.app import store
 from backend.app.contract import (
     AgentRun,
     ExamCase,
@@ -624,3 +625,54 @@ def test_connect_sheet_diffs_any_tab_by_the_scenarios_id_column(api: Api) -> Non
 def test_observed_workflow_is_null_until_patterns_run(api: Api) -> None:
     r = api.client.get("/api/observed-workflow")
     assert r.status_code == 200 and r.json() is None
+
+
+# ---- judge sandbox (docs/Judge_Sandbox.md, ticket 04) ----
+def as_user(email: str, uid: str) -> None:
+    from backend.app.routers import auth
+
+    u = auth.User(uid=uid, email=email, email_verified=True)
+    app.dependency_overrides[auth.require_user] = lambda: u
+    app.dependency_overrides[auth.optional_user] = lambda: u
+
+
+def test_a_stranger_needs_the_judge_code(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SANDBOX_CODE", "river-42")
+    as_user("judge1@example.com", "u-j1")
+    assert api.client.get("/api/me").json()["role"] == "none"
+    r = api.client.get("/api/sessions")
+    assert r.status_code == 403 and "judge code" in r.json()["error"]["message"]
+    assert api.client.post("/api/sandbox/join", json={"code": "wrong"}).status_code == 403
+    r = api.client.post("/api/sandbox/join", json={"code": "river-42"})
+    assert r.status_code == 200 and r.json()["uid"] == "u-j1"
+    assert api.client.get("/api/me").json()["role"] == "judge"
+    assert api.client.get("/api/sessions").status_code == 200
+
+
+def test_no_code_configured_means_no_sandbox(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SANDBOX_CODE", raising=False)
+    as_user("judge1@example.com", "u-j1")
+    assert api.client.post("/api/sandbox/join", json={"code": ""}).status_code == 403
+
+
+def test_each_judge_works_in_a_private_sandbox(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SANDBOX_CODE", "river-42")
+    for email, uid in (("judge1@example.com", "u-j1"), ("judge2@example.com", "u-j2")):
+        as_user(email, uid)
+        api.client.post("/api/sandbox/join", json={"code": "river-42"})
+    as_user("judge1@example.com", "u-j1")
+    sid = new_session(api)["id"]
+    r = api.client.post(
+        f"/api/sessions/{sid}/upload-url", json={"content_type": "video/webm", "size_bytes": 1000}
+    )
+    assert r.json()["gcs_uri"] == f"gs://test-bucket/sandbox-u-j1/{sid}.webm"
+    stored = asyncio.run(store.Store("sandbox", api.db, uid="u-j1").sessions.get(sid))
+    assert stored is not None and stored.workspace == "sandbox"
+    # asking for the live workspace still lands in the judge's own sandbox
+    assert [s["id"] for s in api.client.get("/api/sessions?ws=live").json()] == [sid]
+    as_user("judge2@example.com", "u-j2")
+    assert api.client.get("/api/sessions").json() == []
+    assert api.client.get(f"/api/sessions/{sid}").status_code == 404
+    as_user("expert@example.com", "u-expert")
+    assert api.client.get("/api/sessions").json() == []  # the expert's live workspace is untouched
+    assert api.client.get("/api/me").json()["role"] == "expert"

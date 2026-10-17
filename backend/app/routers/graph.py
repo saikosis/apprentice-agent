@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from backend.app import jobs
 from backend.app.contract import DecisionGraph, ObservedWorkflow, Variant
 from backend.app.pipeline import graph, variants
-from backend.app.store import LiveStore, ReadStore
+from backend.app.workspace import LiveStore, ReadStore
 
 router = APIRouter(tags=["graph"])
 

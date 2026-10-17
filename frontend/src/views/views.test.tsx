@@ -5,6 +5,7 @@ import { SCENARIOS, currentScenario, subscribeScenario, switchScenario } from ".
 import { rowsToRecords } from "../recorder/sheets";
 import { ClipProvider, WsContext } from "../ui";
 import { Discovery } from "./Discovery";
+import { JoinSandbox } from "./JoinSandbox";
 import { Exam } from "./Exam";
 import { Overview } from "./Overview";
 import { GraphView } from "./Graph";
@@ -161,5 +162,32 @@ describe("exam", () => {
     );
     expect(await screen.findByDisplayValue(/reconcile against the statement tab/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Saved" })).toBeTruthy();
+  });
+});
+
+describe("judge code", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("redeems the code with the server and reports a wrong one", async () => {
+    const reply = (status: number, body: unknown) =>
+      Promise.resolve(new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
+    const sent: unknown[] = [];
+    vi.stubGlobal("fetch", (_url: string, init: RequestInit) => {
+      const { code } = JSON.parse(String(init.body)) as { code: string };
+      sent.push(code);
+      return code === "river-42"
+        ? reply(200, { uid: "u", email: "j@example.com", created_at: "2026-10-17T10:00:00Z" })
+        : reply(403, { error: { code: "forbidden", message: "That judge code isn't right." } });
+    });
+    const joined = vi.fn();
+    render(<JoinSandbox email="j@example.com" onJoined={joined} />);
+    const input = screen.getByLabelText("Judge code");
+    fireEvent.change(input, { target: { value: "wrong" } });
+    fireEvent.click(screen.getByRole("button", { name: "Open my sandbox" }));
+    expect(await screen.findByText("That judge code isn't right.")).toBeTruthy();
+    fireEvent.change(input, { target: { value: "river-42" } });
+    fireEvent.click(screen.getByRole("button", { name: "Open my sandbox" }));
+    await vi.waitFor(() => expect(joined).toHaveBeenCalled());
+    expect(sent).toEqual(["wrong", "river-42"]);
   });
 });

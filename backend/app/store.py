@@ -8,9 +8,9 @@ import builtins
 import os
 import uuid
 from functools import lru_cache
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
-from fastapi import Depends, HTTPException
+from fastapi import HTTPException
 from google.cloud import firestore
 from pydantic import BaseModel
 
@@ -37,7 +37,7 @@ from backend.app.contract import (
     Variant,
 )
 
-Ws = Literal["demo", "live"]
+Ws = Literal["demo", "live", "sandbox"]
 
 
 @lru_cache
@@ -146,11 +146,15 @@ class Store:
         *,
         allow_demo_writes: bool = False,
         scenario: Scenario = "ap",
+        uid: str | None = None,
     ) -> None:
         self.ws, self.db, self.scenario = ws, db if db is not None else default_db(), scenario
         self.writable = ws != "demo" or allow_demo_writes
+        if ws == "sandbox" and not uid:
+            raise ValueError("a sandbox store needs the judge's uid")
+        base = f"sandbox-{uid}" if ws == "sandbox" else ws
         # AP keeps the original roots (workspaces/live, workspaces/demo); other scenarios get their own.
-        self.root_name = ws if scenario == "ap" else f"{scenario}-{ws}"
+        self.root_name = base if scenario == "ap" else f"{scenario}-{base}"
         root = f"workspaces/{self.root_name}"
         self.root = root
         self.sop = Coll(self, f"{root}/sop", SOP)
@@ -266,17 +270,3 @@ class Store:
 
 def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8]}"
-
-
-# ---- FastAPI dependencies: reads take ?ws= (default live); writes always go to live.
-# Both take ?scenario= (default ap), so every endpoint is scenario-scoped through these two.
-def _read_store(ws: Ws = "live", scenario: Scenario = "ap") -> Store:
-    return Store(ws, scenario=scenario)
-
-
-def _live_store(scenario: Scenario = "ap") -> Store:
-    return Store("live", scenario=scenario)
-
-
-ReadStore = Annotated[Store, Depends(_read_store)]
-LiveStore = Annotated[Store, Depends(_live_store)]

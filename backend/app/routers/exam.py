@@ -12,7 +12,8 @@ from backend.app import errors, jobs
 from backend.app.contract import AgentRun, Decision, ExamCase, ExamReport, ExpertLabel
 from backend.app.exam import report, scenarios
 from backend.app.routers.auth import CurrentUser
-from backend.app.store import LiveStore, ReadStore, new_id
+from backend.app.store import new_id
+from backend.app.workspace import LiveStore, ReadStore
 
 router = APIRouter(tags=["exam"])
 

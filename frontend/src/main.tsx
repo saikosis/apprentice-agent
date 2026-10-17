@@ -41,6 +41,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import "./index.css";
 import { ClipProvider, ErrorNote, WsContext, useRoute } from "./ui";
 import { Discovery } from "./views/Discovery";
+import { JoinSandbox } from "./views/JoinSandbox";
 import { Probes } from "./views/Probes";
 import { SessionDetail } from "./views/SessionDetail";
 import { Sessions } from "./views/Sessions";
@@ -242,6 +243,7 @@ function App() {
   // tied to the account it was asked for, so a late reply or an account switch can't gate the wrong one.
   const account = DEV_AUTH ? "dev" : (user?.uid ?? null);
   const [answer, setAnswer] = useState<{ account: string; who: Me | { error: string } } | null>(null);
+  const [meNonce, setMeNonce] = useState(0); // bumped after the judge code is accepted
   useEffect(() => {
     if (SKIP_AUTH || !account) return;
     let current = true;
@@ -252,7 +254,7 @@ function App() {
     return () => {
       current = false;
     };
-  }, [account]);
+  }, [account, meNonce]);
   const who = answer && answer.account === account ? answer.who : undefined;
 
   const ws = IS_DEMO ? "demo" : "live";
@@ -269,7 +271,27 @@ function App() {
     if (!signedIn) return <SignIn />;
     if (who === undefined) return checking("Checking access");
     if ("error" in who) return <NotExpert error={who.error} />;
-    if (!who.is_demo_expert) return <NotExpert email={who.email} />;
+    if (who.role === "none")
+      return (
+        <main className="flex min-h-svh items-center justify-center p-4">
+          <JoinSandbox
+            email={who.email}
+            onJoined={() => setMeNonce((n) => n + 1)}
+            footer={
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" asChild>
+                  <a href="/demo/">Open the read-only demo</a>
+                </Button>
+                {!DEV_AUTH && (
+                  <Button variant="ghost" onClick={() => void signOut()}>
+                    Use another account
+                  </Button>
+                )}
+              </div>
+            }
+          />
+        </main>
+      );
   }
   const email = user?.email ?? (who && "email" in who ? who.email : undefined);
 
@@ -290,7 +312,13 @@ function App() {
                   </span>
                 </div>
               ) : (
-                <span className="text-sm text-muted-foreground">Live workspace</span>
+                <span className="text-sm text-muted-foreground">
+                  {who && "role" in who && who.role === "judge" ? (
+                    <Badge variant="secondary">Judge sandbox</Badge>
+                  ) : (
+                    "Live workspace"
+                  )}
+                </span>
               )}
               <div className="ml-auto flex items-center gap-2">
                 <ThemeToggle />

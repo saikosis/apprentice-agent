@@ -18,6 +18,25 @@ Arm = Literal["sop_only", "sop_graph"]
 Scenario = Literal["ap", "essays", "volunteers"]  # domain packs in backend/app/domains/
 
 
+class SandboxUsage(M):
+    recordings: int = 0
+    graph_builds: int = 0
+    exam_runs: int = 0
+    case_generations: int = 0
+
+
+class SandboxInfo(M):
+    """A judge's sandbox (docs/Judge_Sandbox.md). Stored at sandboxes/{uid}; global counts filled on read."""
+
+    uid: str
+    email: str
+    created_at: datetime
+    usage: SandboxUsage = SandboxUsage()
+    limit_each: int = 5
+    global_today: int = 0
+    global_limit: int = 100
+
+
 class ScenarioInfo(M):
     """What the UI needs to know about a scenario (backend/app/domains/<id>/config.json)."""
 
@@ -69,7 +88,7 @@ class ModerationResult(M):
 
 class Session(M):
     id: str
-    workspace: Literal["demo", "live"]
+    workspace: Literal["demo", "live", "sandbox"]
     expert_uid: str
     kind: Literal["training", "heldout"]
     status: Literal["created", "uploading", "uploaded", "processing", "processed", "failed"]

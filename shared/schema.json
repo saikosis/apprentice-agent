@@ -77,6 +77,12 @@
     "SOPSection": {
       "$ref": "#/$defs/SOPSection"
     },
+    "SandboxInfo": {
+      "$ref": "#/$defs/SandboxInfo"
+    },
+    "SandboxUsage": {
+      "$ref": "#/$defs/SandboxUsage"
+    },
     "ScenarioInfo": {
       "$ref": "#/$defs/ScenarioInfo"
     },
@@ -1497,6 +1503,83 @@
       "title": "SOPSection",
       "type": "object"
     },
+    "SandboxInfo": {
+      "additionalProperties": false,
+      "description": "A judge's sandbox (docs/Judge_Sandbox.md). Stored at sandboxes/{uid}; global counts filled on read.",
+      "properties": {
+        "uid": {
+          "title": "Uid",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "usage": {
+          "$ref": "#/$defs/SandboxUsage",
+          "default": {
+            "recordings": 0,
+            "graph_builds": 0,
+            "exam_runs": 0,
+            "case_generations": 0
+          }
+        },
+        "limit_each": {
+          "default": 5,
+          "title": "Limit Each",
+          "type": "integer"
+        },
+        "global_today": {
+          "default": 0,
+          "title": "Global Today",
+          "type": "integer"
+        },
+        "global_limit": {
+          "default": 100,
+          "title": "Global Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "created_at"
+      ],
+      "title": "SandboxInfo",
+      "type": "object"
+    },
+    "SandboxUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "recordings": {
+          "default": 0,
+          "title": "Recordings",
+          "type": "integer"
+        },
+        "graph_builds": {
+          "default": 0,
+          "title": "Graph Builds",
+          "type": "integer"
+        },
+        "exam_runs": {
+          "default": 0,
+          "title": "Exam Runs",
+          "type": "integer"
+        },
+        "case_generations": {
+          "default": 0,
+          "title": "Case Generations",
+          "type": "integer"
+        }
+      },
+      "title": "SandboxUsage",
+      "type": "object"
+    },
     "ScenarioInfo": {
       "additionalProperties": false,
       "description": "What the UI needs to know about a scenario (backend/app/domains/<id>/config.json).",
@@ -1721,7 +1804,8 @@
         "workspace": {
           "enum": [
             "demo",
-            "live"
+            "live",
+            "sandbox"
           ],
           "title": "Workspace",
           "type": "string"

@@ -24,7 +24,7 @@ from backend.app.contract import (
     SessionSummary,
     Variant,
 )
-from backend.app.routers.auth import CurrentUser, MaybeUser, is_expert
+from backend.app.routers.auth import CurrentUser, MaybeUser, role_of
 from backend.app.routers.probes import probe_rows
 from backend.app.store import Store, Ws
 
@@ -63,13 +63,16 @@ async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
     store = Store("demo", scenario=scenario)
     sessions = await store.sessions.list()
     (
-        (segs, devs, sums, variants, probes, graph, reports),
+        (segs, devs, sums),
+        (variants, probes, graph, reports),
         (cases, runs, observed),
     ) = await asyncio.gather(
         asyncio.gather(
             asyncio.gather(*(store.segments(s.id).list() for s in sessions)),
             asyncio.gather(*(store.deviations(s.id).list() for s in sessions)),
             asyncio.gather(*(store.get_summary(s.id) for s in sessions)),
+        ),
+        asyncio.gather(
             store.variants.list(),
             probe_rows(store),
             store.get_graph(),
@@ -101,15 +104,18 @@ async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
 async def video_url(
     session_id: str, user: MaybeUser, ws: Ws | None = None, scenario: Scenario = "ap"
 ) -> dict[str, str]:
-    """Signed GET, 1 h. Demo recordings are public; live ones need the expert's sign-in.
-
-    Without ?ws=, the expert gets live first and demo as a fallback (the /demo page sends no ws).
+    """Signed GET, 1 h. Demo recordings are public; the caller's own workspace (the expert's live one, a
+    judge's sandbox) needs their sign-in. Without ?ws=, own workspace first and demo as a fallback.
     """
-    order: list[Ws] = ["demo"] if ws == "demo" else ["live", "demo"] if ws is None else ["live"]
-    if "live" in order and not (user and is_expert(user)):
-        order.remove("live")
-    for name in order:
-        s = await Store(name, scenario=scenario).sessions.get(session_id)
+    role = await role_of(user) if user else "none"
+    own: list[Store] = []
+    if ws != "demo" and role == "expert":
+        own = [Store("live", scenario=scenario)]
+    elif ws != "demo" and role == "judge" and user:
+        own = [Store("sandbox", uid=user.uid, scenario=scenario)]
+    demo_store = [Store("demo", scenario=scenario)] if ws in (None, "demo") else []
+    for store in [*own, *demo_store]:
+        s = await store.sessions.get(session_id)
         if s and s.gcs_uri and s.status not in ("created", "uploading"):
             return {"url": await storage.signed_url(s.gcs_uri, "GET", VIDEO_URL_MINUTES)}
     raise HTTPException(404, f"No recording for session {session_id}.")

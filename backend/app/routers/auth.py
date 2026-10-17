@@ -3,7 +3,7 @@
 import os
 import threading
 from dataclasses import dataclass
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 import firebase_admin
 from fastapi import APIRouter, Depends, HTTPException
@@ -82,21 +82,39 @@ def is_expert(user: User) -> bool:
 
 CurrentUser = Annotated[User, Depends(require_user)]
 MaybeUser = Annotated[User | None, Depends(optional_user)]
+Role = Literal["expert", "judge", "none"]
 
 
-async def require_expert(user: CurrentUser) -> User:
-    """The live workspace belongs to the expert: any other Google account is refused (fails closed)."""
-    if not _experts():
-        raise HTTPException(403, "EXPERT_EMAIL isn't configured on this server.")
-    if not is_expert(user):
-        raise HTTPException(403, "Only the expert's account can use the live workspace.")
-    return user
+async def role_of(user: User) -> Role:
+    """The expert owns the live workspace; a judge (code redeemed) owns a private sandbox."""
+    from backend.app import sandbox
+
+    if is_expert(user):
+        return "expert"
+    return "judge" if await sandbox.get(user.uid) else "none"
+
+
+async def current_role(user: CurrentUser) -> Role:
+    return await role_of(user)
+
+
+CurrentRole = Annotated[Role, Depends(current_role)]  # cached per request by FastAPI
+
+
+async def require_member(role: CurrentRole) -> Role:
+    """Every data route: the expert or a judge. Anyone else is asked for the judge code (fails closed)."""
+    if role == "none":
+        raise HTTPException(
+            403, "This account isn't the expert's. Enter the judge code to use Apprentice."
+        )
+    return role
 
 
 @router.get("/me")
-async def me(user: CurrentUser) -> dict[str, object]:
+async def me(user: CurrentUser, role: CurrentRole) -> dict[str, object]:
     return {
         "uid": user.uid,
         "email": user.email,
-        "is_demo_expert": is_expert(user),
+        "is_demo_expert": role == "expert",
+        "role": role,
     }

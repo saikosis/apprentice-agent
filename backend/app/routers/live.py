@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from backend.app import domains, errors, gemini, prompts
 from backend.app.contract import SOP, Scenario
 from backend.app.routers.sessions import get_or_404
-from backend.app.store import LiveStore
+from backend.app.workspace import LiveStore
 
 router = APIRouter(tags=["live"])
 

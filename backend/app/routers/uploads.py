@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from backend.app import errors, storage
 from backend.app.contract import Session
 from backend.app.routers.sessions import get_or_404
-from backend.app.store import LiveStore
+from backend.app.workspace import LiveStore
 
 router = APIRouter(tags=["uploads"])
 

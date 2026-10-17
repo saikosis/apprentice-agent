@@ -1,5 +1,7 @@
 # 04. Judge code and private sandbox workspace
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: nothing

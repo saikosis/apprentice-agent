@@ -10,7 +10,8 @@ from backend.app import errors, jobs, ts
 from backend.app.contract import ClipRef, Deviation, Probe, Segment, Session
 from backend.app.pipeline import segment
 from backend.app.routers.auth import CurrentUser
-from backend.app.store import LiveStore, ReadStore, Store, new_id
+from backend.app.store import Store, new_id
+from backend.app.workspace import LiveStore, ReadStore
 
 router = APIRouter(tags=["sessions"])
 
@@ -50,7 +51,7 @@ async def get_or_404(store: Store, session_id: str) -> Session:
 async def create_session(body: NewSession, user: CurrentUser, store: LiveStore) -> Session:
     s = Session(
         id=new_id("s"),
-        workspace="live",
+        workspace=store.ws,  # type: ignore[arg-type]
         expert_uid=user.uid,
         kind=body.kind,
         status="created",

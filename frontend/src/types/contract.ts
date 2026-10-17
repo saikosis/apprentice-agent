@@ -163,6 +163,16 @@ export type Title1 = string;
 export type Text2 = string;
 export type Sections = SOPSection[];
 export type FullText = string;
+export type Uid = string;
+export type Email1 = string;
+export type CreatedAt2 = string;
+export type Recordings = number;
+export type GraphBuilds = number;
+export type ExamRuns = number;
+export type CaseGenerations = number;
+export type LimitEach = number;
+export type GlobalToday = number;
+export type GlobalLimit = number;
 export type Id11 = "ap" | "essays" | "volunteers";
 export type Title2 = string;
 export type ItemLabel = string;
@@ -186,7 +196,7 @@ export type ModerationId1 = string | null;
 export type Quarantined = boolean;
 export type Segments = Segment[];
 export type Id13 = string;
-export type Workspace = "demo" | "live";
+export type Workspace = "demo" | "live" | "sandbox";
 export type ExpertUid = string;
 export type Kind1 = "training" | "heldout";
 export type Status2 = "created" | "uploading" | "uploaded" | "processing" | "processed" | "failed";
@@ -253,6 +263,8 @@ export interface Contract {
   ProbeList?: ProbeList;
   SOP?: SOP;
   SOPSection?: SOPSection;
+  SandboxInfo?: SandboxInfo;
+  SandboxUsage?: SandboxUsage1;
   ScenarioInfo?: ScenarioInfo;
   Segment?: Segment;
   SegmentList?: SegmentList;
@@ -499,6 +511,30 @@ export interface SOPSection {
   id: Id10;
   title: Title1;
   text: Text2;
+}
+/**
+ * A judge's sandbox (docs/Judge_Sandbox.md). Stored at sandboxes/{uid}; global counts filled on read.
+ */
+export interface SandboxInfo {
+  uid: Uid;
+  email: Email1;
+  created_at: CreatedAt2;
+  usage?: SandboxUsage;
+  limit_each?: LimitEach;
+  global_today?: GlobalToday;
+  global_limit?: GlobalLimit;
+}
+export interface SandboxUsage {
+  recordings?: Recordings;
+  graph_builds?: GraphBuilds;
+  exam_runs?: ExamRuns;
+  case_generations?: CaseGenerations;
+}
+export interface SandboxUsage1 {
+  recordings?: Recordings;
+  graph_builds?: GraphBuilds;
+  exam_runs?: ExamRuns;
+  case_generations?: CaseGenerations;
 }
 /**
  * What the UI needs to know about a scenario (backend/app/domains/<id>/config.json).
