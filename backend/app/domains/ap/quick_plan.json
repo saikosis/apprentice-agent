@@ -1,0 +1,29 @@
+{
+  "items": [
+    "INV-2101",
+    "INV-2102",
+    "INV-2103",
+    "INV-2104",
+    "INV-2105",
+    "INV-2106"
+  ],
+  "planted_items": {
+    "E1": [
+      "INV-2101",
+      "INV-2102"
+    ],
+    "E2": [
+      "INV-2103",
+      "INV-2104"
+    ],
+    "E3": [
+      "INV-2105",
+      "INV-2106"
+    ]
+  },
+  "rules": {
+    "E1": "Consignment vendor (Kaveri): approve after checking the Consignment Statement tab, with no PO",
+    "E2": "Urgent critical-vendor invoice of ₹1–2 lakh after the CFO's line-stoppage email: one approval",
+    "E3": "Resent duplicate (new number; same vendor, amount and items): reject"
+  }
+}

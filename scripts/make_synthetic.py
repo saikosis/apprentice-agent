@@ -127,6 +127,7 @@ class World:
     emails: list[Email]
     sessions: dict[str, dict[str, Any]]
     duplicates: list[tuple[str, str]] = field(default_factory=list)  # (original, renumbered resend)
+    quick: dict[str, Any] = field(default_factory=dict)  # the 6-item quick plan (judge sandbox)
 
 
 def build_sop() -> SOP:
@@ -217,7 +218,7 @@ def build() -> World:
             }
         )
 
-    def resend(orig_id: str, dup_id: str, day_gap: int) -> None:
+    def resend(orig_id: str, dup_id: str, day_gap: int, *, record: bool = True) -> None:
         o = invoices[orig_id]
         d = date.fromisoformat(o.invoice_date) + timedelta(days=day_gap)
         seq[o.vendor_id] += 7
@@ -229,7 +230,8 @@ def build() -> World:
                 "due_date": (d + timedelta(days=30)).isoformat(),
             }
         )
-        duplicates.append((orig_id, dup_id))
+        if record:
+            duplicates.append((orig_id, dup_id))
 
     duplicates: list[tuple[str, str]] = []
     # Planted rows first, so filler never takes their ids. Day = days after Oct 1.
@@ -287,6 +289,22 @@ def build() -> World:
         }
     )
 
+    # Quick plan (docs/Judge_Sandbox.md): each rule twice on new ids. Added last, so every row above
+    # (and the Sheet already built from them) stays exactly the same.
+    consignment("INV-2101", 10, 29_480.0)
+    consignment("INV-2102", 11, 33_120.0)
+    invoice("INV-2103", "V-003", 10, 126_000.0)
+    invoice("INV-2104", "V-003", 11, 171_500.0)
+    resend("INV-1061", "INV-2105", 4, record=False)
+    resend("INV-1064", "INV-2106", 5, record=False)
+    quick = quick_plan(
+        {
+            "E1": (["INV-2101", "INV-2102"], QUICK_RULES["E1"]),
+            "E2": (["INV-2103", "INV-2104"], QUICK_RULES["E2"]),
+            "E3": (["INV-2105", "INV-2106"], QUICK_RULES["E3"]),
+        }
+    )
+
     emails = build_emails(invoices, vendors)
     return World(
         build_sop(),
@@ -297,6 +315,7 @@ def build() -> World:
         emails,
         sessions,
         duplicates,
+        quick,
     )
 
 
@@ -379,6 +398,24 @@ def build_emails(inv: dict[str, InvoiceRow], vendors: list[dict[str, str]]) -> l
         submit("INV-1066"),
         resent("INV-1066", "INV-1068"),
         submit("INV-1070"),
+        *(
+            [  # quick plan (only when its rows exist)
+                (
+                    mail["V-007"],
+                    "Kaveri consignment statement – October (part 3)",
+                    (
+                        "Statement attached for INV-2101 and INV-2102. Quantities and amounts are on the "
+                        "Consignment Statement tab."
+                    ),
+                ),
+                urgent("INV-2103"),
+                urgent("INV-2104"),
+                resent("INV-1061", "INV-2105"),
+                resent("INV-1064", "INV-2106"),
+            ]
+            if "INV-2101" in inv
+            else []
+        ),
     ]
 
     def received(n: int, subject: str, body: str) -> str:
@@ -394,6 +431,22 @@ def build_emails(inv: dict[str, InvoiceRow], vendors: list[dict[str, str]]) -> l
     ]
 
 
+QUICK_RULES = {
+    "E1": "Consignment vendor (Kaveri): approve after checking the Consignment Statement tab, with no PO",
+    "E2": "Urgent critical-vendor invoice of ₹1–2 lakh after the CFO's line-stoppage email: one approval",
+    "E3": "Resent duplicate (new number; same vendor, amount and items): reject",
+}
+
+
+def quick_plan(rules: dict[str, tuple[list[str], str]]) -> dict[str, Any]:
+    """The 6-item recording script a judge follows: each rule twice."""
+    return {
+        "items": [i for ids, _ in rules.values() for i in ids],
+        "planted_items": {k: ids for k, (ids, _) in rules.items()},
+        "rules": {k: what for k, (_, what) in rules.items()},
+    }
+
+
 def planted_invoices(w: World, tag: str) -> list[str]:
     return [i for s in w.sessions.values() for i in s["planted_invoices"].get(tag, [])]
 
@@ -402,19 +455,27 @@ def duplicate_pairs(w: World) -> list[tuple[str, str]]:
     return w.duplicates
 
 
+Tab = tuple[str, str, list[dict[str, Any]]]  # (Sheet tab name, CSV file name, rows)
+
+
 def write_pack(
     out: Path,
     scenario: str,
     sop: SOP,
-    tabs: dict[str, list[dict[str, Any]]],
+    tabs: list[Tab],
     emails: list[Email],
     sessions: dict[str, dict[str, Any]],
     reference: list[dict[str, str]],
+    quick: dict[str, Any],
+    *,
+    docs: dict[str, str] | None = None,
+    domains_dir: Path = DOMAINS,
 ) -> None:
-    """Files common to every scenario. The reference table also goes into the backend's domain pack,
-    which ships in the image (exam cases are built against it)."""
+    """Files common to every scenario: CSVs and the rest under `out`, plus what the backend ships in the
+    image under `domains_dir/<scenario>/`: the reference table (exam cases), the quick plan, and the
+    judges' download pack (one .xlsx with the right tab names, starter emails, essays as .txt)."""
     out.mkdir(parents=True, exist_ok=True)
-    for name, rows in tabs.items():
+    for _, name, rows in tabs:
         with (out / name).open("w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=list(rows[0]))
             writer.writeheader()
@@ -426,35 +487,115 @@ def write_pack(
     (out / "sop.json").write_text(sop.model_dump_json(indent=2), encoding="utf-8")
     (out / "sop.md").write_text(sop.full_text + "\n", encoding="utf-8")
     (out / "sessions.json").write_text(json.dumps(sessions, indent=2), encoding="utf-8")
-    (DOMAINS / scenario / "reference.json").write_text(
+    pack = domains_dir / scenario
+    files = pack / "files"
+    files.mkdir(parents=True, exist_ok=True)
+    (pack / "reference.json").write_text(
         json.dumps(reference, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    (pack / "quick_plan.json").write_text(
+        json.dumps(quick, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    write_xlsx(files / f"{scenario}.xlsx", tabs)
+    (files / "starter_emails.txt").write_text(starter_emails(emails), encoding="utf-8")
+    if docs:
+        write_zip(files / "essays.zip", {f"{k}.txt": v + "\n" for k, v in docs.items()})
+
+
+def write_xlsx(path: Path, tabs: list[Tab]) -> None:
+    """One workbook, one sheet per tab, so Google Sheets keeps the tab names on upload."""
+    from datetime import datetime
+
+    from openpyxl import Workbook  # dev dependency: only this offline generator writes xlsx
+
+    wb = Workbook()
+    wb.remove(wb.active)
+    for tab, _, rows in tabs:
+        ws = wb.create_sheet(tab)
+        ws.append(list(rows[0]))
+        for r in rows:
+            ws.append(["" if v is None else v for v in r.values()])
+    fixed = datetime(2026, 10, 1)  # deterministic file: no "now" in the metadata
+    wb.properties.created = wb.properties.modified = fixed
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    with zipfile.ZipFile(buf) as src:  # openpyxl stamps zip entries and core.xml with "now"
+        parts = {i.filename: src.read(i.filename) for i in src.infolist()}
+    parts["docProps/core.xml"] = re.sub(
+        rb"(<dcterms:modified[^>]*>)[^<]*",
+        rb"\g<1>2026-10-01T00:00:00Z",
+        parts["docProps/core.xml"],
+    )
+    write_zip(path, parts)
+
+
+def write_zip(path: Path, members: dict[str, str] | dict[str, bytes]) -> None:
+    """Fixed timestamps, so regenerating gives byte-identical files."""
+    import zipfile
+
+    with zipfile.ZipFile(path, "w") as z:
+        for name, data in members.items():
+            info = zipfile.ZipInfo(name, date_time=(2026, 10, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            z.writestr(info, data)
+
+
+def starter_emails(emails: list[Email]) -> str:
+    """Gmail can't import messages, so judges read the inbox as a document."""
+    parts = [
+        f"From: {e.sender}\nReceived: {e.received_at}\nSubject: {e.subject}\n\n{e.body}"
+        for e in emails
+    ]
+    return (
+        "Starter emails (read these as if they were in your inbox)\n\n"
+        + ("\n\n" + "-" * 60 + "\n\n").join(parts)
+        + "\n"
     )
 
 
-def write(w: World, out: Path) -> None:
+def write(w: World, out: Path, domains_dir: Path = DOMAINS) -> None:
     write_pack(
         out,
         "ap",
         w.sop,
-        {
-            "invoices.csv": [i.model_dump() for i in w.invoices],
-            "vendor_master.csv": w.vendors,
-            "pos.csv": w.pos,
-            "consignment_statement.csv": w.statement,
-        },
+        [
+            ("Invoices", "invoices.csv", [i.model_dump() for i in w.invoices]),
+            ("Vendor Master", "vendor_master.csv", w.vendors),
+            ("POs", "pos.csv", w.pos),
+            ("Consignment Statement", "consignment_statement.csv", w.statement),
+        ],
         w.emails,
         w.sessions,
         w.vendors,
+        w.quick,
+        domains_dir=domains_dir,
     )
 
 
-def build_and_write(scenario: str, out: Path) -> SOP:
+def build_and_write(scenario: str, out: Path, *, domains_dir: Path = DOMAINS) -> SOP:
     if scenario == "essays":
         from scripts import synthetic_essays as se
 
         e = se.build()
-        tabs = {"grades.csv": e.rows, "students.csv": e.reference}
-        write_pack(out, scenario, e.sop, tabs, e.emails, e.sessions, e.reference)
+        tabs: list[Tab] = [
+            ("Grades", "grades.csv", e.rows),
+            ("Students", "students.csv", e.reference),
+        ]
+        write_pack(
+            out,
+            scenario,
+            e.sop,
+            tabs,
+            e.emails,
+            e.sessions,
+            e.reference,
+            e.quick,
+            docs=e.essays,
+            domains_dir=domains_dir,
+        )
         (out / "essays").mkdir(exist_ok=True)
         for sub, text in e.essays.items():
             (out / "essays" / f"{sub}.txt").write_text(text + "\n", encoding="utf-8")
@@ -464,16 +605,30 @@ def build_and_write(scenario: str, out: Path) -> SOP:
         from scripts import synthetic_volunteers as sv
 
         v = sv.build()
-        tabs = {
-            "responses.csv": v.rows,
-            "shifts.csv": [r for r in v.reference if r["kind"] == "shift"],
-            "returning.csv": [r for r in v.reference if r["kind"] == "returning_volunteer"],
-        }
-        write_pack(out, scenario, v.sop, tabs, v.emails, v.sessions, v.reference)
+        tabs = [
+            ("Form responses 1", "responses.csv", v.rows),
+            ("Shifts", "shifts.csv", [r for r in v.reference if r["kind"] == "shift"]),
+            (
+                "Returning volunteers",
+                "returning.csv",
+                [r for r in v.reference if r["kind"] == "returning_volunteer"],
+            ),
+        ]
+        write_pack(
+            out,
+            scenario,
+            v.sop,
+            tabs,
+            v.emails,
+            v.sessions,
+            v.reference,
+            v.quick,
+            domains_dir=domains_dir,
+        )
         print(f"wrote {len(v.rows)} sign-ups, {len(v.emails)} emails to {out}")
         return v.sop
     w = build()
-    write(w, out)
+    write(w, out, domains_dir)
     print(
         f"wrote {len(w.invoices)} invoices, {len(w.vendors)} vendors, {len(w.emails)} emails to {out}"
     )

@@ -94,6 +94,7 @@ class World:
     reference: list[dict[str, str]]  # shifts and the returning-volunteer list
     emails: list[Email]
     sessions: dict[str, dict[str, Any]]
+    quick: dict[str, Any]  # the 6-item quick plan (judge sandbox)
 
 
 def build_sop() -> SOP:
@@ -162,6 +163,48 @@ def build() -> World:
                 "status": "Pending",
             }
         )
+    # Quick plan (docs/Judge_Sandbox.md): each rule twice on new ids, after everything above.
+    quick_tags = {
+        "R-401": "E1",
+        "R-402": "E1",
+        "R-403": "E2",
+        "R-404": "E2",
+        "R-405": "E3",
+        "R-406": "E3",
+    }
+    for n, (rid, rule) in enumerate(quick_tags.items(), start=len(ids)):
+        name = NAMES[n]
+        rows.append(
+            {
+                "response_id": rid,
+                "timestamp": (OPENED + timedelta(hours=3 * n + 1)).isoformat(),
+                "name": name,
+                "email": f"{name.split()[0].lower()}.{rid.lower()}@mail.test",
+                "age": str(16 + n % 2) if rule == "E1" else str(24 + n),
+                "preferred_shift": FULL_SHIFT
+                if rule == "E2"
+                else "SH-5"
+                if rule == "E3"
+                else "SH-4",
+                "returning_volunteer": "Yes" if rule == "E2" else "No",
+                "accessibility_needs": "I use a wheelchair, so no stairs please."
+                if rule == "E3"
+                else "",
+                "notes": "",
+                "status": "Pending",
+            }
+        )
+    quick = {
+        "items": list(quick_tags),
+        "planted_items": {
+            t: [r for r, x in quick_tags.items() if x == t] for t in ("E1", "E2", "E3")
+        },
+        "rules": {
+            "E1": "16- or 17-year-old with a parent's consent email: accept",
+            "E2": "Returning volunteer whose shift is already full: accept anyway",
+            "E3": "Access need, chosen shift is upstairs: hold and offer a ground-floor shift",
+        },
+    }
     returning = [r for r in rows if r["returning_volunteer"] == "Yes"]
     reference = [
         {
@@ -193,7 +236,7 @@ def build() -> World:
         }
         for k in range(8)
     }
-    return World(build_sop(), rows, reference, build_emails(rows), sessions)
+    return World(build_sop(), rows, reference, build_emails(rows), sessions, quick)
 
 
 def build_emails(rows: list[dict[str, Any]]) -> list[Email]:
@@ -217,6 +260,11 @@ def build_emails(rows: list[dict[str, Any]]) -> list[Email]:
         consent("R-302", "Sunita Ramesh"),
         consent("R-322", "Arvind Narayan"),
         consent("R-332", "Mohan Jain"),
+        *(
+            [consent("R-401", "Lata Iyer"), consent("R-402", "Imran Mirza")]
+            if "R-401" in by_id
+            else []
+        ),
         (
             lead,
             "Sorting room numbers",

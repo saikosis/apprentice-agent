@@ -1,0 +1,29 @@
+{
+  "items": [
+    "R-401",
+    "R-402",
+    "R-403",
+    "R-404",
+    "R-405",
+    "R-406"
+  ],
+  "planted_items": {
+    "E1": [
+      "R-401",
+      "R-402"
+    ],
+    "E2": [
+      "R-403",
+      "R-404"
+    ],
+    "E3": [
+      "R-405",
+      "R-406"
+    ]
+  },
+  "rules": {
+    "E1": "16- or 17-year-old with a parent's consent email: accept",
+    "E2": "Returning volunteer whose shift is already full: accept anyway",
+    "E3": "Access need, chosen shift is upstairs: hold and offer a ground-floor shift"
+  }
+}

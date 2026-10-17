@@ -41,4 +41,12 @@ NAMES = [
     "Lakshmi Subramanian",
     "Rehan Qureshi",
     "Gauri Shinde",
+    # quick-plan people (appended: earlier indices never change)
+    "Naveen Iyer",
+    "Sana Mirza",
+    "Arnav Bhalla",
+    "Pallavi Rao",
+    "Tejas Kamath",
+    "Mehul Doshi",
+    "Ritika Saxena",
 ]

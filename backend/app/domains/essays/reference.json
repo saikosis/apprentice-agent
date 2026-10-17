@@ -285,5 +285,47 @@
     "email": "priya.st-41@riverside-college.test",
     "course": "ENG-201",
     "accommodation": "none"
+  },
+  {
+    "student_id": "ST-42",
+    "name": "Sana Mirza",
+    "email": "sana.st-42@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "extended time"
+  },
+  {
+    "student_id": "ST-43",
+    "name": "Arnav Bhalla",
+    "email": "arnav.st-43@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "extended time"
+  },
+  {
+    "student_id": "ST-44",
+    "name": "Pallavi Rao",
+    "email": "pallavi.st-44@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-45",
+    "name": "Tejas Kamath",
+    "email": "tejas.st-45@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-46",
+    "name": "Mehul Doshi",
+    "email": "mehul.st-46@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-47",
+    "name": "Ritika Saxena",
+    "email": "ritika.st-47@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
   }
 ]

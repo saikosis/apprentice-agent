@@ -1,5 +1,7 @@
 # 06. Quick-plan items and download packs
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: nothing
