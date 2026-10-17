@@ -2,12 +2,14 @@
 
 uv run python -m scripts.export_demo --from live --out fixtures/demo_seed.json
 uv run python scripts/seed_demo.py fixtures/demo_seed.json        (then load it into `demo`)
+Other scenarios: --scenario essays --out fixtures/demo_seed_essays.json, then seed_demo.py <file> essays.
 """
 
 import argparse
 import asyncio
 from pathlib import Path
 
+from backend.app.contract import Scenario
 from backend.app.routers.demo import DemoSeed, SeedProbe
 from backend.app.store import Store, Ws
 
@@ -35,8 +37,8 @@ async def export(store: Store) -> DemoSeed:
     )
 
 
-async def main(ws: Ws, out: Path) -> None:
-    seed = await export(Store(ws))
+async def main(ws: Ws, out: Path, scenario: Scenario = "ap") -> None:
+    seed = await export(Store(ws, scenario=scenario))
     out.write_text(seed.model_dump_json(indent=1), encoding="utf-8")
     print(
         f"wrote {out}: {len(seed.sessions)} sessions, {len(seed.probes)} probes, report={bool(seed.report)}"
@@ -49,8 +51,9 @@ def cli() -> None:
     )
     ap.add_argument("--from", dest="ws", choices=["live", "demo"], default="live")
     ap.add_argument("--out", type=Path, default=Path("fixtures/demo_seed.json"))
+    ap.add_argument("--scenario", choices=["ap", "essays", "volunteers"], default="ap")
     args = ap.parse_args()
-    asyncio.run(main(args.ws, args.out))
+    asyncio.run(main(args.ws, args.out, args.scenario))
 
 
 if __name__ == "__main__":

@@ -237,7 +237,11 @@ def build_emails(rows: list[dict[str, Any]], students: list[dict[str, str]]) -> 
         return (
             mail[r["student_id"]],
             f"Extension request – {sub}",
-            f"Dear marker,\n\n{reason} Could I have two extra days for {TITLE} ({sub})?\n\n{r['student_name']}",
+            # Real Gmail stamps the send time as "now", so the original time is written into the body.
+            (
+                f"(Sent {when:%d %b %Y, %H:%M} IST)\n\nDear marker,\n\n{reason} Could I have two extra days for "
+                f"{TITLE} ({sub})?\n\n{r['student_name']}"
+            ),
             when.isoformat(),
         )
 

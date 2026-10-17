@@ -17,6 +17,7 @@ Split:
 | Backend: routers, store, `gemini.py`, pipeline, exam, safety | Done and tested offline; pipeline + exam verified end to end on real Gemini (text dry run) |
 | Prompts (`/prompts/*.md`) | All 10 written |
 | Scripts (`make_synthetic`, `local`, `run_exam`, `seed_demo`, `export_demo`) | Done; `local.py` runs everything on a laptop before A0 |
+| Scenarios: essay marking + volunteer sign-ups (Oct 17) | Code done, sidebar **Workflow** switcher; to do: store their SOPs, redeploy, prepare the Docs/Sheets/emails, record. Steps in `docs/Scenarios.md` |
 | Real recording through the segmenter; expert answers and labels; real exam numbers | Not yet |
 | GCP / Firebase / Model Armor setup | Not started. Steps written in `docs/Cloud_Setup.md` (Console, CLI and `scripts/cloud_setup.sh`); project `aibuildercup-india-2026` |
 | Dockerfile + `deploy.sh` | Fixed; image built and smoke-tested locally. Never deployed |

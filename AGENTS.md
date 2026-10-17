@@ -17,6 +17,7 @@ Apprentice watches an expert work in Google Sheets + Gmail (screen + voice), ask
   app/safety/armor.py
   app/store.py       # Firestore access (workspace-scoped)
   app/gemini.py      # client, model IDs, structured-call helper
+  app/domains/       # one pack per scenario (ap, essays, volunteers): domain.md, config.json, reference.json
   tests/
 /frontend/           # Person B owns (Vite + React + TS)
   src/types/contract.ts   # GENERATED from backend contract — do not hand-edit
@@ -81,6 +82,7 @@ Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --reg
 - One file per call in `/prompts`: `segmenter.md, deviations.md, variants.md, probes.md, graph.md, scenarios.md, arm_sop.md, arm_graph.md, judge.md, live_system.md`.
 - Front-matter: `id`, `version` (int), `model`, `thinking_level`, `output_schema` (Pydantic class name). Bump `version` on any change; outputs store `prompt_id@version`.
 - Use `{{SOP}}`, `{{SEGMENTS}}`-style placeholders filled by `app/prompts.py`.
+- Prompts are scenario-neutral: every one has `{{DOMAIN}}`, filled from `app/domains/<scenario>/domain.md` via `domains.values(...)`. The part after `<!-- exam-only` (trap definitions) goes only to `scenarios` and `judge`. Scenarios: `docs/Scenarios.md`.
 
 ## Fixtures
 - `fixtures/*.json` mirror API responses (session list, session detail, probes, graph, exam report). B builds the UI against these until A's endpoints are live (`VITE_USE_FIXTURES=1`).
