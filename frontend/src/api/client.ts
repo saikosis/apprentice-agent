@@ -38,7 +38,13 @@ function initialScenario(): Scenario {
 }
 let scenario: Scenario = initialScenario();
 export const currentScenario = (): ScenarioInfo => SCENARIOS.find((s) => s.id === scenario) ?? SCENARIOS[0];
-// Every view refetches from scratch: simplest correct way to switch all data at once.
+// No page reload: sign-in lives in memory only (AGENTS.md), so a reload would sign the expert out. Drop the cached
+// scenario data instead; main.tsx remounts the pages on change so every view refetches.
+const scenarioListeners = new Set<() => void>();
+export function subscribeScenario(cb: () => void): () => void {
+  scenarioListeners.add(cb);
+  return () => scenarioListeners.delete(cb);
+}
 export function switchScenario(next: Scenario): void {
   try {
     localStorage.setItem(SCENARIO_KEY, next);
@@ -46,7 +52,9 @@ export function switchScenario(next: Scenario): void {
     // storage blocked: the choice lasts until reload
   }
   scenario = next;
-  window.location.reload();
+  bundlePromise = null;
+  videoUrls.clear();
+  scenarioListeners.forEach((cb) => cb());
 }
 const withScenario = (path: string) =>
   scenario === "ap" || !path.startsWith("/api/") ? path : `${path}${path.includes("?") ? "&" : "?"}scenario=${scenario}`;

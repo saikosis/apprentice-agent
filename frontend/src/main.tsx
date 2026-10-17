@@ -11,9 +11,9 @@ import {
   VideoIcon,
   type LucideIcon,
 } from "lucide-react";
-import { StrictMode, Suspense, lazy, useEffect, useState } from "react";
+import { StrictMode, Suspense, lazy, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
-import { SCENARIOS, currentScenario, me, switchScenario } from "./api/client";
+import { SCENARIOS, currentScenario, me, subscribeScenario, switchScenario } from "./api/client";
 import { authConfigured, signIn, signOut, watchUser } from "./auth";
 import { Avatar, AvatarFallback } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
@@ -171,7 +171,10 @@ function NotExpert({ email, error }: { email?: string; error?: string }) {
   );
 }
 
+const useScenarioId = () => useSyncExternalStore(subscribeScenario, () => currentScenario().id);
+
 function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean }) {
+  const scenario = useScenarioId();
   return (
     <Sidebar>
       <SidebarHeader className="h-16 justify-center border-b">
@@ -183,7 +186,7 @@ function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean 
             <label htmlFor="scenario">Workflow</label>
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <Select value={currentScenario().id} onValueChange={(v) => switchScenario(v as (typeof SCENARIOS)[number]["id"])}>
+            <Select value={scenario} onValueChange={(v) => switchScenario(v as (typeof SCENARIOS)[number]["id"])}>
               <SelectTrigger id="scenario" className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -253,6 +256,7 @@ function App() {
   const who = answer && answer.account === account ? answer.who : undefined;
 
   const ws = IS_DEMO ? "demo" : "live";
+  const scenario = useScenarioId();
   const current = parts[0] ?? "";
 
   const checking = (label: string) => (
@@ -314,7 +318,8 @@ function App() {
               </div>
             </header>
             <main className="mx-auto w-full max-w-[1400px] p-4 md:p-6 lg:p-8">
-              <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+              {/* key: switching workflow remounts every page so it refetches that workflow's data */}
+              <Suspense key={scenario} fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
                 <Page parts={parts} />
               </Suspense>
             </main>

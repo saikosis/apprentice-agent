@@ -15,7 +15,7 @@ import {
   Loadable,
   ModerationTag,
   PageHeader,
-  ITEM,
+  itemTitle,
   Sop,
   fmtDate,
   fmtDuration,
@@ -103,7 +103,7 @@ export function SessionDetail({ id }: { id: string }) {
                       <TableRow>
                         <TableHead className="eyebrow pl-4">Time</TableHead>
                         <TableHead className="eyebrow">Step</TableHead>
-                        <TableHead className="eyebrow">{ITEM}</TableHead>
+                        <TableHead className="eyebrow">{itemTitle()}</TableHead>
                         <TableHead className="eyebrow pr-4">Decision</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -173,7 +173,7 @@ export function SessionDetail({ id }: { id: string }) {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="pl-4">{ITEM}</TableHead>
+                          <TableHead className="pl-4">{itemTitle()}</TableHead>
                           <TableHead>Column</TableHead>
                           <TableHead>Before</TableHead>
                           <TableHead className="pr-4">After</TableHead>

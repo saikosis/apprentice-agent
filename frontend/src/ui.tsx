@@ -90,12 +90,15 @@ export function PageHeader({ title, description, actions, crumb }: { title: stri
 }
 
 // ---- marks ----
-// Labels for the current scenario (switching scenario reloads the page, so reading them once is enough).
-export const SCENARIO = currentScenario();
+// Labels for the current scenario. Read at render time: switching remounts the pages (main.tsx), no reload.
+export const scenarioInfo = currentScenario;
 export const decisionLabel = (d: Decision | "none") =>
-  d === "none" ? "No decision" : (SCENARIO.decision_labels[d] ?? d);
-export const trapLabel = (t: string) => (t === "none" ? "" : (SCENARIO.traps[t] ?? t));
-export const ITEM = SCENARIO.item_label.charAt(0).toUpperCase() + SCENARIO.item_label.slice(1); // "Invoice"
+  d === "none" ? "No decision" : (currentScenario().decision_labels[d] ?? d);
+export const trapLabel = (t: string) => (t === "none" ? "" : (currentScenario().traps[t] ?? t));
+export const itemTitle = () => {
+  const l = currentScenario().item_label;
+  return l.charAt(0).toUpperCase() + l.slice(1); // "Invoice"
+};
 const DECISION_DOT = { approve: "bg-success", reject: "bg-destructive", hold: "bg-warning", escalate: "bg-chart-5", none: "bg-muted-foreground" };
 
 export function DecisionChip({ d }: { d: Decision | "none" | null | undefined }) {

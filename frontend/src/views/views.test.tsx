@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SCENARIOS } from "../api/client";
+import { SCENARIOS, currentScenario, subscribeScenario, switchScenario } from "../api/client";
 import { rowsToRecords } from "../recorder/sheets";
 import { ClipProvider, WsContext } from "../ui";
 import { Discovery } from "./Discovery";
@@ -91,6 +91,17 @@ describe("scenarios", () => {
   it("come from the backend's domain packs, invoices first", () => {
     expect(SCENARIOS.map((s) => s.id)).toEqual(["ap", "essays", "volunteers"]);
     expect(SCENARIOS[2].decision_labels.approve).toBe("Accept");
+  });
+
+  it("switch in place and tell the app, so sign-in (memory only) survives", () => {
+    const seen: string[] = [];
+    const stop = subscribeScenario(() => seen.push(currentScenario().id));
+    const before = window.location.href;
+    switchScenario("volunteers");
+    switchScenario("ap");
+    stop();
+    expect(seen).toEqual(["volunteers", "ap"]);
+    expect(window.location.href).toBe(before);
   });
 });
 

@@ -16,7 +16,7 @@ import { PipPortal, pipSupported, usePip } from "../pip/pip";
 import { startCapture, uploadAndProcess, type Capture } from "../recorder/recorder";
 import { readTab, requestSheetsToken, sheetsConfigured } from "../recorder/sheets";
 import type { Session } from "../types/contract";
-import { Empty, ErrorNote, PageHeader, SCENARIO, fmtDuration, go, useWs } from "../ui";
+import { Empty, ErrorNote, PageHeader, scenarioInfo, fmtDuration, go, useWs } from "../ui";
 
 type Phase = "idle" | "starting" | "recording" | "uploading" | "done" | "error";
 
@@ -134,7 +134,7 @@ export function Record() {
   const snapshot = async (phaseName: "before" | "after") => {
     if (!sheetToken || !sheetId || !sessionRef.current) return;
     try {
-      await sheetSnapshot(sessionRef.current.id, phaseName, await readTab(sheetId, SCENARIO.sheet_tab, sheetToken));
+      await sheetSnapshot(sessionRef.current.id, phaseName, await readTab(sheetId, scenarioInfo().sheet_tab, sheetToken));
     } catch (e) {
       setSheetMsg(`Sheet snapshot (${phaseName}) failed: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -235,7 +235,7 @@ export function Record() {
     <>
       <PageHeader
         title="Record a session"
-        description={`Share the tab where you work (${SCENARIO.title.toLowerCase()}). Apprentice records the tab and your microphone. Nothing is written to your Sheet, documents or mailbox.`}
+        description={`Share the tab where you work (${scenarioInfo().title.toLowerCase()}). Apprentice records the tab and your microphone. Nothing is written to your Sheet, documents or mailbox.`}
       />
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -294,7 +294,7 @@ export function Record() {
                     </Button>
                   </div>
                   <FieldDescription>
-                    {sheetMsg ?? `Apprentice reads the "${SCENARIO.sheet_tab}" tab before and after the session to see what changed. Read-only.`}
+                    {sheetMsg ?? `Apprentice reads the "${scenarioInfo().sheet_tab}" tab before and after the session to see what changed. Read-only.`}
                   </FieldDescription>
                 </Field>
               )}
