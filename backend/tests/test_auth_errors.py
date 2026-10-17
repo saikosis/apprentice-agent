@@ -136,3 +136,26 @@ def test_body_errors_name_the_problem_and_500s_keep_the_shape() -> None:
     assert r.json() == {
         "error": {"code": "internal", "message": "Something went wrong on the server."}
     }
+
+
+def test_local_dev_bypass_only_with_local_db_and_never_on_cloud_run(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    from backend.app import store
+    from backend.app.localdb import FakeDb
+
+    monkeypatch.setattr(store, "default_db", lambda: FakeDb())
+    monkeypatch.setenv("EXPERT_EMAIL", "expert@example.com")
+    monkeypatch.setenv("DEV_USER_EMAIL", "expert@example.com")
+    c = TestClient(app)
+    monkeypatch.delenv("LOCAL_DB", raising=False)
+    assert c.get("/api/sessions").status_code == 401  # no LOCAL_DB: real sign-in only
+
+    monkeypatch.setenv("LOCAL_DB", "data/local.json")
+    assert c.get("/api/sessions").status_code == 200
+    assert c.get("/api/me").json() == {
+        "uid": "dev",
+        "email": "expert@example.com",
+        "is_demo_expert": True,
+    }
+
+    monkeypatch.setenv("K_SERVICE", "apprentice")  # Cloud Run sets this: bypass is off
+    assert c.get("/api/sessions").status_code == 401

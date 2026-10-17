@@ -1,0 +1,25 @@
+# Secrets never enter the build context. frontend/.env.production holds only public VITE_* values.
+.env
+.env.*
+!frontend/.env.production
+**/.env
+*.pem
+*-key.json
+service-account*.json
+client_secret*.json
+
+# host artefacts that would clobber the Linux installs in the image
+.git
+.venv
+**/node_modules
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.mypy_cache
+backend/app/static
+frontend/dist
+
+# local-only data
+data/local*.json
+eval
+.claude

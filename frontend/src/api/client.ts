@@ -1,5 +1,6 @@
 // All data fetching goes through here. Token is held in memory only (AGENTS.md guardrails).
 import type {
+  AgentRun,
   Decision,
   DecisionGraph,
   Deviation,
@@ -63,12 +64,14 @@ export type DemoBundle = {
   report: ExamReport | null;
   segments?: Record<string, Segment[]>;
   deviations?: Record<string, Deviation[]>;
+  exam_cases?: ExamCase[];
+  agent_runs?: AgentRun[];
 };
 
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === "1";
 
 async function fixtureBundle(): Promise<DemoBundle> {
-  const [sessions, segments, deviations, variants, probes, answers, graph, report] = await Promise.all([
+  const [sessions, segments, deviations, variants, probes, answers, graph, report, cases, runs] = await Promise.all([
     import("../../../fixtures/sessions.json"),
     import("../../../fixtures/segments.json"),
     import("../../../fixtures/deviations.json"),
@@ -77,6 +80,8 @@ async function fixtureBundle(): Promise<DemoBundle> {
     import("../../../fixtures/probe_answers.json"),
     import("../../../fixtures/graph.json"),
     import("../../../fixtures/exam_report.json"),
+    import("../../../fixtures/exam_cases.json"),
+    import("../../../fixtures/agent_runs.json"),
   ]);
   const group = <X extends { session_id: string }>(xs: X[]) =>
     xs.reduce<Record<string, X[]>>((acc, x) => ((acc[x.session_id] ??= []).push(x), acc), {});
@@ -89,6 +94,8 @@ async function fixtureBundle(): Promise<DemoBundle> {
     probes: (probes.default as Probe[]).map((p) => ({ ...p, answer: byProbe.get(p.id) ?? null })),
     graph: graph.default as DecisionGraph,
     report: report.default as ExamReport,
+    exam_cases: cases.default as ExamCase[],
+    agent_runs: runs.default as AgentRun[],
   };
 }
 
@@ -150,6 +157,19 @@ export async function latestReport(ws: Ws): Promise<ExamReport | null> {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
   }
+}
+
+// Labelled cases survive a reload; the demo shows the report's cases.
+export async function listCases(ws: Ws): Promise<ExamCase[]> {
+  if (fromBundle(ws)) return (await demoBundle()).exam_cases ?? [];
+  return api(`/api/exam/cases?ws=${ws}`);
+}
+
+// Both agents' runs on one case of one report, for the side-by-side view.
+export async function listRuns(ws: Ws, caseId: string, reportId: string): Promise<AgentRun[]> {
+  if (fromBundle(ws))
+    return ((await demoBundle()).agent_runs ?? []).filter((r) => r.case_id === caseId && r.id.startsWith(`${reportId}-`));
+  return api(`/api/exam/runs?ws=${ws}&case_id=${encodeURIComponent(caseId)}&report_id=${encodeURIComponent(reportId)}`);
 }
 
 const videoUrls = new Map<string, Promise<string>>();

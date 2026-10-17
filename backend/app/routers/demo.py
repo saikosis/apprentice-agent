@@ -57,14 +57,18 @@ class DemoSeed(BaseModel):
 async def bundle() -> dict[str, object]:
     store = Store("demo")
     sessions = await store.sessions.list()
-    segs, devs, variants, probes, graph, reports = await asyncio.gather(
-        asyncio.gather(*(store.segments(s.id).list() for s in sessions)),
-        asyncio.gather(*(store.deviations(s.id).list() for s in sessions)),
-        store.variants.list(),
-        probe_rows(store),
-        store.get_graph(),
-        store.exam_reports.list(),
+    (segs, devs, variants, probes, graph, reports), (cases, runs) = await asyncio.gather(
+        asyncio.gather(
+            asyncio.gather(*(store.segments(s.id).list() for s in sessions)),
+            asyncio.gather(*(store.deviations(s.id).list() for s in sessions)),
+            store.variants.list(),
+            probe_rows(store),
+            store.get_graph(),
+            store.exam_reports.list(),
+        ),
+        asyncio.gather(store.exam_cases.list(), store.agent_runs.list()),
     )
+    report = max(reports, key=lambda r: r.created_at) if reports else None
     return {
         "sessions": sorted(sessions, key=lambda s: s.started_at, reverse=True),
         "segments": {s.id: x for s, x in zip(sessions, segs, strict=True)},
@@ -72,7 +76,11 @@ async def bundle() -> dict[str, object]:
         "variants": variants,
         "probes": probes,
         "graph": graph,
-        "report": max(reports, key=lambda r: r.created_at) if reports else None,
+        "report": report,
+        # the report table's cases (labels included, as in the seed) and that report's agent runs,
+        # so the demo can show both agents' reasoning side by side
+        "exam_cases": sorted(cases, key=lambda c: c.id),
+        "agent_runs": [r for r in runs if report and r.id.startswith(f"{report.id}-")],
     }
 
 

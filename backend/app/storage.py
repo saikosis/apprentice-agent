@@ -6,13 +6,17 @@ from functools import lru_cache
 from typing import Any
 
 import google.auth
+from fastapi import HTTPException
 from fastapi.concurrency import run_in_threadpool
 from google.auth.transport.requests import Request
 from google.cloud import storage  # type: ignore[attr-defined]
 
 
 def object_uri(ws: str, session_id: str) -> str:
-    return f"gs://{os.environ['BUCKET']}/{ws}/{session_id}.webm"
+    bucket = os.getenv("BUCKET")
+    if not bucket:  # e.g. a laptop run before the bucket exists
+        raise HTTPException(503, "Recording upload needs the storage bucket; BUCKET isn't set.")
+    return f"gs://{bucket}/{ws}/{session_id}.webm"
 
 
 @lru_cache
