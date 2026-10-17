@@ -3,17 +3,20 @@
 import hmac
 import os
 from datetime import UTC, datetime, timedelta, timezone
-from typing import Literal
+from typing import Literal, get_args
 
 from fastapi import HTTPException
 
 from backend.app import store
-from backend.app.contract import SandboxInfo
+from backend.app.contract import SandboxInfo, Scenario
 
 Kind = Literal["recordings", "graph_builds", "exam_runs", "case_generations"]
 LIMIT_EACH = 5  # per judge, per kind, for the life of the sandbox
 GLOBAL_LIMIT = 100  # sandbox actions per IST day, all judges together
 MAX_RECORDING_S = 330  # 5:00 plus grace; the browser stops at 5:00
+MAX_RECORDING_BYTES = 200 * 1024**2  # a 5-minute tab recording is well under this
+LIVE_WINDOW_S = 360  # Live tokens only within 6 minutes of a sandbox session's start
+MAX_CODE_TRIES = 10  # wrong judge codes per account, then locked out
 IST = timezone(timedelta(hours=5, minutes=30))
 _WHAT = {
     "recordings": "recordings",
@@ -102,11 +105,29 @@ async def charge(ws_store: store.Store, kind: Kind) -> None:
 async def join(uid: str, email: str, code: str) -> SandboxInfo:
     if not enabled():
         raise HTTPException(403, "The judge sandbox is closed.")
+    tries = store.default_db().document(f"sandbox_code_tries/{uid}")
+    snap = await tries.get()
+    failed = int((snap.to_dict() or {}).get("failed", 0)) if snap.exists else 0
+    if failed >= MAX_CODE_TRIES:
+        raise HTTPException(429, "Too many wrong judge codes from this account.")
     expected = os.environ["SANDBOX_CODE"].encode()
     if not hmac.compare_digest(code.strip().encode(), expected):
+        await tries.set({"failed": failed + 1})
         raise HTTPException(403, "That judge code isn't right.")
     if existing := await get(uid):
         return existing
     info = SandboxInfo(uid=uid, email=email, created_at=datetime.now(UTC))
     await _doc(uid).set(info.model_dump(mode="json"))  # type: ignore[attr-defined]
+    await copy_sops(uid)
     return info
+
+
+async def copy_sops(uid: str) -> None:
+    """Every workflow's sandbox starts with that workflow's SOP (the live one, else the demo's)."""
+    for scenario in get_args(Scenario):
+        for source in ("live", "demo"):
+            sops = await store.Store(source, scenario=scenario).sop.list()  # type: ignore[arg-type]
+            if sops:
+                target = store.Store("sandbox", uid=uid, scenario=scenario)
+                await target.sop.put(max(sops, key=lambda s: s.version))
+                break

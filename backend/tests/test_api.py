@@ -250,7 +250,9 @@ def test_graph_and_variants(api: Api) -> None:
     freqs = [v["frequency"] for v in api.client.get("/api/variants").json()]
     assert freqs == sorted(freqs, reverse=True)
     assert api.client.post("/api/variants/discover").status_code == 202
-    assert api.client.post("/api/graph/build").status_code == 202
+    assert (
+        api.client.post("/api/graph/build").status_code == 409
+    )  # refused up front: no answers yet
     api.drain()  # seams raise NotImplementedError: logged, never crash the app
 
 
@@ -292,6 +294,14 @@ def test_exam_flow(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
         return cases
 
     monkeypatch.setattr(scenarios, "generate", fake_generate)
+    from backend.app.contract import DecisionGraph
+    from scripts.make_synthetic import build_sop
+
+    graph = DecisionGraph.model_validate(
+        json.loads((FIXTURES / "graph.json").read_text(encoding="utf-8"))
+    )
+    asyncio.run(api.store().sop.put(build_sop()))
+    asyncio.run(api.store().put_graph(graph))
     assert (
         len(api.client.post("/api/exam/generate", json={"heldout_session_ids": [held]}).json()) == 2
     )
@@ -656,6 +666,9 @@ def test_no_code_configured_means_no_sandbox(api: Api, monkeypatch: pytest.Monke
 
 
 def test_each_judge_works_in_a_private_sandbox(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts.make_synthetic import build_sop
+
+    asyncio.run(api.store().sop.put(build_sop()))  # joining copies the live SOP into the sandbox
     monkeypatch.setenv("SANDBOX_CODE", "river-42")
     for email, uid in (("judge1@example.com", "u-j1"), ("judge2@example.com", "u-j2")):
         as_user(email, uid)
@@ -680,9 +693,16 @@ def test_each_judge_works_in_a_private_sandbox(api: Api, monkeypatch: pytest.Mon
 
 # ---- sandbox limits (ticket 05) ----
 def judge(api: Api, monkeypatch: pytest.MonkeyPatch, uid: str = "u-j1") -> None:
+    from scripts.make_synthetic import build_sop
+
     monkeypatch.setenv("SANDBOX_CODE", "river-42")
     as_user(f"{uid}@example.com", uid)
     assert api.client.post("/api/sandbox/join", json={"code": "river-42"}).status_code == 200
+    sandbox_store = store.Store("sandbox", api.db, uid=uid)
+    if not asyncio.run(
+        sandbox_store.sop.list()
+    ):  # joining copies the SOP (ticket 08); make sure here
+        asyncio.run(sandbox_store.sop.put(build_sop()))
 
 
 def test_a_judge_gets_five_recordings(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -745,6 +765,12 @@ def test_sandbox_exam_uses_six_generated_cases(api: Api, monkeypatch: pytest.Mon
         return []
 
     monkeypatch.setattr(scenarios, "generate", fake_generate)
+    from backend.app.contract import DecisionGraph
+
+    graph = DecisionGraph.model_validate(
+        json.loads((FIXTURES / "graph.json").read_text(encoding="utf-8"))
+    )
+    asyncio.run(store.Store("sandbox", api.db, uid="u-j1").put_graph(graph))
     r = api.client.post(
         "/api/exam/generate", json={"heldout_session_ids": ["s-x"], "n_generated": 9}
     )
@@ -812,3 +838,87 @@ def test_a_judge_cannot_read_another_sandbox_via_uid(
     judge(api, monkeypatch, "u-j2")
     assert api.client.get("/api/sessions?ws=sandbox&uid=u-j1").json() == []
     assert api.client.get("/api/admin/sandboxes").status_code == 403
+
+
+# ---- review fixes: limits can't be bypassed, refusals cost nothing ----
+def credits(api: Api) -> dict[str, int]:
+    return api.client.get("/api/sandbox").json()["usage"]
+
+
+def test_sandbox_uploads_are_capped_at_storage(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    judge(api, monkeypatch)
+    sid = new_session(api)["id"]
+    url = f"/api/sessions/{sid}/upload-url"
+    r = api.client.post(url, json={"content_type": "video/webm", "size_bytes": 300 * 1024**2})
+    assert r.status_code == 422
+    r = api.client.post(url, json={"content_type": "video/webm", "size_bytes": 1000})
+    # the signed URL enforces the cap at Cloud Storage, whatever the browser claims
+    assert r.json()["headers"]["x-goog-content-length-range"] == f"0,{200 * 1024**2}"
+
+
+def test_a_sandbox_session_is_processed_once(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    judge(api, monkeypatch)
+    sid = new_session(api)["id"]
+    st = store.Store("sandbox", api.db, uid="u-j1")
+    s = asyncio.run(st.sessions.get(sid))
+    asyncio.run(st.sessions.put(s.model_copy(update={"status": "failed"})))  # type: ignore[union-attr]
+    assert api.client.post(f"/api/sessions/{sid}/process").status_code == 409
+    assert api.client.post(f"/api/sessions/{sid}/process?force=true").status_code == 409
+
+
+def test_live_tokens_end_with_the_recording_window(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from datetime import timedelta
+
+    judge(api, monkeypatch)
+    sid = new_session(api)["id"]
+    st = store.Store("sandbox", api.db, uid="u-j1")
+    s = asyncio.run(st.sessions.get(sid))
+    old = s.started_at - timedelta(minutes=7)  # type: ignore[union-attr]
+    asyncio.run(st.sessions.put(s.model_copy(update={"started_at": old})))  # type: ignore[union-attr]
+    r = api.client.post("/api/live/token", json={"session_id": sid})
+    assert r.status_code == 409 and "5 minutes" in r.json()["error"]["message"]
+
+
+def test_finding_patterns_in_a_sandbox_costs_a_graph_build(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    judge(api, monkeypatch)
+    assert api.client.post("/api/variants/discover").status_code == 202
+    assert credits(api)["graph_builds"] == 1
+
+
+def test_judge_code_guessing_is_capped(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SANDBOX_CODE", "river-42")
+    as_user("guess@example.com", "u-g")
+    for _ in range(10):
+        assert api.client.post("/api/sandbox/join", json={"code": "nope"}).status_code == 403
+    r = api.client.post("/api/sandbox/join", json={"code": "river-42"})
+    assert r.status_code == 429
+
+
+def test_refused_requests_cost_no_credit(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    judge(api, monkeypatch)
+    assert api.client.post("/api/exam/generate", json={}).status_code == 409  # no graph yet
+    assert api.client.post("/api/graph/build").status_code == 409  # no answered questions yet
+    asyncio.run(store.Store("sandbox", api.db, uid="u-j1").sop.delete("AP-SOP-07"))
+    assert api.client.post("/api/sessions", json={"kind": "training"}).status_code == 409  # no SOP
+    assert credits(api) == {
+        "recordings": 0,
+        "graph_builds": 0,
+        "exam_runs": 0,
+        "case_generations": 0,
+    }
+
+
+def test_an_admin_who_is_not_the_expert_can_still_view(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    judge(api, monkeypatch, "u-j1")
+    sid = new_session(api)["id"]
+    monkeypatch.setenv("ADMIN_UIDS", "u-admin")
+    as_user("organiser@example.com", "u-admin")
+    seen = api.client.get("/api/sessions?ws=sandbox&uid=u-j1")
+    assert seen.status_code == 200 and [x["id"] for x in seen.json()] == [sid]
+    assert api.client.post("/api/sessions", json={"kind": "training"}).status_code == 403

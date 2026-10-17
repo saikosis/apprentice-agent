@@ -106,9 +106,10 @@ async def current_role(user: CurrentUser) -> Role:
 CurrentRole = Annotated[Role, Depends(current_role)]  # cached per request by FastAPI
 
 
-async def require_member(role: CurrentRole) -> Role:
-    """Every data route: the expert or a judge. Anyone else is asked for the judge code (fails closed)."""
-    if role == "none":
+async def require_member(user: CurrentUser, role: CurrentRole) -> Role:
+    """Every data route: the expert or a judge (admins may read). Anyone else is asked for the judge
+    code (fails closed); workspace.py still gives an admin-only account no workspace to write to."""
+    if role == "none" and not is_admin(user):
         raise HTTPException(
             403, "This account isn't the expert's. Enter the judge code to use Apprentice."
         )

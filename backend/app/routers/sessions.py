@@ -49,6 +49,8 @@ async def get_or_404(store: Store, session_id: str) -> Session:
 
 @router.post("/sessions")
 async def create_session(body: NewSession, user: CurrentUser, store: LiveStore) -> Session:
+    if store.ws == "sandbox":
+        await store.current_sop()  # 409 without an SOP: refuse before charging, not after
     await sandbox.charge(store, "recordings")
     s = Session(
         id=new_id("s"),
@@ -85,7 +87,11 @@ async def session_detail(session_id: str, store: ReadStore) -> dict[str, object]
 async def process(session_id: str, store: LiveStore, force: bool = False) -> dict[str, str]:
     """`force=true` restarts a session stuck in `processing` (e.g. the instance died mid-run)."""
     s = await get_or_404(store, session_id)
-    allowed = ("uploaded", "failed", "processing") if force else ("uploaded", "failed")
+    allowed: tuple[str, ...] = (
+        ("uploaded", "failed", "processing") if force else ("uploaded", "failed")
+    )
+    if store.ws == "sandbox":  # each sandbox recording is analysed once: no retries, no force
+        allowed = ("uploaded",)
     if s.status not in allowed:
         raise errors.conflict(
             f"Session {session_id} is {s.status}; upload the recording before processing it."

@@ -35,13 +35,18 @@ async def upload_url(session_id: str, body: UploadReq, store: LiveStore) -> dict
     s = await get_or_404(store, session_id)
     if s.status not in ("created", "uploading"):
         raise errors.conflict(f"Session {session_id} is {s.status}; it already has a recording.")
+    cap = sandbox.MAX_RECORDING_BYTES if store.ws == "sandbox" else None
+    if cap and body.size_bytes > cap:
+        raise HTTPException(422, "Sandbox recordings are limited to 5 minutes (200 MB).")
     gcs_uri = storage.object_uri(store.root_name, session_id)
-    url = await storage.signed_url(gcs_uri, "PUT", UPLOAD_URL_MINUTES, body.content_type)
+    url = await storage.signed_url(
+        gcs_uri, "PUT", UPLOAD_URL_MINUTES, body.content_type, max_bytes=cap
+    )
     await store.sessions.put(s.model_copy(update={"status": "uploading", "gcs_uri": gcs_uri}))
     return {
         "url": url,
         "method": "PUT",
-        "headers": {"Content-Type": body.content_type},
+        "headers": {"Content-Type": body.content_type, **(storage.length_header(cap) or {})},
         "gcs_uri": gcs_uri,
         "expires_at": datetime.now(UTC) + timedelta(minutes=UPLOAD_URL_MINUTES),
     }

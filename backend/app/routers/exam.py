@@ -38,13 +38,15 @@ class RunReq(BaseModel):
 
 @router.post("/exam/generate")
 async def generate(body: GenerateReq, store: LiveStore) -> list[ExamCase]:
-    await sandbox.charge(store, "case_generations")
-    if (
-        store.ws == "sandbox"
-    ):  # one-session flow: no held-out recording, cases from the judge's graph
-        return await scenarios.generate(store, [], SANDBOX_CASES)
-    if not body.heldout_session_ids:
+    # Every refusal comes before the charge, so a refused request costs a judge nothing.
+    if store.ws != "sandbox" and not body.heldout_session_ids:
         raise HTTPException(422, "Generating cases needs analysed held-out sessions.")
+    await store.current_sop()
+    if await store.get_graph() is None:
+        raise errors.conflict("Build the decision graph before generating exam cases.")
+    await sandbox.charge(store, "case_generations")
+    if store.ws == "sandbox":  # one-session flow: no held-out recording, cases from the graph
+        return await scenarios.generate(store, [], SANDBOX_CASES)
     for sid in body.heldout_session_ids:
         s = await store.sessions.get(sid)
         if s is None or s.kind != "heldout" or s.status != "processed":
