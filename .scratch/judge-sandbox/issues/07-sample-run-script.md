@@ -1,5 +1,7 @@
 # 07. Sample run per workflow (text steps on real Gemini)
 
+Status: done in code; verified on real Gemini into a local DB (volunteers: 3 patterns, exam 50% -> 83%; essays: 3 patterns, 3 exceptions, exam 33% -> 67%). Running it into the cloud demo is in docs/Judge_Guide.md step 3
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: `01-pattern-rule-twice`, `02-session-summary`, `03-observed-workflow`, `06-quick-plan-and-download-packs`
