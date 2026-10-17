@@ -59,6 +59,9 @@
     "ModerationResult": {
       "$ref": "#/$defs/ModerationResult"
     },
+    "ObservedWorkflow": {
+      "$ref": "#/$defs/ObservedWorkflow"
+    },
     "Probe": {
       "$ref": "#/$defs/Probe"
     },
@@ -103,6 +106,9 @@
     },
     "VariantList": {
       "$ref": "#/$defs/VariantList"
+    },
+    "WorkflowStep": {
+      "$ref": "#/$defs/WorkflowStep"
     }
   },
   "$defs": {
@@ -1196,6 +1202,59 @@
       "title": "ModerationResult",
       "type": "object"
     },
+    "ObservedWorkflow": {
+      "additionalProperties": false,
+      "description": "The expert's actual procedure across sessions (prompts/observed_workflow.md). Display only:\nnever an input to the graph builder, the case writer or the agents.",
+      "properties": {
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/WorkflowStep"
+          },
+          "title": "Steps",
+          "type": "array"
+        },
+        "built_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Built At"
+        },
+        "prompt_version": {
+          "default": "",
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "moderation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Moderation Id"
+        },
+        "flagged": {
+          "default": false,
+          "title": "Flagged",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "steps"
+      ],
+      "title": "ObservedWorkflow",
+      "type": "object"
+    },
     "Probe": {
       "additionalProperties": false,
       "properties": {
@@ -2033,6 +2092,50 @@
         "variants"
       ],
       "title": "VariantList",
+      "type": "object"
+    },
+    "WorkflowStep": {
+      "additionalProperties": false,
+      "properties": {
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "sop_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sop Rule"
+        },
+        "in_sop": {
+          "title": "In Sop",
+          "type": "boolean"
+        },
+        "session_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Session Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "n",
+        "text",
+        "in_sop",
+        "session_ids"
+      ],
+      "title": "WorkflowStep",
       "type": "object"
     }
   }

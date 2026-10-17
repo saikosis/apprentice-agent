@@ -313,3 +313,39 @@ def test_a_flagged_summary_is_kept_but_marked(llm: FakeLLM, monkeypatch: Any) ->
     out = asyncio.run(summary.summarise(store, "s-1", [seg], build_sop()))
     assert out.flagged and out.moderation_id == "mod-1"
     assert asyncio.run(store.get_summary("s-1")) == out
+
+
+def test_pattern_refresh_writes_the_observed_workflow_even_without_patterns(llm: FakeLLM) -> None:
+    store = Store("live", FakeDb())
+    asyncio.run(store.sop.put(build_sop()))
+    _processed(store, "s-1")
+    asyncio.run(store.deviations("s-1").replace([dev("s-1-dev-01", "§3.2", 60)]))
+    llm.reply("variants", {"variants": []})
+    llm.reply(
+        "observed_workflow",
+        {
+            "steps": [
+                {
+                    "n": 1,
+                    "text": "Opens the queue",
+                    "sop_rule": None,
+                    "in_sop": True,
+                    "session_ids": ["s-1"],
+                },
+                {
+                    "n": 2,
+                    "text": "Checks the statement tab",
+                    "sop_rule": None,
+                    "in_sop": False,
+                    "session_ids": ["s-1"],
+                },
+            ]
+        },
+    )
+    assert asyncio.run(variants.discover(store)) == []
+    w = asyncio.run(store.get_observed_workflow())
+    assert w is not None and [s.text for s in w.steps] == [
+        "Opens the queue",
+        "Checks the statement tab",
+    ]
+    assert w.prompt_version.startswith("observed_workflow@") and w.built_at is not None

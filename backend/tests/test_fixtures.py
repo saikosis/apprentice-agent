@@ -21,6 +21,7 @@ SCHEMAS: dict[str, object] = {
     "exam_cases.json": list[c.ExamCase],
     "agent_runs.json": list[c.AgentRun],
     "summaries.json": list[c.SessionSummary],
+    "observed_workflow.json": c.ObservedWorkflow,
 }
 
 

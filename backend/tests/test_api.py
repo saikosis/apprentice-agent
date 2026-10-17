@@ -398,6 +398,7 @@ def fixture_seed() -> DemoSeed:
             "variants": load("variants.json"),
             "probes": [{**p, "answer": answers.get(p["id"])} for p in load("probes.json")],
             "graph": load("graph.json"),
+            "observed_workflow": load("observed_workflow.json"),
             "report": load("exam_report.json"),
             "exam_cases": load("exam_cases.json"),
             "agent_runs": load("agent_runs.json"),
@@ -415,6 +416,7 @@ def test_demo_bundle_is_public_and_complete(api: Api) -> None:
     answered = [p for p in b["probes"] if p["answer"]]
     assert len(answered) == 5 and all(p["status"] == "answered" for p in answered)
     assert len(b["graph"]["nodes"]) == 14
+    assert b["observed_workflow"]["steps"][0]["n"] == 1
     assert len(b["exam_cases"]) == 10 and len(b["agent_runs"]) == 60
     assert all(r["id"].startswith("r-pilot-01-") for r in b["agent_runs"])
     assert api.client.get("/api/sessions").status_code == 401  # everything else still needs sign-in
@@ -617,3 +619,8 @@ def test_connect_sheet_diffs_any_tab_by_the_scenarios_id_column(api: Api) -> Non
     assert diff["changes"] == [
         {"invoice_id": "R-301", "column": "status", "before": "Pending", "after": "Accepted"}
     ]
+
+
+def test_observed_workflow_is_null_until_patterns_run(api: Api) -> None:
+    r = api.client.get("/api/observed-workflow")
+    assert r.status_code == 200 and r.json() is None

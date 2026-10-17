@@ -65,6 +65,12 @@ describe("views render against fixtures", () => {
     expect(await screen.findByText("Consignment vendor bypasses PO match")).toBeTruthy();
   });
 
+  it("Discovery shows the expert's observed workflow, marked against the SOP", async () => {
+    demo(<Discovery />);
+    expect(await screen.findByText(/Compare vendor, amount and items/)).toBeTruthy();
+    expect(screen.getAllByText("Not in the SOP").length).toBeGreaterThan(0);
+  });
+
   it("Graph lists exceptions", async () => {
     demo(<GraphView />);
     expect(await screen.findByText("Renumbered duplicate: reject")).toBeTruthy();

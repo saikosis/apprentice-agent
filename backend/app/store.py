@@ -25,6 +25,7 @@ from backend.app.contract import (
     ExamReport,
     JudgeScore,
     ModerationResult,
+    ObservedWorkflow,
     Probe,
     ProbeAnswer,
     Scenario,
@@ -184,6 +185,14 @@ class Store:
 
     def sheet_snapshots(self, session_id: str) -> Coll[SheetSnapshot]:
         return Coll(self, f"{self.root}/sessions/{session_id}/sheet_snapshots", SheetSnapshot)
+
+    async def get_observed_workflow(self) -> ObservedWorkflow | None:
+        snap = await self.db.document(f"{self.root}/observed_workflow/current").get()
+        return ObservedWorkflow.model_validate(snap.to_dict()) if snap.exists else None
+
+    async def put_observed_workflow(self, w: ObservedWorkflow) -> None:
+        self.check_writable()
+        await self.db.document(f"{self.root}/observed_workflow/current").set(_dump(w))
 
     async def get_summary(self, session_id: str) -> SessionSummary | None:
         snap = await self.db.document(f"{self.root}/sessions/{session_id}/summary/current").get()

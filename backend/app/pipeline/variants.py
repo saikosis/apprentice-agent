@@ -1,11 +1,13 @@
 """Variant discovery across sessions, one call (prompts/variants.md)."""
 
 import logging
+from datetime import UTC, datetime
 
 from backend.app import domains, gemini, jobs
-from backend.app.contract import Variant, VariantList
+from backend.app.contract import SOP, ObservedWorkflow, Variant, VariantList
 from backend.app.pipeline import probes
 from backend.app.pipeline.deviations import segment_for_prompt
+from backend.app.safety import armor
 from backend.app.store import Store
 
 log = logging.getLogger(__name__)
@@ -68,6 +70,10 @@ async def _discover(store: Store) -> list[Variant]:
                 "deviations": [d.model_dump() for d in devs],
             }
         )
+    try:  # display only, and never a reason to lose the patterns
+        await observe(store, payload, sop)
+    except Exception:
+        log.exception("observed workflow failed")
     out = await gemini.structured(
         gemini.FLASH_MODEL,
         "variants",
@@ -79,3 +85,27 @@ async def _discover(store: Store) -> list[Variant]:
     found = await store.variants.replace(normalize(out.output.variants, known))
     await probes.for_variants(store, [v for v in found if v.name.lower() not in before], sop)
     return found
+
+
+async def observe(store: Store, sessions: list[dict[str, object]], sop: SOP) -> ObservedWorkflow:
+    """The expert's actual procedure, step by step, marked against the SOP. Screened; display only."""
+    out = await gemini.structured(
+        gemini.FLASH_MODEL,
+        "observed_workflow",
+        [gemini.data("Sessions", sessions)],
+        ObservedWorkflow,
+        values=domains.values(store.scenario, SOP=sop.full_text),
+    )
+    w = out.output
+    mod = await armor.screen_output("\n".join(st.text for st in w.steps), "workflow", store.root)
+    await store.moderation.put(mod)
+    result = w.model_copy(
+        update={
+            "built_at": datetime.now(UTC),
+            "prompt_version": out.prompt_ref,
+            "moderation_id": mod.id,
+            "flagged": mod.match_found,
+        }
+    )
+    await store.put_observed_workflow(result)
+    return result

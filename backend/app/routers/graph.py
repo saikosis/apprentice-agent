@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 
 from backend.app import jobs
-from backend.app.contract import DecisionGraph, Variant
+from backend.app.contract import DecisionGraph, ObservedWorkflow, Variant
 from backend.app.pipeline import graph, variants
 from backend.app.store import LiveStore, ReadStore
 
@@ -19,6 +19,12 @@ async def discover(store: LiveStore) -> dict[str, str]:
 @router.get("/variants")
 async def list_variants(store: ReadStore) -> list[Variant]:
     return sorted(await store.variants.list(), key=lambda v: v.frequency, reverse=True)
+
+
+@router.get("/observed-workflow")
+async def observed_workflow(store: ReadStore) -> ObservedWorkflow | None:
+    """Written on every pattern refresh; null until the first one."""
+    return await store.get_observed_workflow()
 
 
 @router.post("/graph/build", status_code=202)

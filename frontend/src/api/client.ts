@@ -6,6 +6,7 @@ import type {
   Deviation,
   ExamCase,
   ExamReport,
+  ObservedWorkflow,
   Probe,
   ProbeAnswer,
   Segment,
@@ -115,6 +116,7 @@ export type DemoBundle = {
   segments?: Record<string, Segment[]>;
   deviations?: Record<string, Deviation[]>;
   summaries?: Record<string, SessionSummary>;
+  observed_workflow?: ObservedWorkflow | null;
   exam_cases?: ExamCase[];
   agent_runs?: AgentRun[];
 };
@@ -122,7 +124,8 @@ export type DemoBundle = {
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === "1";
 
 async function fixtureBundle(): Promise<DemoBundle> {
-  const [sessions, segments, deviations, variants, probes, answers, graph, report, cases, runs, summaries] = await Promise.all([
+  const [sessions, segments, deviations, variants, probes, answers, graph, report, cases, runs, summaries, workflow] =
+    await Promise.all([
     import("../../../fixtures/sessions.json"),
     import("../../../fixtures/segments.json"),
     import("../../../fixtures/deviations.json"),
@@ -134,6 +137,7 @@ async function fixtureBundle(): Promise<DemoBundle> {
     import("../../../fixtures/exam_cases.json"),
     import("../../../fixtures/agent_runs.json"),
     import("../../../fixtures/summaries.json"),
+    import("../../../fixtures/observed_workflow.json"),
   ]);
   const group = <X extends { session_id: string }>(xs: X[]) =>
     xs.reduce<Record<string, X[]>>((acc, x) => ((acc[x.session_id] ??= []).push(x), acc), {});
@@ -149,6 +153,7 @@ async function fixtureBundle(): Promise<DemoBundle> {
     exam_cases: cases.default as ExamCase[],
     agent_runs: runs.default as AgentRun[],
     summaries: Object.fromEntries((summaries.default as SessionSummary[]).map((s) => [s.session_id, s])),
+    observed_workflow: workflow.default as ObservedWorkflow,
   };
 }
 
@@ -200,6 +205,11 @@ export async function listProbes(ws: Ws, status?: Probe["status"]): Promise<Prob
 export async function listVariants(ws: Ws): Promise<Variant[]> {
   if (fromBundle(ws)) return (await demoBundle()).variants;
   return api("/api/variants");
+}
+
+export async function getObservedWorkflow(ws: Ws): Promise<ObservedWorkflow | null> {
+  if (fromBundle(ws)) return (await demoBundle()).observed_workflow ?? null;
+  return api(`/api/observed-workflow?ws=${ws}`);
 }
 
 export async function getGraph(ws: Ws): Promise<DecisionGraph | null> {

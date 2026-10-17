@@ -15,6 +15,7 @@ from backend.app.contract import (
     ExamCase,
     ExamReport,
     JudgeScore,
+    ObservedWorkflow,
     Probe,
     ProbeAnswer,
     Scenario,
@@ -49,6 +50,7 @@ class DemoSeed(BaseModel):
     variants: list[Variant] = []
     probes: list[SeedProbe] = []
     graph: DecisionGraph | None = None
+    observed_workflow: ObservedWorkflow | None = None
     exam_cases: list[ExamCase] = []
     agent_runs: list[AgentRun] = []
     judge_scores: list[JudgeScore] = []
@@ -60,7 +62,10 @@ class DemoSeed(BaseModel):
 async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
     store = Store("demo", scenario=scenario)
     sessions = await store.sessions.list()
-    (segs, devs, sums, variants, probes, graph, reports), (cases, runs) = await asyncio.gather(
+    (
+        (segs, devs, sums, variants, probes, graph, reports),
+        (cases, runs, observed),
+    ) = await asyncio.gather(
         asyncio.gather(
             asyncio.gather(*(store.segments(s.id).list() for s in sessions)),
             asyncio.gather(*(store.deviations(s.id).list() for s in sessions)),
@@ -70,7 +75,9 @@ async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
             store.get_graph(),
             store.exam_reports.list(),
         ),
-        asyncio.gather(store.exam_cases.list(), store.agent_runs.list()),
+        asyncio.gather(
+            store.exam_cases.list(), store.agent_runs.list(), store.get_observed_workflow()
+        ),
     )
     report = max(reports, key=lambda r: r.created_at) if reports else None
     return {
@@ -81,6 +88,7 @@ async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
         "variants": variants,
         "probes": probes,
         "graph": graph,
+        "observed_workflow": observed,
         "report": report,
         # the report table's cases (labels included, as in the seed) and that report's agent runs,
         # so the demo can show both agents' reasoning side by side
@@ -132,6 +140,8 @@ async def load_seed(store: Store, seed: DemoSeed) -> None:
             await store.probes.set_answer(sp.answer)
     if seed.graph:
         await store.put_graph(seed.graph)
+    if seed.observed_workflow:
+        await store.put_observed_workflow(seed.observed_workflow)
     for c in seed.exam_cases:
         await store.exam_cases.put(c)
     for r in seed.agent_runs:

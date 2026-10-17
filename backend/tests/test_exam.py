@@ -301,6 +301,12 @@ def test_no_label_leakage(llm: FakeLLM) -> None:
         },
     )
 
+    from backend.app.contract import ObservedWorkflow, WorkflowStep
+
+    observed = ObservedWorkflow(
+        steps=[WorkflowStep(n=1, text="OBSERVED-7c1 opens the queue", in_sop=True, session_ids=[])]
+    )
+    asyncio.run(store.put_observed_workflow(observed))  # display only: must reach no model below
     asyncio.run(graph.build(store))
     from backend.app.contract import Deviation
 
@@ -325,6 +331,7 @@ def test_no_label_leakage(llm: FakeLLM) -> None:
         assert "prompt_injection" not in seen and "tests_rule" not in seen, (
             f"trap hint leaked into {pid}"
         )
+        assert "OBSERVED-7c1" not in seen, f"observed workflow leaked into {pid}"
     assert SECRET in llm.seen("judge")
     assert "sop_graph" not in llm.seen("judge") and "cited_nodes" not in llm.seen(
         "judge"

@@ -145,6 +145,25 @@ class Variant(M):
     frequency: int
 
 
+class WorkflowStep(M):
+    n: int
+    text: str
+    sop_rule: str | None = None  # the section it matches, when it does
+    in_sop: bool
+    session_ids: list[str]
+
+
+class ObservedWorkflow(M):
+    """The expert's actual procedure across sessions (prompts/observed_workflow.md). Display only:
+    never an input to the graph builder, the case writer or the agents."""
+
+    steps: list[WorkflowStep]
+    built_at: datetime | None = None
+    prompt_version: str = ""
+    moderation_id: str | None = None
+    flagged: bool = False
+
+
 class Probe(M):
     id: str
     session_id: str | None = None

@@ -31,6 +31,7 @@ async def export(store: Store) -> DemoSeed:
             SeedProbe(**p.model_dump(), answer=a) for p, a in await store.probes.with_answers()
         ],
         graph=await store.get_graph(),
+        observed_workflow=await store.get_observed_workflow(),
         exam_cases=await store.exam_cases.list(),
         agent_runs=await store.agent_runs.list(),
         judge_scores=await store.judge_scores.list(),

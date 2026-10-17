@@ -1,5 +1,7 @@
 # 03. Observed workflow on the Patterns page
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: `01-pattern-rule-twice`
