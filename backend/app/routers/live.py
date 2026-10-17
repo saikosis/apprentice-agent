@@ -12,7 +12,7 @@ from google.genai import types
 from pydantic import BaseModel, ConfigDict, Field
 
 from backend.app import domains, errors, gemini, prompts
-from backend.app.contract import SOP
+from backend.app.contract import SOP, Scenario
 from backend.app.routers.sessions import get_or_404
 from backend.app.store import LiveStore
 
@@ -60,7 +60,7 @@ class TokenReq(BaseModel):
 
 
 def live_config(
-    sop: SOP, resume_handle: str | None, scenario: str = "ap"
+    sop: SOP, resume_handle: str | None, scenario: Scenario = "ap"
 ) -> types.LiveConnectConfig:
     return types.LiveConnectConfig(
         response_modalities=[types.Modality.AUDIO],
@@ -83,7 +83,7 @@ def live_config(
 
 
 def token_config(
-    sop: SOP, resume_handle: str | None, now: datetime, scenario: str = "ap"
+    sop: SOP, resume_handle: str | None, now: datetime, scenario: Scenario = "ap"
 ) -> types.CreateAuthTokenConfig:
     # No lock_additional_fields: the whole setup comes from the token; browser setup is ignored.
     return types.CreateAuthTokenConfig(

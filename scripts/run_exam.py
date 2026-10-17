@@ -9,8 +9,9 @@ import argparse
 import asyncio
 import sys
 from pathlib import Path
+from typing import get_args
 
-from backend.app.contract import ExamReport
+from backend.app.contract import ExamReport, Scenario
 from backend.app.store import Store, new_id
 
 CHART = Path("eval/pilot_chart.png")
@@ -71,7 +72,7 @@ def cli() -> None:
     )
     ap.add_argument("--ws", choices=["live", "demo"], default="live")
     ap.add_argument("--runs", type=int, default=3)
-    ap.add_argument("--scenario", choices=["ap", "essays", "volunteers"], default="ap")
+    ap.add_argument("--scenario", choices=get_args(Scenario), default="ap")
     ap.add_argument("--chart-only", metavar="REPORT_ID")
     asyncio.run(main(ap.parse_args()))
 

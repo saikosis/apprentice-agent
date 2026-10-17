@@ -45,7 +45,3 @@ def values(name: str, *, exam: bool = False, **more: str) -> dict[str, str]:
     `exam=True` (case writer, judge) adds the trap definitions."""
     d = load(name)
     return {"DOMAIN": d.prompt + ("\n" + d.exam if exam else ""), **more}
-
-
-def all_info() -> list[ScenarioInfo]:
-    return [load(n).info for n in get_args(Scenario)]

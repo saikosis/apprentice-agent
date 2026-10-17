@@ -587,15 +587,6 @@ def test_upload_without_a_bucket_says_so(api: Api, monkeypatch: pytest.MonkeyPat
     assert r.status_code == 503 and "BUCKET" in r.json()["error"]["message"]
 
 
-def test_scenarios_are_listed_for_the_ui(api: Api) -> None:
-    r = api.client.get("/api/scenarios")
-    assert r.status_code == 200
-    by_id = {s["id"]: s for s in r.json()}
-    assert set(by_id) == {"ap", "essays", "volunteers"}
-    assert by_id["volunteers"]["decision_labels"]["approve"] == "Accept"
-    assert by_id["ap"]["sheet_tab"] == "Invoices"
-
-
 def test_each_scenario_has_its_own_sessions_and_recordings(api: Api) -> None:
     r = api.client.post("/api/sessions?scenario=essays", json={"kind": "training"})
     sid = r.json()["id"]

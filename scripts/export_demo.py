@@ -8,6 +8,7 @@ Other scenarios: --scenario essays --out fixtures/demo_seed_essays.json, then se
 import argparse
 import asyncio
 from pathlib import Path
+from typing import get_args
 
 from backend.app.contract import Scenario
 from backend.app.routers.demo import DemoSeed, SeedProbe
@@ -51,7 +52,7 @@ def cli() -> None:
     )
     ap.add_argument("--from", dest="ws", choices=["live", "demo"], default="live")
     ap.add_argument("--out", type=Path, default=Path("fixtures/demo_seed.json"))
-    ap.add_argument("--scenario", choices=["ap", "essays", "volunteers"], default="ap")
+    ap.add_argument("--scenario", choices=get_args(Scenario), default="ap")
     args = ap.parse_args()
     asyncio.run(main(args.ws, args.out, args.scenario))
 

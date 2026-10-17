@@ -19,6 +19,7 @@ from backend.app.contract import (
     ExamReport,
     JudgeScore,
     Probe,
+    Scenario,
 )
 from backend.app.exam import arms, judge
 from backend.app.store import Store, new_id
@@ -92,7 +93,7 @@ def aggregate(
     )
 
 
-def miss_question(c: ExamCase, scenario: str = "ap") -> str:
+def miss_question(c: ExamCase, scenario: Scenario = "ap") -> str:
     """Describes the situation (the item's naming fields and the scenario's cue fields), never the expected
     decision. Email text is untrusted: never quoted."""
     info = domains.load(scenario).info

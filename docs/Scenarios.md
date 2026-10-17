@@ -52,7 +52,7 @@ automatically the first time it's used:
 | Firestore | `workspaces/live`, `workspaces/demo` (unchanged) | `workspaces/essays-live`, `workspaces/essays-demo` | `workspaces/volunteers-live`, `workspaces/volunteers-demo` |
 | Recordings | `gs://apprentice-recordings-aibc2026/live/` | `…/essays-live/` | `…/volunteers-live/` |
 
-Connect Sheet uses the same OAuth client and the same read-only Sheets permission. Docs and Forms are only ever seen
+The invoice job's data area is unchanged, but see *Old saved data* below. Connect Sheet uses the same OAuth client and the same read-only Sheets permission. Docs and Forms are only ever seen
 through the screen recording; Apprentice never calls their APIs.
 
 You need to do three things: store the two new SOPs, redeploy, and check.
@@ -82,15 +82,14 @@ EXPERT_EMAIL="<expert's gmail>" ADMIN_UIDS="<your uid>" \
   bash scripts/deploy.sh
 ```
 
-**3. Check:**
+**3. Check:** on the site, the sidebar shows **Workflow** with all three jobs; switch to *Essay marking* and the
+Sessions page says "submissions". In the Firestore console, `workspaces/essays-live/sop/ENG-MK-02` and
+`workspaces/volunteers-live/sop/VOL-SOP-03` exist.
 
-```bash
-curl -s https://apprentice-410061958227.asia-south1.run.app/api/scenarios | head -c 300
-```
-
-It lists `ap`, `essays` and `volunteers`. In the Firestore console, `workspaces/essays-live/sop/ENG-MK-02` and
-`workspaces/volunteers-live/sop/VOL-SOP-03` exist. On the site, the sidebar shows **Workflow**; switch to *Essay
-marking* and the Sessions page says "submissions".
+**Old saved data.** Exam cases and Connect Sheet snapshots changed shape (`item` / `reference_row`; snapshot cells are
+text). Any saved in the old shape before this change no longer load: regenerate the exam cases and re-take the
+snapshots. Nothing had been saved in the cloud yet; on a laptop, delete `data/local.json` (or your `LOCAL_DB` file) if
+the invoice job errors.
 
 ## Preparing the Google files (in the demo account's Drive)
 

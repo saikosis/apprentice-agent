@@ -6,7 +6,7 @@ import os
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
-from backend.app import domains, storage
+from backend.app import storage
 from backend.app.contract import (
     SOP,
     AgentRun,
@@ -18,7 +18,6 @@ from backend.app.contract import (
     Probe,
     ProbeAnswer,
     Scenario,
-    ScenarioInfo,
     Segment,
     Session,
     Variant,
@@ -53,11 +52,6 @@ class DemoSeed(BaseModel):
     judge_scores: list[JudgeScore] = []
     report: ExamReport | None = None
     clips: dict[str, str] = {}  # session id -> gs:// uri, when it differs from session.gcs_uri
-
-
-@router.get("/scenarios")
-async def scenarios() -> list[ScenarioInfo]:
-    return domains.all_info()
 
 
 @router.get("/demo/bundle")

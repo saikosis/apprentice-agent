@@ -22,11 +22,11 @@ import json
 import os
 import sys
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, get_args
 
 os.environ.setdefault("LOCAL_DB", "data/local.json")
 
-from backend.app.contract import ExpertLabel, ProbeAnswer, Session
+from backend.app.contract import ExpertLabel, ProbeAnswer, Scenario, Session
 from backend.app.store import Store, new_id
 
 
@@ -162,7 +162,7 @@ def cli() -> None:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ap.add_argument("--scenario", choices=["ap", "essays", "volunteers"], default="ap")
+    ap.add_argument("--scenario", choices=get_args(Scenario), default="ap")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("seed-sop")
     p = sub.add_parser("process")

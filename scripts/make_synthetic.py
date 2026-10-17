@@ -18,7 +18,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 from backend.app.contract import SOP, Email, InvoiceRow, Scenario, SOPSection
 
@@ -490,7 +490,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ap.add_argument("--scenario", choices=["ap", "essays", "volunteers"], default="ap")
+    ap.add_argument("--scenario", choices=get_args(Scenario), default="ap")
     ap.add_argument("--out", type=Path, help="default data/synthetic, or data/synthetic/<scenario>")
     ap.add_argument(
         "--upload-sop", action="store_true", help="store the SOP in the scenario's live workspace"

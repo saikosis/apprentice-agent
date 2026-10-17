@@ -6,14 +6,14 @@ from typing import Any
 from fastapi import HTTPException
 
 from backend.app import domains, gemini
-from backend.app.contract import ExamCase, ExamCaseList
+from backend.app.contract import ExamCase, ExamCaseList, Scenario
 from backend.app.pipeline.deviations import segment_for_prompt
 from backend.app.store import Store
 
 log = logging.getLogger(__name__)
 
 
-def missing_traps(cases: list[ExamCase], scenario: str = "ap") -> set[str]:
+def missing_traps(cases: list[ExamCase], scenario: Scenario = "ap") -> set[str]:
     traps = set(domains.load(scenario).info.traps)
     return traps - {c.trap_type for c in cases if c.origin == "generated"}
 
