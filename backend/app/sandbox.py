@@ -55,6 +55,15 @@ async def get(uid: str) -> SandboxInfo | None:
     )
 
 
+async def all_sandboxes() -> list[SandboxInfo]:
+    today = await _today()
+    out = []
+    async for snap in store.default_db().collection("sandboxes").stream():
+        info = SandboxInfo.model_validate(snap.to_dict())
+        out.append(info.model_copy(update={"global_today": today, "global_limit": GLOBAL_LIMIT}))
+    return sorted(out, key=lambda s: s.created_at)
+
+
 def check_open() -> None:
     if not enabled():
         raise HTTPException(403, "The judge sandbox is closed.")

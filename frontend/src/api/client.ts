@@ -59,8 +59,30 @@ export function switchScenario(next: Scenario): void {
   videoUrls.clear();
   scenarioListeners.forEach((cb) => cb());
 }
-const withScenario = (path: string) =>
-  scenario === "ap" || !path.startsWith("/api/") ? path : `${path}${path.includes("?") ? "&" : "?"}scenario=${scenario}`;
+// Admin only: read a judge's sandbox. Every GET then targets it; writes still go to the admin's own workspace.
+let viewing: { uid: string; email: string } | null = null;
+export const viewingSandbox = () => viewing;
+export function viewSandbox(judge: { uid: string; email: string } | null): void {
+  viewing = judge;
+  bundlePromise = null;
+  videoUrls.clear();
+  scenarioListeners.forEach((cb) => cb());
+}
+// Changes whenever the data the pages show should change (workflow switch, admin view).
+export const viewKey = () => `${scenario}|${viewing?.uid ?? ""}`;
+
+function withScenario(path: string, method = "GET"): string {
+  if (!path.startsWith("/api/")) return path;
+  const [base, query = ""] = path.split("?");
+  const q = new URLSearchParams(query);
+  if (viewing && method === "GET") {
+    q.set("ws", "sandbox");
+    q.set("uid", viewing.uid);
+  }
+  if (scenario !== "ap") q.set("scenario", scenario);
+  const qs = q.toString();
+  return qs ? `${base}?${qs}` : base;
+}
 
 let idToken: string | null = null;
 
@@ -81,7 +103,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   if (idToken) headers.set("Authorization", `Bearer ${idToken}`);
   if (init.body) headers.set("Content-Type", "application/json");
-  const res = await fetch(withScenario(path), { ...init, headers });
+  const res = await fetch(withScenario(path, init.method), { ...init, headers });
   if (!res.ok) {
     let message = `${res.status} ${res.statusText}`;
     try {
@@ -259,7 +281,10 @@ export function videoUrl(sessionId: string): Promise<string> {
 
 // ---- writes (live workspace only) ----
 export const me = () =>
-  api<{ uid: string; email: string; is_demo_expert: boolean; role: "expert" | "judge" | "none" }>("/api/me");
+  api<{ uid: string; email: string; is_demo_expert: boolean; role: "expert" | "judge" | "none"; is_admin: boolean }>(
+    "/api/me",
+  );
+export const listSandboxes = () => api<SandboxInfo[]>("/api/admin/sandboxes");
 export const joinSandbox = (code: string) => post<SandboxInfo>("/api/sandbox/join", { code });
 export const answerProbe = (id: string, text: string, source: ProbeAnswer["source"]) =>
   post<{ probe: Probe; answer: ProbeAnswer }>(`/api/probes/${id}/answer`, { text, source });

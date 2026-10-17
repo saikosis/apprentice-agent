@@ -785,3 +785,30 @@ def test_a_sandbox_exam_runs_once_per_agent_and_refusals_are_free(
     assert api.client.post("/api/exam/run", json={"runs_per_arm": 3}).status_code == 202
     api.drain()
     assert seen == [1] and api.client.get("/api/sandbox").json()["usage"]["exam_runs"] == 1
+
+
+# ---- admin view of sandboxes (ticket 11) ----
+def test_admin_lists_sandboxes_and_reads_one(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    judge(api, monkeypatch, "u-j1")
+    sid = new_session(api)["id"]
+    as_user("expert@example.com", "u-expert")
+    assert api.client.get("/api/admin/sandboxes").status_code == 403  # not an admin yet
+    monkeypatch.setenv("ADMIN_UIDS", "u-expert")
+    assert api.client.get("/api/me").json()["is_admin"] is True
+    rows = api.client.get("/api/admin/sandboxes").json()
+    assert [(r["email"], r["usage"]["recordings"]) for r in rows] == [("u-j1@example.com", 1)]
+    seen = api.client.get("/api/sessions?ws=sandbox&uid=u-j1").json()
+    assert [s["id"] for s in seen] == [sid]
+    # reading is all: writes still go to the admin's own workspace
+    new_session(api)
+    assert len(api.client.get("/api/sessions?ws=sandbox&uid=u-j1").json()) == 1
+
+
+def test_a_judge_cannot_read_another_sandbox_via_uid(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    judge(api, monkeypatch, "u-j1")
+    new_session(api)
+    judge(api, monkeypatch, "u-j2")
+    assert api.client.get("/api/sessions?ws=sandbox&uid=u-j1").json() == []
+    assert api.client.get("/api/admin/sandboxes").status_code == 403

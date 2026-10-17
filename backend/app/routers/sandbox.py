@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from backend.app import sandbox
 from backend.app.contract import SandboxInfo
-from backend.app.routers.auth import CurrentUser
+from backend.app.routers.auth import CurrentUser, is_admin
 
 router = APIRouter(tags=["sandbox"])
 
@@ -18,6 +18,13 @@ class JoinReq(BaseModel):
 @router.post("/sandbox/join")
 async def join(body: JoinReq, user: CurrentUser) -> SandboxInfo:
     return await sandbox.join(user.uid, user.email, body.code)
+
+
+@router.get("/admin/sandboxes")
+async def list_sandboxes(user: CurrentUser) -> list[SandboxInfo]:
+    if not is_admin(user):
+        raise HTTPException(403, "Only an admin can see the judges' sandboxes.")
+    return await sandbox.all_sandboxes()
 
 
 @router.get("/sandbox")

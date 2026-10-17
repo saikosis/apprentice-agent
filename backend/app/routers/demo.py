@@ -1,7 +1,6 @@
 """Public routes: the demo bundle and recording playback; plus the admin-only demo seed (SPEC §3, §8)."""
 
 import asyncio
-import os
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
@@ -24,7 +23,7 @@ from backend.app.contract import (
     SessionSummary,
     Variant,
 )
-from backend.app.routers.auth import CurrentUser, MaybeUser, role_of
+from backend.app.routers.auth import CurrentUser, MaybeUser, is_admin, role_of
 from backend.app.routers.probes import probe_rows
 from backend.app.store import Store, Ws
 
@@ -102,14 +101,20 @@ async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
 
 @router.get("/sessions/{session_id}/video-url")
 async def video_url(
-    session_id: str, user: MaybeUser, ws: Ws | None = None, scenario: Scenario = "ap"
+    session_id: str,
+    user: MaybeUser,
+    ws: Ws | None = None,
+    scenario: Scenario = "ap",
+    uid: str | None = None,
 ) -> dict[str, str]:
     """Signed GET, 1 h. Demo recordings are public; the caller's own workspace (the expert's live one, a
     judge's sandbox) needs their sign-in. Without ?ws=, own workspace first and demo as a fallback.
     """
     role = await role_of(user) if user else "none"
     own: list[Store] = []
-    if ws != "demo" and role == "expert":
+    if ws == "sandbox" and uid and user and is_admin(user):  # admin viewing a judge's sandbox
+        own = [Store("sandbox", uid=uid, scenario=scenario)]
+    elif ws != "demo" and role == "expert":
         own = [Store("live", scenario=scenario)]
     elif ws != "demo" and role == "judge" and user:
         own = [Store("sandbox", uid=user.uid, scenario=scenario)]
@@ -165,7 +170,7 @@ class SeedReq(BaseModel):
 
 @router.post("/admin/seed-demo")
 async def seed_demo(body: SeedReq, user: CurrentUser, scenario: Scenario = "ap") -> dict[str, bool]:
-    if user.uid not in {u.strip() for u in os.getenv("ADMIN_UIDS", "").split(",") if u.strip()}:
+    if not is_admin(user):
         raise HTTPException(403, "Only an admin can seed the demo workspace.")
     await load_seed(Store("demo", allow_demo_writes=True, scenario=scenario), body.bundle)
     return {"ok": True}

@@ -76,6 +76,11 @@ def _experts() -> set[str]:
     return {e.strip().lower() for e in os.getenv("EXPERT_EMAIL", "").split(",") if e.strip()}
 
 
+def is_admin(user: User) -> bool:
+    """ADMIN_UIDS: may seed the demo and read any judge's sandbox."""
+    return user.uid in {u.strip() for u in os.getenv("ADMIN_UIDS", "").split(",") if u.strip()}
+
+
 def is_expert(user: User) -> bool:
     return user.email_verified and user.email.lower() in _experts()
 
@@ -117,4 +122,5 @@ async def me(user: CurrentUser, role: CurrentRole) -> dict[str, object]:
         "email": user.email,
         "is_demo_expert": role == "expert",
         "role": role,
+        "is_admin": is_admin(user),
     }

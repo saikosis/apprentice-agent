@@ -1,5 +1,7 @@
 # 11. Admin page: sandboxes and read-only view
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: `04-sandbox-workspace-and-code`, `05-limits-and-off-switch`

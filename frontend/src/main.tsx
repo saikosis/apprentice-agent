@@ -3,6 +3,7 @@ import {
   CircleDotIcon,
   GraduationCapIcon,
   LayoutDashboardIcon,
+  UsersIcon,
   MessageCircleQuestionIcon,
   MoonIcon,
   NetworkIcon,
@@ -13,7 +14,16 @@ import {
 } from "lucide-react";
 import { StrictMode, Suspense, lazy, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
-import { SCENARIOS, currentScenario, me, subscribeScenario, switchScenario } from "./api/client";
+import {
+  SCENARIOS,
+  currentScenario,
+  me,
+  subscribeScenario,
+  switchScenario,
+  viewKey,
+  viewSandbox,
+  viewingSandbox,
+} from "./api/client";
 import { authConfigured, signIn, signOut, watchUser } from "./auth";
 import { Avatar, AvatarFallback } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
@@ -40,6 +50,7 @@ import { Skeleton } from "./components/ui/skeleton";
 import { TooltipProvider } from "./components/ui/tooltip";
 import "./index.css";
 import { ClipProvider, ErrorNote, WsContext, useRoute } from "./ui";
+import { Admin } from "./views/Admin";
 import { Discovery } from "./views/Discovery";
 import { JoinSandbox } from "./views/JoinSandbox";
 import { Probes } from "./views/Probes";
@@ -78,6 +89,7 @@ function Page({ parts }: { parts: string[] }) {
   if (head === "discovery") return <Discovery />;
   if (head === "graph") return <GraphView />;
   if (head === "exam") return <Exam />;
+  if (head === "admin") return <Admin />;
   return <Overview />;
 }
 
@@ -173,8 +185,9 @@ function NotExpert({ email, error }: { email?: string; error?: string }) {
 }
 
 const useScenarioId = () => useSyncExternalStore(subscribeScenario, () => currentScenario().id);
+const useViewKey = () => useSyncExternalStore(subscribeScenario, viewKey);
 
-function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean }) {
+function AppSidebar({ current, readOnly, admin }: { current: string; readOnly: boolean; admin: boolean }) {
   const scenario = useScenarioId();
   return (
     <Sidebar>
@@ -206,7 +219,7 @@ function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean 
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV.map(([path, label, Icon]) => (
+              {[...NAV, ...(admin ? ([["admin", "Judge sandboxes", UsersIcon]] as typeof NAV) : [])].map(([path, label, Icon]) => (
                 <SidebarMenuItem key={path}>
                   <SidebarMenuButton asChild isActive={current === path} size="lg" tooltip={label}>
                     <a href={`#/${path}`} aria-current={current === path ? "page" : undefined}>
@@ -258,7 +271,9 @@ function App() {
   const who = answer && answer.account === account ? answer.who : undefined;
 
   const ws = IS_DEMO ? "demo" : "live";
-  const scenario = useScenarioId();
+  const scenario = useViewKey(); // remount key: workflow switch or admin view
+  const viewing = viewingSandbox();
+  const isAdmin = Boolean(who && "is_admin" in who && who.is_admin);
   const current = parts[0] ?? "";
 
   const checking = (label: string) => (
@@ -296,15 +311,25 @@ function App() {
   const email = user?.email ?? (who && "email" in who ? who.email : undefined);
 
   return (
-    <WsContext.Provider value={{ ws, readOnly: IS_DEMO, sandbox: Boolean(who && "role" in who && who.role === "judge") }}>
+    <WsContext.Provider
+      value={{ ws, readOnly: IS_DEMO || Boolean(viewing), sandbox: Boolean(who && "role" in who && who.role === "judge") }}
+    >
       <ClipProvider>
         <SidebarProvider>
-          <AppSidebar current={current} readOnly={IS_DEMO} />
+          <AppSidebar current={current} readOnly={IS_DEMO || Boolean(viewing)} admin={isAdmin} />
           <SidebarInset className="min-w-0">
             <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-6">
               <SidebarTrigger />
               <Separator orientation="vertical" className="data-vertical:h-5 data-vertical:self-center" />
-              {IS_DEMO ? (
+              {viewing ? (
+                <div className="flex min-w-0 items-center gap-2 text-sm">
+                  <Badge variant="secondary">Read-only</Badge>
+                  <span className="truncate text-muted-foreground">Viewing {viewing.email}'s sandbox</span>
+                  <Button variant="outline" size="sm" onClick={() => (viewSandbox(null), (window.location.hash = "#/admin"))}>
+                    Stop viewing
+                  </Button>
+                </div>
+              ) : IS_DEMO ? (
                 <div className="flex min-w-0 items-center gap-2 text-sm">
                   <Badge variant="secondary">Demo</Badge>
                   <span className="truncate text-muted-foreground">

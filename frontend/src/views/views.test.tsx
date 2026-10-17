@@ -1,9 +1,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SCENARIOS, currentScenario, subscribeScenario, switchScenario } from "../api/client";
+import { SCENARIOS, currentScenario, subscribeScenario, switchScenario, viewingSandbox } from "../api/client";
 import { rowsToRecords } from "../recorder/sheets";
 import { ClipProvider, WsContext } from "../ui";
+import { Admin } from "./Admin";
 import { Discovery } from "./Discovery";
 import { JoinSandbox } from "./JoinSandbox";
 import { Exam } from "./Exam";
@@ -198,5 +199,36 @@ describe("judge code", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open my sandbox" }));
     await vi.waitFor(() => expect(joined).toHaveBeenCalled());
     expect(sent).toEqual(["wrong", "river-42"]);
+  });
+});
+
+describe("admin", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("lists sandboxes and opens one read-only; reads then target that sandbox", async () => {
+    const urls: string[] = [];
+    const row = {
+      uid: "u-j1",
+      email: "judge1@example.com",
+      created_at: "2026-10-17T10:00:00Z",
+      usage: { recordings: 2, graph_builds: 1, exam_runs: 0, case_generations: 0 },
+      limit_each: 5,
+      global_today: 3,
+      global_limit: 100,
+    };
+    vi.stubGlobal("fetch", (url: string) => {
+      urls.push(url);
+      return Promise.resolve(new Response(JSON.stringify(url.startsWith("/api/admin") ? [row] : []), { status: 200 }));
+    });
+    render(<Admin />);
+    expect(await screen.findByText("judge1@example.com")).toBeTruthy();
+    expect(screen.getByText("2 of 5")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "View judge1@example.com's sandbox" }));
+    expect(viewingSandbox()).toEqual({ uid: "u-j1", email: "judge1@example.com" });
+    const { listVariants } = await import("../api/client");
+    await listVariants("live");
+    expect(urls.at(-1)).toBe("/api/variants?ws=sandbox&uid=u-j1");
+    const { viewSandbox } = await import("../api/client");
+    viewSandbox(null);
   });
 });

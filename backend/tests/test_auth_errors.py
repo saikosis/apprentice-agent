@@ -67,6 +67,7 @@ def test_me_with_a_verified_token(monkeypatch) -> None:  # type: ignore[no-untyp
         "email": "expert@example.com",
         "is_demo_expert": True,
         "role": "expert",
+        "is_admin": False,
     }
 
 
@@ -161,6 +162,7 @@ def test_local_dev_bypass_only_with_local_db_and_never_on_cloud_run(monkeypatch)
         "email": "expert@example.com",
         "is_demo_expert": True,
         "role": "expert",
+        "is_admin": False,
     }
 
     monkeypatch.setenv("K_SERVICE", "apprentice")  # Cloud Run sets this: bypass is off

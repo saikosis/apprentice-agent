@@ -9,7 +9,7 @@ from fastapi import Depends, HTTPException
 
 from backend.app import sandbox
 from backend.app.contract import Scenario
-from backend.app.routers.auth import CurrentRole, CurrentUser
+from backend.app.routers.auth import CurrentRole, CurrentUser, is_admin
 from backend.app.store import Store, Ws
 
 
@@ -22,10 +22,16 @@ def _own(user_uid: str, role: str, scenario: Scenario) -> Store:
 
 
 def _read_store(
-    user: CurrentUser, role: CurrentRole, ws: Ws = "live", scenario: Scenario = "ap"
+    user: CurrentUser,
+    role: CurrentRole,
+    ws: Ws = "live",
+    scenario: Scenario = "ap",
+    uid: str | None = None,
 ) -> Store:
     if ws == "demo":
         return Store("demo", scenario=scenario)
+    if ws == "sandbox" and uid and is_admin(user):  # read-only: writes never use this store
+        return Store("sandbox", uid=uid, scenario=scenario)
     if ws == "sandbox" and role == "expert":
         raise HTTPException(403, "The expert has no sandbox.")
     return _own(user.uid, role, scenario)
