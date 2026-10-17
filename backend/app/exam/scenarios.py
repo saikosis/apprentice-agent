@@ -1,25 +1,21 @@
 """Exam case generator (prompts/scenarios.md)."""
 
-import json
 import logging
-from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException
 
-from backend.app import gemini
-from backend.app.contract import ExamCase, ExamCaseList
+from backend.app import domains, gemini
+from backend.app.contract import ExamCase, ExamCaseList, Scenario
 from backend.app.pipeline.deviations import segment_for_prompt
 from backend.app.store import Store
 
-TRAPS = {"consignment_lookalike", "prompt_injection", "duplicate_renumbered"}
-# Written by scripts/make_synthetic.py; lives in the backend so the Cloud Run image has it.
-VENDOR_MASTER = Path(__file__).with_name("vendor_master.json")
 log = logging.getLogger(__name__)
 
 
-def missing_traps(cases: list[ExamCase]) -> set[str]:
-    return TRAPS - {c.trap_type for c in cases if c.origin == "generated"}
+def missing_traps(cases: list[ExamCase], scenario: Scenario = "ap") -> set[str]:
+    traps = set(domains.load(scenario).info.traps)
+    return traps - {c.trap_type for c in cases if c.origin == "generated"}
 
 
 def normalize(raw: list[ExamCase]) -> list[ExamCase]:
@@ -42,20 +38,24 @@ async def generate(
     for sid in heldout_session_ids:
         snap = await store.sheet_snapshots(sid).get(
             f"{sid}-before"
-        )  # real invoice rows, if Connect Sheet ran
+        )  # real work-Sheet rows, if Connect Sheet ran
         heldout.append(
             {
                 "session_id": sid,
                 "segments": [segment_for_prompt(s) for s in await store.segments(sid).list()],
                 "deviations": [d.model_dump() for d in await store.deviations(sid).list()],
-                "sheet_rows": [r.model_dump() for r in snap.rows] if snap else [],
+                "sheet_rows": snap.rows if snap else [],
             }
         )
-    vendors = (
-        json.loads(VENDOR_MASTER.read_text(encoding="utf-8")) if VENDOR_MASTER.exists() else []
+    reference = domains.load(store.scenario).reference
+    payload = {"reference": reference, "heldout": heldout, "n_generated": n_generated}
+    values = domains.values(
+        store.scenario,
+        exam=True,
+        SOP=sop.full_text,
+        GRAPH=graph.model_dump_json(),
+        N=str(n_generated),
     )
-    payload = {"vendor_master": vendors, "heldout": heldout, "n_generated": n_generated}
-    values = {"SOP": sop.full_text, "GRAPH": graph.model_dump_json(), "N": str(n_generated)}
     parts: list[Any] = [gemini.data("Exam inputs", payload)]
     cases: list[ExamCase] = []
     for _ in range(2):  # one retry if a trap type is missing (SPEC §11: never drop the traps)
@@ -63,7 +63,7 @@ async def generate(
             gemini.FLASH_MODEL, "scenarios", parts, ExamCaseList, values=values
         )
         cases = normalize(out.output.cases)
-        gap = missing_traps(cases)
+        gap = missing_traps(cases, store.scenario)
         if not gap:
             break
         log.warning("scenarios missing traps %s; retrying", gap)

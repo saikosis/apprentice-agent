@@ -6,7 +6,7 @@ import logging
 import time
 from typing import Any
 
-from backend.app import gemini, prompts
+from backend.app import domains, gemini, prompts
 from backend.app.contract import SOP, AgentOutput, AgentRun, Arm, DecisionGraph, ExamCase
 from backend.app.safety import armor
 from backend.app.store import Store
@@ -41,7 +41,7 @@ async def run_one(
     moderation_in_id: str | None,
 ) -> AgentRun:
     rid = run_id(report_id, case.id, arm, i)
-    values = {"SOP": sop.full_text}
+    values = domains.values(store.scenario, SOP=sop.full_text)
     if arm == "sop_graph":
         values["GRAPH"] = graph.model_dump_json()
     t0 = time.monotonic()

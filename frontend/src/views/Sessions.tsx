@@ -6,7 +6,7 @@ import { Card } from "../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { cn } from "../lib/utils";
 import type { Session } from "../types/contract";
-import { Empty, Loadable, PageHeader, fmtDate, fmtDuration, go, useAsync, useWs } from "../ui";
+import { Empty, Loadable, PageHeader, SCENARIO, fmtDate, fmtDuration, go, useAsync, useWs } from "../ui";
 
 export const SESSION_STATUS: Record<Session["status"], string> = {
   created: "Not recorded",
@@ -44,14 +44,14 @@ export function Sessions() {
     <>
       <PageHeader
         title="Sessions"
-        description="Each recording of the expert working through the invoice queue in Sheets and Gmail."
+        description={`Each recording of the expert working through ${SCENARIO.item_label}s (${SCENARIO.title.toLowerCase()}).`}
         actions={!readOnly && <RecordButton />}
       />
       <Loadable state={state}>
         {(sessions) =>
           sessions.length === 0 ? (
             <Empty title="No sessions yet" action={!readOnly && <RecordButton />}>
-              Record the expert clearing a few invoices. Apprentice watches for steps that depart from the SOP and asks about
+              Record the expert working through a few {SCENARIO.item_label}s. Apprentice watches for steps that depart from the SOP and asks about
               them.
             </Empty>
           ) : (

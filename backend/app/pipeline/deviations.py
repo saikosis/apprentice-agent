@@ -1,6 +1,6 @@
 """Deviation detector + live/batch dedup (prompts/deviations.md)."""
 
-from backend.app import gemini, ts
+from backend.app import domains, gemini, ts
 from backend.app.contract import SOP, Deviation, DeviationList, Segment, Session, SheetDiff
 from backend.app.store import Store
 
@@ -72,7 +72,7 @@ async def detect(
         "deviations",
         [gemini.data("Session", payload)],
         DeviationList,
-        values={"SOP": sop.full_text},
+        values=domains.values(store.scenario, SOP=sop.full_text),
     )
     batch = dedup(normalize(out.output.deviations, session.id), live)
     await store.deviations(session.id).replace([*live, *batch])

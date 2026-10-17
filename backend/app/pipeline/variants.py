@@ -2,7 +2,7 @@
 
 import logging
 
-from backend.app import gemini, jobs
+from backend.app import domains, gemini, jobs
 from backend.app.contract import Variant, VariantList
 from backend.app.pipeline import probes
 from backend.app.pipeline.deviations import segment_for_prompt
@@ -73,7 +73,7 @@ async def _discover(store: Store) -> list[Variant]:
         "variants",
         [gemini.data("Sessions", payload)],
         VariantList,
-        values={"SOP": sop.full_text},
+        values=domains.values(store.scenario, SOP=sop.full_text),
     )
     before = {v.name.lower() for v in await store.variants.list()}
     found = await store.variants.replace(normalize(out.output.variants, known))

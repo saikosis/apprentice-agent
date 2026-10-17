@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Kabir Shah (SUB-203)
+
+Automated decisions promise speed and consistency, and they often deliver both. The cost of an automated mistake is rarely paid by the people who chose to automate.
+
+A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern. Workers who supervise automated systems report that they stop questioning the output after a few months.
+
+The right test is whether someone affected by the decision could still appeal to a human.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

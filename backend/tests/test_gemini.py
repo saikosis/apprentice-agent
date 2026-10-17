@@ -48,7 +48,7 @@ def run(**kw: Any) -> gemini.Structured[SegmentList]:
             "segmenter",
             ["video part"],
             SegmentList,
-            values={"SOP": "§3.2 PO match"},
+            values={"SOP": "§3.2 PO match", "DOMAIN": "AP"},
             **kw,
         )
     )
@@ -58,7 +58,7 @@ def test_valid_reply_is_parsed_and_tagged_with_prompt_and_model() -> None:
     client, models = fake_client(GOOD)
     out = run(client=client)
     assert out.output.segments[0].invoice_id == "INV-1032"
-    assert out.prompt_ref == "segmenter@1"
+    assert out.prompt_ref == "segmenter@2"
     assert out.model == "flash-test"
 
     call = models.calls[0]
@@ -83,7 +83,7 @@ def test_retries_once_after_a_validation_error() -> None:
 
 def test_gives_up_after_the_second_bad_reply() -> None:
     client, models = fake_client("not json", "still not json")
-    with pytest.raises(gemini.StructuredOutputError, match="segmenter@1"):
+    with pytest.raises(gemini.StructuredOutputError, match="segmenter@2"):
         run(client=client)
     assert len(models.calls) == 2
 
@@ -95,6 +95,6 @@ def test_refuses_a_schema_that_differs_from_the_prompt_front_matter() -> None:
     with pytest.raises(ValueError, match="SegmentList"):
         asyncio.run(
             gemini.structured(
-                "m", "segmenter", [], DeviationList, values={"SOP": ""}, client=client
+                "m", "segmenter", [], DeviationList, values={"SOP": "", "DOMAIN": ""}, client=client
             )
         )

@@ -12,7 +12,6 @@ from backend.app.contract import (
     AgentRun,
     ExamCase,
     ExamReport,
-    InvoiceRow,
     ModerationResult,
     Variant,
 )
@@ -256,24 +255,17 @@ def test_graph_and_variants(api: Api) -> None:
 
 # ---- exam ----
 def case(id: str) -> ExamCase:
-    inv = InvoiceRow(
-        invoice_id="INV-1062",
-        vendor_id="V-007",
-        vendor_name="Kaveri Consignment Stores",
-        invoice_no="KAV/1",
-        invoice_date="2026-10-09",
-        amount_inr=36980,
-        gst_inr=6656.4,
-        due_date="2026-11-08",
-        category="Canteen stock",
-        status="Pending",
-    )
+    inv = {
+        "invoice_id": "INV-1062",
+        "vendor_name": "Kaveri Consignment Stores",
+        "amount_inr": "36980",
+    }
     return ExamCase(
         id=id,
         origin="generated",
         trap_type="none",
-        invoice=inv,
-        vendor_master_row={},
+        item=inv,
+        reference_row={},
         emails=[],
         context="",
     )
@@ -358,8 +350,8 @@ def row(inv: str, status: str = "Pending") -> dict[str, Any]:
         "vendor_name": "Sahyadri",
         "invoice_no": "SAH/1",
         "invoice_date": "2026-10-01",
-        "amount_inr": 1000,
-        "gst_inr": 180,
+        "amount_inr": "1000",
+        "gst_inr": "180",
         "due_date": "2026-10-31",
         "category": "Office supplies",
         "status": status,
@@ -593,3 +585,33 @@ def test_upload_without_a_bucket_says_so(api: Api, monkeypatch: pytest.MonkeyPat
         f"/api/sessions/{sid}/upload-url", json={"content_type": "video/webm", "size_bytes": 10}
     )
     assert r.status_code == 503 and "BUCKET" in r.json()["error"]["message"]
+
+
+def test_each_scenario_has_its_own_sessions_and_recordings(api: Api) -> None:
+    r = api.client.post("/api/sessions?scenario=essays", json={"kind": "training"})
+    sid = r.json()["id"]
+    assert [s["id"] for s in api.client.get("/api/sessions?scenario=essays").json()] == [sid]
+    assert api.client.get("/api/sessions").json() == []  # AP sees nothing
+    r = api.client.post(
+        f"/api/sessions/{sid}/upload-url?scenario=essays",
+        json={"content_type": "video/webm", "size_bytes": 1000},
+    )
+    assert r.json()["gcs_uri"] == f"gs://test-bucket/essays-live/{sid}.webm"
+    assert api.client.get(f"/api/sessions/{sid}").status_code == 404
+
+
+def test_connect_sheet_diffs_any_tab_by_the_scenarios_id_column(api: Api) -> None:
+    sid = api.client.post("/api/sessions?scenario=volunteers", json={"kind": "training"}).json()[
+        "id"
+    ]
+    r = lambda rid, status: {"response_id": rid, "name": "Riya Sen", "status": status}
+    for phase, rows in (("before", [r("R-301", "Pending")]), ("after", [r("R-301", "Accepted")])):
+        res = api.client.post(
+            "/api/sheets/snapshot?scenario=volunteers",
+            json={"session_id": sid, "phase": phase, "rows": rows},
+        )
+        assert res.status_code == 200, res.text
+    diff = api.client.get(f"/api/sessions/{sid}?scenario=volunteers").json()["diff"]
+    assert diff["changes"] == [
+        {"invoice_id": "R-301", "column": "status", "before": "Pending", "after": "Accepted"}
+    ]

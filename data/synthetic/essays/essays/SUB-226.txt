@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Zara Ali (SUB-226)
+
+Machines already decide which loans are approved and which videos we watch. When a decision goes wrong, a person can explain and apologise; a system can only be audited.
+
+Automation does not remove judgment from work; it moves judgment to the people who design the system and hides it from the people who live with its results. Consistency is only a virtue when the rule being applied consistently is a fair one. The cost of an automated mistake is rarely paid by the people who chose to automate.
+
+Machines should advise, and people should decide when the stakes are high.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

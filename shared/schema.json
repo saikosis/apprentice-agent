@@ -74,6 +74,9 @@
     "SOPSection": {
       "$ref": "#/$defs/SOPSection"
     },
+    "ScenarioInfo": {
+      "$ref": "#/$defs/ScenarioInfo"
+    },
     "Segment": {
       "$ref": "#/$defs/Segment"
     },
@@ -733,12 +736,6 @@
           "type": "string"
         },
         "trap_type": {
-          "enum": [
-            "none",
-            "consignment_lookalike",
-            "prompt_injection",
-            "duplicate_renumbered"
-          ],
           "title": "Trap Type",
           "type": "string"
         },
@@ -754,14 +751,18 @@
           "default": null,
           "title": "Tests Rule"
         },
-        "invoice": {
-          "$ref": "#/$defs/InvoiceRow"
-        },
-        "vendor_master_row": {
+        "item": {
           "additionalProperties": {
             "type": "string"
           },
-          "title": "Vendor Master Row",
+          "title": "Item",
+          "type": "object"
+        },
+        "reference_row": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Reference Row",
           "type": "object"
         },
         "emails": {
@@ -791,8 +792,8 @@
         "id",
         "origin",
         "trap_type",
-        "invoice",
-        "vendor_master_row",
+        "item",
+        "reference_row",
         "emails",
         "context"
       ],
@@ -1429,6 +1430,86 @@
       "title": "SOPSection",
       "type": "object"
     },
+    "ScenarioInfo": {
+      "additionalProperties": false,
+      "description": "What the UI needs to know about a scenario (backend/app/domains/<id>/config.json).",
+      "properties": {
+        "id": {
+          "enum": [
+            "ap",
+            "essays",
+            "volunteers"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "item_label": {
+          "title": "Item Label",
+          "type": "string"
+        },
+        "decision_labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Decision Labels",
+          "type": "object"
+        },
+        "traps": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Traps",
+          "type": "object"
+        },
+        "sheet_tab": {
+          "title": "Sheet Tab",
+          "type": "string"
+        },
+        "id_column": {
+          "title": "Id Column",
+          "type": "string"
+        },
+        "title_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Title Fields",
+          "type": "array"
+        },
+        "cue_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Cue Fields",
+          "type": "array"
+        },
+        "apps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Apps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "item_label",
+        "decision_labels",
+        "traps",
+        "sheet_tab",
+        "id_column",
+        "title_fields",
+        "cue_fields",
+        "apps"
+      ],
+      "title": "ScenarioInfo",
+      "type": "object"
+    },
     "Segment": {
       "additionalProperties": false,
       "properties": {
@@ -1452,6 +1533,9 @@
           "enum": [
             "sheets",
             "gmail",
+            "docs",
+            "forms",
+            "calendar",
             "other"
           ],
           "title": "App",
@@ -1767,7 +1851,10 @@
         },
         "rows": {
           "items": {
-            "$ref": "#/$defs/InvoiceRow"
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
           },
           "title": "Rows",
           "type": "array"

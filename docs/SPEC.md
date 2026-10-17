@@ -15,6 +15,12 @@ EXAM_RUNS_PER_ARM = 3
 ```
 
 ## 1. Data contract (backend/app/contract.py)
+
+> Oct 17: three scenarios (invoices, essay marking, volunteer sign-ups; `docs/Scenarios.md`). `ExamCase.invoice` /
+> `vendor_master_row` became `item` / `reference_row` (string dicts), `trap_type` is a string, `SheetSnapshot.rows` is
+> header → text, `Segment.app` adds docs/forms/calendar, and `Scenario` / `ScenarioInfo` are new. `invoice_id` / `vendor`
+> keep their names and hold any scenario's work-item id and owner. The contract file is the source of truth where the
+> listing below differs.
 ```python
 from __future__ import annotations
 from datetime import datetime

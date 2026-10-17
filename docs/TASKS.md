@@ -17,22 +17,23 @@ Split:
 | Backend: routers, store, `gemini.py`, pipeline, exam, safety | Done and tested offline; pipeline + exam verified end to end on real Gemini (text dry run) |
 | Prompts (`/prompts/*.md`) | All 10 written |
 | Scripts (`make_synthetic`, `local`, `run_exam`, `seed_demo`, `export_demo`) | Done; `local.py` runs everything on a laptop before A0 |
+| Scenarios: essay marking + volunteer sign-ups (Oct 17) | Code done, sidebar **Workflow** switcher; to do: store their SOPs, redeploy, prepare the Docs/Sheets/emails, record. Steps in `docs/Scenarios.md` |
 | Real recording through the segmenter; expert answers and labels; real exam numbers | Not yet |
-| GCP / Firebase / Model Armor setup | Not started. gcloud CLI installed and signed in; its default project is `aibuildercup-india-2026`, not `apprentice-aibc` (see A0) |
+| GCP / Firebase / Model Armor setup | Not started. Steps written in `docs/Cloud_Setup.md` (Console, CLI and `scripts/cloud_setup.sh`); project `aibuildercup-india-2026` |
 | Dockerfile + `deploy.sh` | Fixed; image built and smoke-tested locally. Never deployed |
 
 ---
 
 ## Person A: backend, pipeline, evaluation
 
-### A0. Cloud setup (Oct 13, SPEC §10)
+### A0. Cloud setup (SPEC §10). Step-by-step: `docs/Cloud_Setup.md` (step numbers in brackets)
 - [x] ~~Install the gcloud CLI; `gcloud auth login`~~
-- [ ] Decide the project id: SPEC/AGENTS/`deploy.sh` say `apprentice-aibc`, but gcloud's current default is `aibuildercup-india-2026`. Either create `apprentice-aibc`, or switch the docs and `deploy.sh` to the existing project. Then `gcloud config set project <id>`.
-- [ ] Create project `apprentice-aibc`, link billing
+- [x] ~~Decide the project id~~: `aibuildercup-india-2026` (existing project; docs and `deploy.sh` updated)
+- [ ] Link billing account "Personal" to `aibuildercup-india-2026` [2]; budget ₹5,000/month with alerts at 50/90/100% [3]
 - [ ] Enable APIs: `run`, `firestore`, `storage`, `secretmanager`, `modelarmor`, `sheets`, `iamcredentials`, `cloudbuild`, `artifactregistry`
 - [ ] Firestore (Native) in `asia-south1`; rules deny all client access (SPEC §2)
 - [ ] AI Studio API key → Secret Manager secret `gemini-api-key`
-- [ ] Service account `apprentice-run@apprentice-aibc.iam.gserviceaccount.com` with these roles:
+- [ ] Service account `apprentice-run@aibuildercup-india-2026.iam.gserviceaccount.com` with these roles [7, 9]:
   - [ ] `roles/secretmanager.secretAccessor` on `gemini-api-key`
   - [ ] `roles/datastore.user`
   - [ ] `roles/storage.objectAdmin` on the bucket
@@ -41,7 +42,7 @@ Split:
 - [ ] Model Armor template `apprentice-default` in `asia-south1` (SPEC §6):
   - [ ] Prompt injection and jailbreak detection, LOW_AND_ABOVE
   - [ ] Sensitive Data Protection basic. Test whether bank-account numbers are caught; if not, switch to advanced with FINANCIAL_ACCOUNT_NUMBER and IBAN_CODE
-  - [ ] Malicious URLs on
+  - [x] ~~Malicious URLs on~~: not offered in asia-south1; left off
   - [ ] RAI, MEDIUM_AND_ABOVE
 - [x] ~~Put `GEMINI_API_KEY` in `.env` (never commit it)~~
 - [ ] Local dev credentials: `gcloud auth application-default login`
@@ -159,7 +160,7 @@ Split:
 - [x] ~~Install pnpm globally (`npm i -g pnpm`) so `make setup` / `make dev` work~~
 - [ ] Firebase project + Google sign-in; set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID` at build time
 - [ ] Demo Google account; OAuth consent screen (External, Testing, test user = demo account); OAuth client ID → `VITE_GOOGLE_CLIENT_ID` (Connect Sheet)
-- [ ] Bucket `apprentice-recordings-<suffix>` in `asia-south1` + CORS (PUT/GET from the service URL and `localhost:5173`)
+- [ ] Bucket `apprentice-recordings-aibc2026` in `asia-south1` + CORS (PUT/GET from the service URL and `localhost:5173`) [`docs/Cloud_Setup.md` 9, 15]
 - [ ] Synthetic Sheet "AP Queue – Oct" (4 tabs: import `data/synthetic/invoices.csv`, `vendor_master.csv`, `pos.csv`, `consignment_statement.csv`) + the 14 emails in `data/synthetic/emails.json` sent from a second test account. No cloud needed; blocks the first real recording.
 - [ ] **AC:** deployed hello page; sign-in works; the expert can do one dry-run session
 
@@ -215,7 +216,7 @@ The four API gaps are settled. All were additive response shapes, so `contract.p
 - [x] ~~`GET /api/demo/bundle` should also return `segments` and `deviations` keyed by session id, so demo session pages aren't empty.~~ Done in A2.
 - [x] ~~Expose agent runs so the exam page can show both agents' reasoning side by side (PRD §13 beat 2:00–2:25).~~ `GET /api/exam/runs?case_id=&report_id=`; "Compare reasoning" on the exam page.
 - [ ] Contract freeze v1: the gaps are settled and `contract.py` hasn't changed since; confirm the freeze between A and B.
-- [ ] Project id: `apprentice-aibc` (docs) vs `aibuildercup-india-2026` (current gcloud default). Pick one before A0 (see A0).
+- [x] ~~Project id~~: `aibuildercup-india-2026`.
 
 ## Cut order if behind (SPEC §11)
 Live → Connect Sheet → probe depth (1 per deviation) → scenario count (8 → 6, keep all traps).

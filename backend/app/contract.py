@@ -15,6 +15,22 @@ class M(BaseModel):
 Timestamp = str  # "MM:SS" (H:MM:SS if > 1h)
 Decision = Literal["approve", "reject", "hold", "escalate"]
 Arm = Literal["sop_only", "sop_graph"]
+Scenario = Literal["ap", "essays", "volunteers"]  # domain packs in backend/app/domains/
+
+
+class ScenarioInfo(M):
+    """What the UI needs to know about a scenario (backend/app/domains/<id>/config.json)."""
+
+    id: Scenario
+    title: str
+    item_label: str  # "invoice" / "submission" / "registration"
+    decision_labels: dict[str, str]  # Decision -> label shown in this scenario
+    traps: dict[str, str]  # trap_type -> label
+    sheet_tab: str  # tab Connect Sheet reads
+    id_column: str  # column holding the work item id
+    title_fields: list[str]  # item fields that name an exam case
+    cue_fields: list[str]  # item/reference fields an exam-miss question mentions (never the answer)
+    apps: list[str]
 
 
 class ClipRef(M):
@@ -67,12 +83,15 @@ class Session(M):
     error: str | None = None
 
 
+# `invoice_id` / `vendor` (Segment, Deviation, CellChange) hold the work item's id and its owner in every scenario:
+# an invoice and vendor (ap), a submission and student (essays), a sign-up and volunteer (volunteers). The names are
+# kept from the first scenario; the UI labels them with ScenarioInfo.item_label.
 class Segment(M):
     id: str
     session_id: str
     start_ts: Timestamp
     end_ts: Timestamp
-    app: Literal["sheets", "gmail", "other"]
+    app: Literal["sheets", "gmail", "docs", "forms", "calendar", "other"]
     action: str
     invoice_id: str | None = None
     vendor: str | None = None
@@ -156,7 +175,7 @@ class DecisionGraph(M):
     edges: list[DecisionEdge]
 
 
-class InvoiceRow(M):
+class InvoiceRow(M):  # the AP synthetic generator's row shape (scripts/make_synthetic.py)
     invoice_id: str
     vendor_id: str
     vendor_name: str
@@ -192,10 +211,14 @@ class ExpertLabel(M):
 class ExamCase(M):
     id: str
     origin: Literal["heldout", "generated"]
-    trap_type: Literal["none", "consignment_lookalike", "prompt_injection", "duplicate_renumbered"]
+    trap_type: str  # "none" or a key of the scenario's ScenarioInfo.traps
     tests_rule: str | None = None  # exception/variant name being tested
-    invoice: InvoiceRow
-    vendor_master_row: dict[str, str]
+    item: dict[
+        str, str
+    ]  # the work item as the successor sees it (invoice row, grade-book row, sign-up)
+    reference_row: dict[
+        str, str
+    ]  # its row in the scenario's reference table (vendor, student, shift)
     emails: list[Email]
     context: str
     expert_label: ExpertLabel | None = None  # judge-only
@@ -283,7 +306,7 @@ class SheetSnapshot(M):
     session_id: str
     phase: Literal["before", "after"]
     taken_at: datetime
-    rows: list[InvoiceRow]
+    rows: list[dict[str, str]]  # header -> cell text, from the scenario's sheet_tab
 
 
 class SheetDiff(M):

@@ -1,0 +1,289 @@
+[
+  {
+    "student_id": "ST-01",
+    "name": "Aarav Mehta",
+    "email": "aarav.st-01@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-02",
+    "name": "Priya Ramesh",
+    "email": "priya.st-02@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "extended time"
+  },
+  {
+    "student_id": "ST-03",
+    "name": "Kabir Shah",
+    "email": "kabir.st-03@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-04",
+    "name": "Ananya Iyer",
+    "email": "ananya.st-04@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-05",
+    "name": "Rohan Das",
+    "email": "rohan.st-05@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-06",
+    "name": "Meera Pillai",
+    "email": "meera.st-06@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-07",
+    "name": "Arjun Nair",
+    "email": "arjun.st-07@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-08",
+    "name": "Diya Kapoor",
+    "email": "diya.st-08@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-09",
+    "name": "Vikram Rao",
+    "email": "vikram.st-09@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "extended time"
+  },
+  {
+    "student_id": "ST-10",
+    "name": "Sara Thomas",
+    "email": "sara.st-10@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-11",
+    "name": "Ishaan Gupta",
+    "email": "ishaan.st-11@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-12",
+    "name": "Kavya Menon",
+    "email": "kavya.st-12@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-13",
+    "name": "Aditya Joshi",
+    "email": "aditya.st-13@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-14",
+    "name": "Nisha Verma",
+    "email": "nisha.st-14@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-15",
+    "name": "Rahul Bose",
+    "email": "rahul.st-15@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-16",
+    "name": "Tara Krishnan",
+    "email": "tara.st-16@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-17",
+    "name": "Neel Banerjee",
+    "email": "neel.st-17@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-18",
+    "name": "Aisha Khan",
+    "email": "aisha.st-18@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-19",
+    "name": "Siddharth Kulkarni",
+    "email": "siddharth.st-19@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-20",
+    "name": "Riya Sen",
+    "email": "riya.st-20@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-21",
+    "name": "Manav Chopra",
+    "email": "manav.st-21@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-22",
+    "name": "Leela Narayan",
+    "email": "leela.st-22@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "extended time"
+  },
+  {
+    "student_id": "ST-23",
+    "name": "Dev Malhotra",
+    "email": "dev.st-23@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-24",
+    "name": "Pooja Hegde",
+    "email": "pooja.st-24@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-25",
+    "name": "Karan Sethi",
+    "email": "karan.st-25@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-26",
+    "name": "Zara Ali",
+    "email": "zara.st-26@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-27",
+    "name": "Omkar Patil",
+    "email": "omkar.st-27@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-28",
+    "name": "Sneha Reddy",
+    "email": "sneha.st-28@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-29",
+    "name": "Yash Agarwal",
+    "email": "yash.st-29@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-30",
+    "name": "Fatima Sheikh",
+    "email": "fatima.st-30@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "extended time"
+  },
+  {
+    "student_id": "ST-31",
+    "name": "Varun Kumar",
+    "email": "varun.st-31@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-32",
+    "name": "Anjali Desai",
+    "email": "anjali.st-32@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "extended time"
+  },
+  {
+    "student_id": "ST-33",
+    "name": "Nikhil Jain",
+    "email": "nikhil.st-33@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-34",
+    "name": "Shreya Ghosh",
+    "email": "shreya.st-34@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-35",
+    "name": "Aman Trivedi",
+    "email": "aman.st-35@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-36",
+    "name": "Ira Bhatt",
+    "email": "ira.st-36@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-37",
+    "name": "Harsh Vora",
+    "email": "harsh.st-37@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-38",
+    "name": "Lakshmi Subramanian",
+    "email": "lakshmi.st-38@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-39",
+    "name": "Rehan Qureshi",
+    "email": "rehan.st-39@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-40",
+    "name": "Gauri Shinde",
+    "email": "gauri.st-40@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  },
+  {
+    "student_id": "ST-41",
+    "name": "Priya Raman",
+    "email": "priya.st-41@riverside-college.test",
+    "course": "ENG-201",
+    "accommodation": "none"
+  }
+]

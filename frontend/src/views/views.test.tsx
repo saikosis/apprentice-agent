@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { rowsToInvoices } from "../recorder/sheets";
+import { SCENARIOS } from "../api/client";
+import { rowsToRecords } from "../recorder/sheets";
 import { ClipProvider, WsContext } from "../ui";
 import { Discovery } from "./Discovery";
 import { Exam } from "./Exam";
@@ -75,14 +76,21 @@ describe("views render against fixtures", () => {
   });
 });
 
-describe("rowsToInvoices", () => {
-  it("maps header names, parses rupees, nulls empty optionals, skips blank rows", () => {
-    const rows = rowsToInvoices([
-      ["Invoice ID", "Vendor ID", "Amount INR", "PO Number", "Status"],
-      ["INV-1041", "V-007", "₹42,300", "", "Pending"],
-      ["", "", "", "", ""],
+describe("rowsToRecords", () => {
+  it("keys any tab's rows by normalised header, keeps cell text, skips blank rows", () => {
+    const rows = rowsToRecords([
+      ["Response ID", "Name", "Preferred shift", "Notes"],
+      ["R-307", "Riya Sen", "SH-3"],
+      ["", "", "", ""],
     ]);
-    expect(rows).toEqual([{ invoice_id: "INV-1041", vendor_id: "V-007", amount_inr: 42300, po_number: null, status: "Pending" }]);
+    expect(rows).toEqual([{ response_id: "R-307", name: "Riya Sen", preferred_shift: "SH-3", notes: "" }]);
+  });
+});
+
+describe("scenarios", () => {
+  it("come from the backend's domain packs, invoices first", () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(["ap", "essays", "volunteers"]);
+    expect(SCENARIOS[2].decision_labels.approve).toBe("Accept");
   });
 });
 

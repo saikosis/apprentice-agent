@@ -4,7 +4,7 @@ import os
 from datetime import UTC, datetime
 from typing import Any
 
-from backend.app import gemini
+from backend.app import domains, gemini
 from backend.app.contract import SOP, ClipRef, DecisionEdge, DecisionGraph, DecisionNode
 from backend.app.pipeline.probes import clean_answers
 from backend.app.safety import armor
@@ -140,7 +140,11 @@ async def build(store: Store) -> DecisionGraph:
         )
     model = gemini.PRO_MODEL if os.getenv("GRAPH_MODEL") == "pro" else gemini.FLASH_MODEL
     out = await gemini.structured(
-        model, "graph", [gemini.data("Inputs", data)], DecisionGraph, values={"SOP": sop.full_text}
+        model,
+        "graph",
+        [gemini.data("Inputs", data)],
+        DecisionGraph,
+        values=domains.values(store.scenario, SOP=sop.full_text),
     )
     clean = {
         q["probe_id"]: ClipRef.model_validate(q["clip"]) if q["clip"] else None for q in data["qa"]

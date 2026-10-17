@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Aisha Khan (SUB-218)
+
+The question is no longer whether machines can decide, but whether they should. A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern.
+
+The cost of an automated mistake is rarely paid by the people who chose to automate. When a decision goes wrong, a person can explain and apologise; a system can only be audited.
+
+We should automate the routine and keep a named person responsible for the rest.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Dev Malhotra (SUB-223)
+
+Machines already decide which loans are approved and which videos we watch. A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern.
+
+Some decisions are reversible and cheap, and those are the ones machines handle best. The cost of an automated mistake is rarely paid by the people who chose to automate.
+
+The right test is whether someone affected by the decision could still appeal to a human.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

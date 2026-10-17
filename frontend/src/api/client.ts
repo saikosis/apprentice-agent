@@ -6,15 +6,50 @@ import type {
   Deviation,
   ExamCase,
   ExamReport,
-  InvoiceRow,
   Probe,
   ProbeAnswer,
   Segment,
   Session,
   SheetDiff,
+  ScenarioInfo,
   SheetSnapshot,
   Variant,
 } from "../types/contract";
+
+// ---- scenario: which workflow the app is showing (invoices, essays, volunteers) ----
+// Labels come straight from the backend's domain packs, so the UI and the prompts never disagree.
+const configs = import.meta.glob<ScenarioInfo>("../../../backend/app/domains/*/config.json", {
+  eager: true,
+  import: "default",
+});
+export const SCENARIOS: ScenarioInfo[] = Object.values(configs).sort((a, b) =>
+  a.id === "ap" ? -1 : b.id === "ap" ? 1 : a.title.localeCompare(b.title),
+);
+type Scenario = ScenarioInfo["id"];
+const SCENARIO_KEY = "apprentice.scenario"; // a view preference, not a token
+function initialScenario(): Scenario {
+  try {
+    const saved = localStorage.getItem(SCENARIO_KEY);
+    if (SCENARIOS.some((s) => s.id === saved)) return saved as Scenario;
+  } catch {
+    // storage blocked: default scenario
+  }
+  return "ap";
+}
+let scenario: Scenario = initialScenario();
+export const currentScenario = (): ScenarioInfo => SCENARIOS.find((s) => s.id === scenario) ?? SCENARIOS[0];
+// Every view refetches from scratch: simplest correct way to switch all data at once.
+export function switchScenario(next: Scenario): void {
+  try {
+    localStorage.setItem(SCENARIO_KEY, next);
+  } catch {
+    // storage blocked: the choice lasts until reload
+  }
+  scenario = next;
+  window.location.reload();
+}
+const withScenario = (path: string) =>
+  scenario === "ap" || !path.startsWith("/api/") ? path : `${path}${path.includes("?") ? "&" : "?"}scenario=${scenario}`;
 
 let idToken: string | null = null;
 
@@ -35,7 +70,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   if (idToken) headers.set("Authorization", `Bearer ${idToken}`);
   if (init.body) headers.set("Content-Type", "application/json");
-  const res = await fetch(path, { ...init, headers });
+  const res = await fetch(withScenario(path), { ...init, headers });
   if (!res.ok) {
     let message = `${res.status} ${res.statusText}`;
     try {
@@ -99,12 +134,16 @@ async function fixtureBundle(): Promise<DemoBundle> {
   };
 }
 
+const EMPTY_BUNDLE: DemoBundle = { sessions: [], variants: [], probes: [], graph: null, report: null };
+
 let bundlePromise: Promise<DemoBundle> | null = null;
 // ponytail: falls back to bundled fixtures when the demo endpoint isn't seeded yet, so /demo always loads.
+// The fixtures are invoice data, so other scenarios fall back to an empty demo instead.
 export function demoBundle(): Promise<DemoBundle> {
+  const fallback = () => (scenario === "ap" ? fixtureBundle() : Promise.resolve(EMPTY_BUNDLE));
   bundlePromise ??= (USE_FIXTURES ? Promise.reject(new Error("fixtures")) : api<DemoBundle>("/api/demo/bundle"))
-    .then((b) => (b.sessions?.length ? b : fixtureBundle()))
-    .catch(() => fixtureBundle());
+    .then((b) => (b.sessions?.length ? b : fallback()))
+    .catch(fallback);
   return bundlePromise;
 }
 
@@ -217,7 +256,7 @@ export const postDeviation = (
   id: string,
   body: { sop_rule: string; question: string; invoice_id?: string; t_seconds: number; model_timestamp?: string },
 ) => post<{ deviation: Deviation; probe: Probe }>(`/api/sessions/${id}/deviations`, body);
-export const sheetSnapshot = (session_id: string, phase: "before" | "after", rows: InvoiceRow[]) =>
+export const sheetSnapshot = (session_id: string, phase: "before" | "after", rows: Record<string, string>[]) =>
   post<SheetSnapshot>("/api/sheets/snapshot", { session_id, phase, rows });
 
 // Signed GCS PUT — no bearer token, the URL carries the signature.

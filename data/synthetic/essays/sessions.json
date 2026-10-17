@@ -1,0 +1,152 @@
+{
+  "s-01": {
+    "kind": "training",
+    "items": [
+      "SUB-201",
+      "SUB-202",
+      "SUB-203",
+      "SUB-204",
+      "SUB-205"
+    ],
+    "planted": [
+      "E1"
+    ],
+    "planted_items": {
+      "E1": [
+        "SUB-202"
+      ]
+    },
+    "notes": "Teacher narrates lightly; the why comes from probes, not narration."
+  },
+  "s-02": {
+    "kind": "training",
+    "items": [
+      "SUB-206",
+      "SUB-207",
+      "SUB-208",
+      "SUB-209",
+      "SUB-210"
+    ],
+    "planted": [
+      "E2"
+    ],
+    "planted_items": {
+      "E2": [
+        "SUB-207"
+      ]
+    },
+    "notes": "Teacher narrates lightly; the why comes from probes, not narration."
+  },
+  "s-03": {
+    "kind": "training",
+    "items": [
+      "SUB-211",
+      "SUB-212",
+      "SUB-213",
+      "SUB-214",
+      "SUB-215"
+    ],
+    "planted": [],
+    "planted_items": {},
+    "notes": "Teacher narrates lightly; the why comes from probes, not narration."
+  },
+  "s-04": {
+    "kind": "training",
+    "items": [
+      "SUB-216",
+      "SUB-217",
+      "SUB-218",
+      "SUB-219",
+      "SUB-220"
+    ],
+    "planted": [
+      "E3"
+    ],
+    "planted_items": {
+      "E3": [
+        "SUB-218"
+      ]
+    },
+    "notes": "Teacher narrates lightly; the why comes from probes, not narration."
+  },
+  "s-05": {
+    "kind": "training",
+    "items": [
+      "SUB-221",
+      "SUB-222",
+      "SUB-223",
+      "SUB-224",
+      "SUB-225"
+    ],
+    "planted": [
+      "E1"
+    ],
+    "planted_items": {
+      "E1": [
+        "SUB-222"
+      ]
+    },
+    "notes": "Teacher narrates lightly; the why comes from probes, not narration."
+  },
+  "s-06": {
+    "kind": "training",
+    "items": [
+      "SUB-226",
+      "SUB-227",
+      "SUB-228",
+      "SUB-229",
+      "SUB-230"
+    ],
+    "planted": [
+      "E2",
+      "E3"
+    ],
+    "planted_items": {
+      "E2": [
+        "SUB-226"
+      ],
+      "E3": [
+        "SUB-227"
+      ]
+    },
+    "notes": "Teacher narrates lightly; the why comes from probes, not narration."
+  },
+  "s-07": {
+    "kind": "heldout",
+    "items": [
+      "SUB-231",
+      "SUB-232",
+      "SUB-233",
+      "SUB-234",
+      "SUB-235"
+    ],
+    "planted": [
+      "E1"
+    ],
+    "planted_items": {
+      "E1": [
+        "SUB-232"
+      ]
+    },
+    "notes": "Teacher narrates lightly; the why comes from probes, not narration."
+  },
+  "s-08": {
+    "kind": "heldout",
+    "items": [
+      "SUB-236",
+      "SUB-237",
+      "SUB-238",
+      "SUB-239",
+      "SUB-240"
+    ],
+    "planted": [
+      "E3"
+    ],
+    "planted_items": {
+      "E3": [
+        "SUB-238"
+      ]
+    },
+    "notes": "Teacher narrates lightly; the why comes from probes, not narration."
+  }
+}

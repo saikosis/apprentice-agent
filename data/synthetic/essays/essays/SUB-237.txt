@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Harsh Vora (SUB-237)
+
+The question is no longer whether machines can decide, but whether they should. The cost of an automated mistake is rarely paid by the people who chose to automate.
+
+Some decisions are reversible and cheap, and those are the ones machines handle best. A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern.
+
+The right test is whether someone affected by the decision could still appeal to a human.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.
