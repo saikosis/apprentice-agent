@@ -49,6 +49,12 @@ describe("views render against fixtures", () => {
     expect(await screen.findByText(/kept out of graph/)).toBeTruthy();
   });
 
+  it("SessionDetail shows the session summary and the steps per item", async () => {
+    demo(<SessionDetail id="s-01" />);
+    expect(await screen.findByText(/Worked through three invoices/)).toBeTruthy();
+    expect(screen.getByText("Opens the Consignment Statement tab")).toBeTruthy();
+  });
+
   it("Probes", async () => {
     demo(<Probes />);
     expect(await screen.findByText(/What would have made you stop/)).toBeTruthy();

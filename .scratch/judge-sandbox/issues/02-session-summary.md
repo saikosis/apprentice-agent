@@ -1,5 +1,7 @@
 # 02. Session summary on every session
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: nothing

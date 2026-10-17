@@ -20,6 +20,7 @@ from backend.app.contract import (
     Scenario,
     Segment,
     Session,
+    SessionSummary,
     Variant,
 )
 from backend.app.routers.auth import CurrentUser, MaybeUser, is_expert
@@ -44,6 +45,7 @@ class DemoSeed(BaseModel):
     sessions: list[Session]
     segments: dict[str, list[Segment]] = {}
     deviations: dict[str, list[Deviation]] = {}
+    summaries: dict[str, SessionSummary] = {}
     variants: list[Variant] = []
     probes: list[SeedProbe] = []
     graph: DecisionGraph | None = None
@@ -58,10 +60,11 @@ class DemoSeed(BaseModel):
 async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
     store = Store("demo", scenario=scenario)
     sessions = await store.sessions.list()
-    (segs, devs, variants, probes, graph, reports), (cases, runs) = await asyncio.gather(
+    (segs, devs, sums, variants, probes, graph, reports), (cases, runs) = await asyncio.gather(
         asyncio.gather(
             asyncio.gather(*(store.segments(s.id).list() for s in sessions)),
             asyncio.gather(*(store.deviations(s.id).list() for s in sessions)),
+            asyncio.gather(*(store.get_summary(s.id) for s in sessions)),
             store.variants.list(),
             probe_rows(store),
             store.get_graph(),
@@ -74,6 +77,7 @@ async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
         "sessions": sorted(sessions, key=lambda s: s.started_at, reverse=True),
         "segments": {s.id: x for s, x in zip(sessions, segs, strict=True)},
         "deviations": {s.id: x for s, x in zip(sessions, devs, strict=True)},
+        "summaries": {s.id: x for s, x in zip(sessions, sums, strict=True) if x},
         "variants": variants,
         "probes": probes,
         "graph": graph,
@@ -118,6 +122,8 @@ async def load_seed(store: Store, seed: DemoSeed) -> None:
     for sid, devs in seed.deviations.items():
         for d in devs:
             await store.deviations(sid).put(d)
+    for summary in seed.summaries.values():
+        await store.put_summary(summary)
     for v in seed.variants:
         await store.variants.put(v)
     for sp in seed.probes:

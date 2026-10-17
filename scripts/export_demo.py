@@ -25,6 +25,7 @@ async def export(store: Store) -> DemoSeed:
         sessions=[s.model_copy(update={"workspace": "demo"}) for s in sessions],
         segments={s.id: await store.segments(s.id).list() for s in sessions},
         deviations={s.id: await store.deviations(s.id).list() for s in sessions},
+        summaries={s.id: x for s in sessions if (x := await store.get_summary(s.id))},
         variants=await store.variants.list(),
         probes=[
             SeedProbe(**p.model_dump(), answer=a) for p, a in await store.probes.with_answers()

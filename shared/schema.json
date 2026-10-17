@@ -86,11 +86,17 @@
     "Session": {
       "$ref": "#/$defs/Session"
     },
+    "SessionSummary": {
+      "$ref": "#/$defs/SessionSummary"
+    },
     "SheetDiff": {
       "$ref": "#/$defs/SheetDiff"
     },
     "SheetSnapshot": {
       "$ref": "#/$defs/SheetSnapshot"
+    },
+    "SummaryItem": {
+      "$ref": "#/$defs/SummaryItem"
     },
     "Variant": {
       "$ref": "#/$defs/Variant"
@@ -1136,7 +1142,9 @@
             "probe_answer",
             "exam_input",
             "agent_output",
-            "email"
+            "email",
+            "summary",
+            "workflow"
           ],
           "title": "Target Kind",
           "type": "string"
@@ -1803,6 +1811,56 @@
       "title": "Session",
       "type": "object"
     },
+    "SessionSummary": {
+      "additionalProperties": false,
+      "description": "Plain-language account of one session (prompts/summary.md). Display only.",
+      "properties": {
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/SummaryItem"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "prompt_version": {
+          "default": "",
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "moderation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Moderation Id"
+        },
+        "flagged": {
+          "default": false,
+          "title": "Flagged",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "session_id",
+        "summary",
+        "items"
+      ],
+      "title": "SessionSummary",
+      "type": "object"
+    },
     "SheetDiff": {
       "additionalProperties": false,
       "properties": {
@@ -1868,6 +1926,35 @@
         "rows"
       ],
       "title": "SheetSnapshot",
+      "type": "object"
+    },
+    "SummaryItem": {
+      "additionalProperties": false,
+      "properties": {
+        "invoice_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invoice Id"
+        },
+        "steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "steps"
+      ],
+      "title": "SummaryItem",
       "type": "object"
     },
     "Variant": {

@@ -51,7 +51,7 @@ def test_create_list_and_detail(api: Api) -> None:
     assert [x["id"] for x in api.client.get("/api/sessions").json()] == [s["id"]]
     assert api.client.get("/api/sessions?ws=demo").json() == []
     d = api.client.get(f"/api/sessions/{s['id']}").json()
-    assert d == {"session": s, "segments": [], "deviations": [], "diff": None}
+    assert d == {"session": s, "segments": [], "deviations": [], "diff": None, "summary": None}
     r = api.client.get("/api/sessions/nope")
     assert r.status_code == 404 and r.json()["error"]["code"] == "not_found"
 
@@ -394,6 +394,7 @@ def fixture_seed() -> DemoSeed:
             "sessions": load("sessions.json"),
             "segments": group(load("segments.json")),
             "deviations": group(load("deviations.json")),
+            "summaries": {x["session_id"]: x for x in load("summaries.json")},
             "variants": load("variants.json"),
             "probes": [{**p, "answer": answers.get(p["id"])} for p in load("probes.json")],
             "graph": load("graph.json"),
@@ -410,6 +411,7 @@ def test_demo_bundle_is_public_and_complete(api: Api) -> None:
     b = api.client.get("/api/demo/bundle").json()
     assert len(b["sessions"]) == 8 and b["report"]["id"] == "r-pilot-01"
     assert len(b["segments"]["s-03"]) > 0 and "s-01" in b["deviations"]
+    assert b["summaries"]["s-01"]["items"][1]["invoice_id"] == "INV-1041"
     answered = [p for p in b["probes"] if p["answer"]]
     assert len(answered) == 5 and all(p["status"] == "answered" for p in answered)
     assert len(b["graph"]["nodes"]) == 14

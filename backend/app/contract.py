@@ -55,7 +55,9 @@ class SOP(M):
 
 class ModerationResult(M):
     id: str
-    target_kind: Literal["segment", "probe_answer", "exam_input", "agent_output", "email"]
+    target_kind: Literal[
+        "segment", "probe_answer", "exam_input", "agent_output", "email", "summary", "workflow"
+    ]
     target_id: str
     template: str
     match_found: bool
@@ -100,6 +102,22 @@ class Segment(M):
     on_screen_text: str = ""
     moderation_id: str | None = None
     quarantined: bool = False
+
+
+class SummaryItem(M):
+    invoice_id: str | None = None  # the work item (see the note above Segment)
+    steps: list[str]  # what the expert did with it, in order
+
+
+class SessionSummary(M):
+    """Plain-language account of one session (prompts/summary.md). Display only."""
+
+    session_id: str
+    summary: str  # 3-5 sentences
+    items: list[SummaryItem]
+    prompt_version: str = ""
+    moderation_id: str | None = None
+    flagged: bool = False  # Model Armor matched: shown as "kept out", never as trusted text
 
 
 class Deviation(M):

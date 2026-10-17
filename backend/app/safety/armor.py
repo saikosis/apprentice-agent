@@ -23,7 +23,9 @@ TEMPLATE = (
     f"projects/{_PROJECT}/locations/{MA_LOCATION}/templates/{_NAME}" if _PROJECT and _NAME else ""
 )
 
-TargetKind = Literal["segment", "probe_answer", "exam_input", "agent_output", "email"]
+TargetKind = Literal[
+    "segment", "probe_answer", "exam_input", "agent_output", "email", "summary", "workflow"
+]
 # sha256(direction + text) -> (match_found, filters). ponytail: per-process, unbounded; fine for a demo.
 _cache: dict[str, tuple[bool, dict[str, str]]] = {}
 

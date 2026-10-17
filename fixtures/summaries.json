@@ -1,0 +1,32 @@
+[
+  {
+    "session_id": "s-01",
+    "summary": "Worked through three invoices in the AP Queue Sheet and read one vendor email. Approved two invoices and put one On Hold. Checked the PO and goods receipt before approving INV-1038, and opened the Consignment Statement tab before approving INV-1041, which had no PO. Emailed the AP Lead about INV-1044.",
+    "items": [
+      {
+        "invoice_id": "INV-1038",
+        "steps": [
+          "Checks the PO and GRN",
+          "Sets status Approved"
+        ]
+      },
+      {
+        "invoice_id": "INV-1041",
+        "steps": [
+          "Opens the Consignment Statement tab",
+          "Sets status Approved without a PO"
+        ]
+      },
+      {
+        "invoice_id": "INV-1044",
+        "steps": [
+          "Sets status On Hold",
+          "Emails the AP Lead"
+        ]
+      }
+    ],
+    "prompt_version": "summary@1",
+    "moderation_id": null,
+    "flagged": false
+  }
+]

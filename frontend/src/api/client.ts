@@ -9,9 +9,10 @@ import type {
   Probe,
   ProbeAnswer,
   Segment,
-  Session,
-  SheetDiff,
   ScenarioInfo,
+  Session,
+  SessionSummary,
+  SheetDiff,
   SheetSnapshot,
   Variant,
 } from "../types/contract";
@@ -96,7 +97,13 @@ const post = <T>(path: string, body: unknown = {}) => api<T>(path, { method: "PO
 
 export type Ws = "demo" | "live";
 export type ProbeWithAnswer = Probe & { answer?: ProbeAnswer | null };
-export type SessionDetail = { session: Session; segments: Segment[]; deviations: Deviation[]; diff: SheetDiff | null };
+export type SessionDetail = {
+  session: Session;
+  segments: Segment[];
+  deviations: Deviation[];
+  diff: SheetDiff | null;
+  summary: SessionSummary | null;
+};
 
 // GET /api/demo/bundle per SPEC §3. segments/deviations/answers are optional extras the seed carries (SPEC §8).
 export type DemoBundle = {
@@ -107,6 +114,7 @@ export type DemoBundle = {
   report: ExamReport | null;
   segments?: Record<string, Segment[]>;
   deviations?: Record<string, Deviation[]>;
+  summaries?: Record<string, SessionSummary>;
   exam_cases?: ExamCase[];
   agent_runs?: AgentRun[];
 };
@@ -114,7 +122,7 @@ export type DemoBundle = {
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === "1";
 
 async function fixtureBundle(): Promise<DemoBundle> {
-  const [sessions, segments, deviations, variants, probes, answers, graph, report, cases, runs] = await Promise.all([
+  const [sessions, segments, deviations, variants, probes, answers, graph, report, cases, runs, summaries] = await Promise.all([
     import("../../../fixtures/sessions.json"),
     import("../../../fixtures/segments.json"),
     import("../../../fixtures/deviations.json"),
@@ -125,6 +133,7 @@ async function fixtureBundle(): Promise<DemoBundle> {
     import("../../../fixtures/exam_report.json"),
     import("../../../fixtures/exam_cases.json"),
     import("../../../fixtures/agent_runs.json"),
+    import("../../../fixtures/summaries.json"),
   ]);
   const group = <X extends { session_id: string }>(xs: X[]) =>
     xs.reduce<Record<string, X[]>>((acc, x) => ((acc[x.session_id] ??= []).push(x), acc), {});
@@ -139,6 +148,7 @@ async function fixtureBundle(): Promise<DemoBundle> {
     report: report.default as ExamReport,
     exam_cases: cases.default as ExamCase[],
     agent_runs: runs.default as AgentRun[],
+    summaries: Object.fromEntries((summaries.default as SessionSummary[]).map((s) => [s.session_id, s])),
   };
 }
 
@@ -168,7 +178,13 @@ export async function getSession(ws: Ws, id: string): Promise<SessionDetail> {
     const b = await demoBundle();
     const session = b.sessions.find((s) => s.id === id);
     if (!session) throw new ApiError(404, `Session ${id} not found`);
-    return { session, segments: b.segments?.[id] ?? [], deviations: b.deviations?.[id] ?? [], diff: null };
+    return {
+      session,
+      segments: b.segments?.[id] ?? [],
+      deviations: b.deviations?.[id] ?? [],
+      diff: null,
+      summary: b.summaries?.[id] ?? null,
+    };
   }
   return api(`/api/sessions/${id}`);
 }

@@ -75,6 +75,7 @@ async def session_detail(session_id: str, store: ReadStore) -> dict[str, object]
         "segments": sorted(segments, key=lambda x: ts.seconds(x.start_ts)),
         "deviations": sorted(deviations, key=lambda x: x.t_seconds),
         "diff": await store.get_sheet_diff(session_id),
+        "summary": await store.get_summary(session_id),
     }
 
 

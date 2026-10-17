@@ -123,7 +123,7 @@ export type Explanation = string;
 export type HandChecked = boolean;
 export type HandOverrideTotal = number | null;
 export type Id7 = string;
-export type TargetKind = "segment" | "probe_answer" | "exam_input" | "agent_output" | "email";
+export type TargetKind = "segment" | "probe_answer" | "exam_input" | "agent_output" | "email" | "summary" | "workflow";
 export type TargetId = string;
 export type Template = string;
 export type MatchFound = boolean;
@@ -191,9 +191,17 @@ export type SheetSnapshotBeforeId = string | null;
 export type SheetSnapshotAfterId = string | null;
 export type Error = string | null;
 export type SessionId4 = string;
+export type Summary = string;
+export type InvoiceId4 = string | null;
+export type Steps = string[];
+export type Items = SummaryItem[];
+export type PromptVersion2 = string;
+export type ModerationId1 = string | null;
+export type Flagged = boolean;
+export type SessionId5 = string;
 export type Changes = CellChange[];
 export type Id14 = string;
-export type SessionId5 = string;
+export type SessionId6 = string;
 export type Phase = "before" | "after";
 export type TakenAt = string;
 export type Rows = {
@@ -238,8 +246,10 @@ export interface Contract {
   Segment?: Segment;
   SegmentList?: SegmentList;
   Session?: Session;
+  SessionSummary?: SessionSummary;
   SheetDiff?: SheetDiff;
   SheetSnapshot?: SheetSnapshot;
+  SummaryItem?: SummaryItem;
   Variant?: Variant;
   VariantList?: VariantList;
   [k: string]: unknown;
@@ -516,13 +526,28 @@ export interface Session {
   sheet_snapshot_after_id?: SheetSnapshotAfterId;
   error?: Error;
 }
-export interface SheetDiff {
+/**
+ * Plain-language account of one session (prompts/summary.md). Display only.
+ */
+export interface SessionSummary {
   session_id: SessionId4;
+  summary: Summary;
+  items: Items;
+  prompt_version?: PromptVersion2;
+  moderation_id?: ModerationId1;
+  flagged?: Flagged;
+}
+export interface SummaryItem {
+  invoice_id?: InvoiceId4;
+  steps: Steps;
+}
+export interface SheetDiff {
+  session_id: SessionId5;
   changes: Changes;
 }
 export interface SheetSnapshot {
   id: Id14;
-  session_id: SessionId5;
+  session_id: SessionId6;
   phase: Phase;
   taken_at: TakenAt;
   rows: Rows;

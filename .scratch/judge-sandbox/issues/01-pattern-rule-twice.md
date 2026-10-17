@@ -1,5 +1,7 @@
 # 01. Patterns from repeats, not from 3 sessions
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: nothing

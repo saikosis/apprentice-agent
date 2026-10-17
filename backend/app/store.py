@@ -30,6 +30,7 @@ from backend.app.contract import (
     Scenario,
     Segment,
     Session,
+    SessionSummary,
     SheetDiff,
     SheetSnapshot,
     Variant,
@@ -183,6 +184,16 @@ class Store:
 
     def sheet_snapshots(self, session_id: str) -> Coll[SheetSnapshot]:
         return Coll(self, f"{self.root}/sessions/{session_id}/sheet_snapshots", SheetSnapshot)
+
+    async def get_summary(self, session_id: str) -> SessionSummary | None:
+        snap = await self.db.document(f"{self.root}/sessions/{session_id}/summary/current").get()
+        return SessionSummary.model_validate(snap.to_dict()) if snap.exists else None
+
+    async def put_summary(self, summary: SessionSummary) -> None:
+        self.check_writable()
+        await self.db.document(f"{self.root}/sessions/{summary.session_id}/summary/current").set(
+            _dump(summary)
+        )
 
     async def get_sheet_diff(self, session_id: str) -> SheetDiff | None:
         snap = await self.db.document(f"{self.root}/sessions/{session_id}/sheet_diff/current").get()

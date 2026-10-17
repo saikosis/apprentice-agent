@@ -7,6 +7,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { cn } from "../lib/utils";
+import type { SessionSummary } from "../types/contract";
 import {
   ClipButton,
   DecisionChip,
@@ -27,6 +28,40 @@ import { SessionStatus } from "./Sessions";
 
 const APP = { sheets: "Sheets", gmail: "Gmail", docs: "Docs", forms: "Forms", calendar: "Calendar", other: "Other" } as const;
 
+function SummaryCard({ s }: { s: SessionSummary }) {
+  return (
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle className="text-lg">Summary</CardTitle>
+        <CardDescription>Written by Apprentice from the recording. It describes what happened, not why.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {s.flagged ? (
+          <ModerationTag quarantined />
+        ) : (
+          <>
+            <p className="max-w-[80ch]">{s.summary}</p>
+            {s.items.length > 0 && (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {s.items.map((item, i) => (
+                  <div key={`${item.invoice_id}-${i}`} className="rounded-lg border p-3">
+                    <div className="mb-1 text-sm font-medium">{item.invoice_id ?? `${itemTitle()} ${i + 1}`}</div>
+                    <ol className="list-decimal pl-5 text-sm text-muted-foreground">
+                      {item.steps.map((step, j) => (
+                        <li key={j}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function SessionDetail({ id }: { id: string }) {
   const { ws, readOnly } = useWs();
   const state = useAsync(() => getSession(ws, id), [ws, id]);
@@ -42,7 +77,7 @@ export function SessionDetail({ id }: { id: string }) {
 
   return (
     <Loadable state={state}>
-      {({ session, segments, deviations, diff }) => {
+      {({ session, segments, deviations, diff, summary }) => {
         const clipFor = (start: string, end: string) => ({ session_id: session.id, start_ts: start, end_ts: end });
         return (
           <>
@@ -86,6 +121,8 @@ export function SessionDetail({ id }: { id: string }) {
               )}
               {session.status === "failed" && <ErrorNote>Analysis failed: {session.error ?? "unknown error"}</ErrorNote>}
             </div>
+
+            {summary && <SummaryCard s={summary} />}
 
             <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
               <Card className="gap-0 pb-0">
