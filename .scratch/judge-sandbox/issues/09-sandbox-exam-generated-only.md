@@ -1,5 +1,7 @@
 # 09. Sandbox exam: 6 generated cases
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: `04-sandbox-workspace-and-code`

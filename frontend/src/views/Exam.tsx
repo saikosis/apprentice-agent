@@ -332,7 +332,7 @@ function CaseLabel({ c }: { c: ExamCase }) {
 }
 
 function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
-  const { ws } = useWs();
+  const { ws, sandbox } = useWs();
   const sessions = useAsync(() => listSessions(ws), [ws]);
   const saved = useAsync(() => listCases(ws), [ws]); // labelled cases survive a reload
   const [fresh, setFresh] = useState<ExamCase[] | null>(null);
@@ -343,9 +343,10 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
   const [err, setErr] = useState<string | null>(null);
 
   const heldout = (sessions.data ?? []).filter((s) => s.kind === "heldout" && s.status === "processed").map((s) => s.id);
+  const canGenerate = sandbox || heldout.length >= 2; // a sandbox writes its cases from the graph alone
 
   const generate = async () => {
-    setBusy("Writing exam cases from the graph and held-out sessions…");
+    setBusy(sandbox ? "Writing 6 practice cases from your graph…" : "Writing exam cases from the graph and held-out sessions…");
     setErr(null);
     try {
       setCases(await generateCases(heldout.slice(0, 2)));
@@ -357,10 +358,14 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
   };
 
   const run = async () => {
-    setBusy("Running both agents three times per case, then scoring. This takes a few minutes.");
+    setBusy(
+      sandbox
+        ? "Running both agents once per case, then scoring. This takes a minute or two."
+        : "Running both agents three times per case, then scoring. This takes a few minutes.",
+    );
     setErr(null);
     try {
-      const { report_id } = await runExam(3);
+      const { report_id } = await runExam(sandbox ? 1 : 3);
       for (let i = 0; ; i++) {
         await new Promise((r) => setTimeout(r, 5000));
         try {
@@ -386,7 +391,7 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
           <p className="text-muted-foreground">The expert labels each case with the decision they would make. Labels go to the judge only.</p>
         </div>
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" disabled={Boolean(busy) || heldout.length < 2} onClick={() => void generate()}>
+          <Button variant="outline" disabled={Boolean(busy) || !canGenerate} onClick={() => void generate()}>
             Generate cases
           </Button>
           <Button disabled={Boolean(busy) || !cases?.length} aria-busy={Boolean(busy)} onClick={() => void run()}>
@@ -394,8 +399,15 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
           </Button>
         </div>
       </div>
-      {heldout.length < 2 && (
-        <p className="text-sm text-muted-foreground">Generating cases needs 2 analysed held-out sessions. You have {heldout.length}.</p>
+      {sandbox ? (
+        <p className="text-sm text-muted-foreground">
+          Apprentice writes 6 practice cases from your graph. Label each one as you would decide; only the judge sees your
+          labels.
+        </p>
+      ) : (
+        heldout.length < 2 && (
+          <p className="text-sm text-muted-foreground">Generating cases needs 2 analysed held-out sessions. You have {heldout.length}.</p>
+        )
       )}
       {busy && (
         <Alert>

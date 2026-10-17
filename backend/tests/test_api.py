@@ -733,3 +733,55 @@ def test_sandbox_recordings_stop_at_five_minutes(api: Api, monkeypatch: pytest.M
     assert r.status_code == 422 and "5 minutes" in r.json()["error"]["message"]
     r = api.client.post(f"/api/sessions/{sid}/finalize", json={"duration_s": 300, **end})
     assert r.status_code == 200
+
+
+# ---- sandbox exam (ticket 09) ----
+def test_sandbox_exam_uses_six_generated_cases(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    judge(api, monkeypatch)
+    asked: list[tuple[list[str], int]] = []
+
+    async def fake_generate(store: Any, heldout: list[str], n: int) -> list[Any]:
+        asked.append((heldout, n))
+        return []
+
+    monkeypatch.setattr(scenarios, "generate", fake_generate)
+    r = api.client.post(
+        "/api/exam/generate", json={"heldout_session_ids": ["s-x"], "n_generated": 9}
+    )
+    assert r.status_code == 200 and asked == [([], 6)]
+
+
+def test_the_live_exam_still_needs_held_out_sessions(api: Api) -> None:
+    r = api.client.post("/api/exam/generate", json={"n_generated": 8})
+    assert r.status_code == 422 and "held-out" in r.json()["error"]["message"]
+
+
+def test_a_sandbox_exam_runs_once_per_agent_and_refusals_are_free(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    judge(api, monkeypatch)
+    assert (
+        api.client.post("/api/exam/run", json={"runs_per_arm": 3}).status_code == 409
+    )  # no labels
+    assert api.client.get("/api/sandbox").json()["usage"]["exam_runs"] == 0
+    st = store.Store("sandbox", api.db, uid="u-j1")
+    lbl = {
+        "decision": "approve",
+        "rationale": "r",
+        "labeled_by": "j",
+        "labeled_at": NOW.isoformat(),
+    }
+    asyncio.run(
+        st.exam_cases.put(
+            ExamCase.model_validate({**case("c-1").model_dump(), "expert_label": lbl})
+        )
+    )
+    seen: list[int] = []
+
+    async def fake_run(store_: Any, rid: str, runs: int) -> None:
+        seen.append(runs)
+
+    monkeypatch.setattr(report, "run_exam", fake_run)
+    assert api.client.post("/api/exam/run", json={"runs_per_arm": 3}).status_code == 202
+    api.drain()
+    assert seen == [1] and api.client.get("/api/sandbox").json()["usage"]["exam_runs"] == 1

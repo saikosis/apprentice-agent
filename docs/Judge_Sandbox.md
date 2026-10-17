@@ -53,7 +53,8 @@ when no pattern has emerged yet.
   - Volunteers: 2 sign-ups aged 16–17 with a parent's consent email (accept); 2 returning volunteers on a full shift
     (accept); 2 people with an access need on an upstairs shift (hold, offer ground floor).
 - **Sandbox exam**: generated cases only (no held-out recording), **6 cases** covering each rule and each trap,
-  labelled by the judge. The live workspace keeps held-out sessions.
+  labelled by the judge, and the exam runs each agent once per case. The live workspace keeps held-out sessions
+  and 3 runs. A refused request (e.g. nothing labelled yet) costs no credit.
 
 ### Files for judges
 - The sandbox start page offers, per workflow, **downloads only**: the spreadsheet as `.xlsx` with the right tab names
