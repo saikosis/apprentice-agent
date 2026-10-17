@@ -972,3 +972,27 @@ def test_download_packs_are_public_and_listed(api: Api) -> None:
     assert r.status_code == 200 and len(r.content) > 1000
     assert api.client.get("/api/packs/volunteers/..%2F..%2Fconfig.json").status_code == 404
     assert api.client.get("/api/packs/volunteers/quick_plan.json").status_code == 404
+
+
+# ---- retention (ticket 10) ----
+def test_sandboxes_older_than_14_days_are_swept_once_a_day(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from datetime import timedelta
+
+    from backend.app import sandbox, storage
+
+    async def delete_prefix(prefix: str) -> None:
+        return None
+
+    monkeypatch.setattr(storage, "delete_prefix", delete_prefix)
+    judge(api, monkeypatch, "u-old")
+    judge(api, monkeypatch, "u-new")
+    doc = api.db.document("sandboxes/u-old")
+    old = asyncio.run(doc.get()).to_dict() or {}
+    old["created_at"] = (NOW - timedelta(days=15)).isoformat()
+    asyncio.run(doc.set(old))
+    monkeypatch.setattr(sandbox, "_swept_on", None)
+    assert asyncio.run(sandbox.maybe_sweep()) == ["u-old"]
+    assert asyncio.run(sandbox.maybe_sweep()) == []  # once per IST day
+    assert asyncio.run(sandbox.get("u-old")) is None and asyncio.run(sandbox.get("u-new"))

@@ -24,7 +24,7 @@ run_from() { [ "$1" -ge "$START" ]; }
 pause() { echo; echo ">>> In the console: $1"; read -r -p ">>> Press Enter when done... " _; }
 cors() {
   local f; f=$(mktemp)
-  printf '[{"origin": [%s], "method": ["PUT", "GET"], "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]\n' "$1" > "$f"
+  printf '[{"origin": [%s], "method": ["PUT", "GET"], "responseHeader": ["Content-Type", "x-goog-content-length-range"], "maxAgeSeconds": 3600}]\n' "$1" > "$f"
   gcloud storage buckets update "gs://$BUCKET" --cors-file="$f" --quiet
   rm -f "$f"
 }
@@ -131,6 +131,11 @@ if run_from 9; then
   gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAccount:$SA" \
     --role=roles/storage.objectAdmin --quiet >/dev/null
   cors '"http://localhost:5173"'
+  # judges' sandbox recordings: deleted 14 days after upload (all three workflows' sandbox prefixes)
+  lc=$(mktemp)
+  echo '{"rule": [{"action": {"type": "Delete"}, "condition": {"age": 14, "matchesPrefix": ["sandbox-", "essays-sandbox-", "volunteers-sandbox-"]}}]}' > "$lc"
+  gcloud storage buckets update "gs://$BUCKET" --lifecycle-file="$lc" --quiet
+  rm -f "$lc"
 fi
 
 if run_from 10; then

@@ -2,7 +2,7 @@
 
 import hmac
 import os
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from typing import Literal, get_args
 
 from fastapi import HTTPException
@@ -17,6 +17,10 @@ MAX_RECORDING_S = 330  # 5:00 plus grace; the browser stops at 5:00
 MAX_RECORDING_BYTES = 200 * 1024**2  # a 5-minute tab recording is well under this
 LIVE_WINDOW_S = 360  # Live tokens only within 6 minutes of a sandbox session's start
 MAX_CODE_TRIES = 10  # wrong judge codes per account, then locked out
+RETENTION = timedelta(
+    days=14
+)  # sandboxes (and, by bucket lifecycle rule, their videos) are deleted after this
+_swept_on: date | None = None
 IST = timezone(timedelta(hours=5, minutes=30))
 _WHAT = {
     "recordings": "recordings",
@@ -65,6 +69,25 @@ async def all_sandboxes() -> list[SandboxInfo]:
         info = SandboxInfo.model_validate(snap.to_dict())
         out.append(info.model_copy(update={"global_today": today, "global_limit": GLOBAL_LIMIT}))
     return sorted(out, key=lambda s: s.created_at)
+
+
+async def sweep() -> list[str]:
+    """Delete every sandbox older than RETENTION. Returns the uids removed."""
+    cutoff = datetime.now(UTC) - RETENTION
+    gone = [s.uid for s in await all_sandboxes() if s.created_at < cutoff]
+    for uid in gone:
+        await delete(uid)
+    return gone
+
+
+async def maybe_sweep() -> list[str]:
+    """At most once per IST day per instance: the first request of the day (and after a restart)."""
+    global _swept_on
+    today = datetime.now(IST).date()
+    if _swept_on == today:
+        return []
+    _swept_on = today
+    return await sweep()
 
 
 def check_open() -> None:

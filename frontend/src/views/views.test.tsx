@@ -97,6 +97,7 @@ describe("views render against fixtures", () => {
       </WsContext.Provider>,
     );
     expect(screen.getByText(/stops automatically at 5:00/)).toBeTruthy();
+    expect(screen.getByText(/visible to you and the Apprentice organisers, and are deleted after 14 days/)).toBeTruthy();
   });
 });
 

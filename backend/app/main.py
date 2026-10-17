@@ -1,9 +1,12 @@
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
-from backend.app import errors, gemini
+from backend.app import errors, gemini, jobs
+from backend.app import sandbox as sandbox_app
 from backend.app.routers import (
     auth,
     demo,
@@ -21,6 +24,16 @@ VERSION = "0.1.0"
 
 app = FastAPI(title="Apprentice", version=VERSION)
 errors.install(app)
+
+
+@app.middleware("http")
+async def daily_sandbox_sweep(request: Request, call_next: Any) -> Any:
+    """14-day retention for judges' sandboxes without a scheduler: the first request each IST day
+    (and after a restart) starts a background sweep. Videos go by the bucket's lifecycle rule."""
+    if sandbox_app.enabled() and sandbox_app._swept_on != datetime.now(sandbox_app.IST).date():
+        jobs.spawn("sandbox sweep", sandbox_app.maybe_sweep())
+    return await call_next(request)
+
 
 # Public: /api/health (below) and the demo router (bundle, demo playback; seed checks admin).
 # /api/me and /api/sandbox/*: any signed-in user (explain a refusal; redeem the judge code).

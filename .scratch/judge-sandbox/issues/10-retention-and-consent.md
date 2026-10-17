@@ -1,5 +1,7 @@
 # 10. Consent line, 14-day deletion
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: `04-sandbox-workspace-and-code`, `08-sandbox-lifecycle`

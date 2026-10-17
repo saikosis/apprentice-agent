@@ -258,7 +258,8 @@ export function Record() {
                   <FieldLabel htmlFor="consent">I agree to record my screen and voice for this session</FieldLabel>
                   <FieldDescription>
                     It captures how I make decisions. I can stop at any time.
-                    {sandbox && " In this sandbox a recording stops automatically at 5:00."}
+                    {sandbox &&
+                      " In this sandbox a recording stops automatically at 5:00. Recordings and answers in this sandbox are visible to you and the Apprentice organisers, and are deleted after 14 days."}
                   </FieldDescription>
                 </FieldContent>
               </Field>

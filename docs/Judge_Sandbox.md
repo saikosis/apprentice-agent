@@ -74,7 +74,8 @@ when no pattern has emerged yet.
 ### Privacy and retention
 - Consent line before recording in a sandbox: *"Recordings and answers in this sandbox are visible to you and the
   Apprentice organisers, and are deleted after 14 days."*
-- **Deletion after 14 days**: a bucket lifecycle rule deletes objects under `sandbox-` prefixes 14 days after upload;
+- **Deletion after 14 days**: a bucket lifecycle rule deletes objects under the `sandbox-`, `essays-sandbox-` and
+  `volunteers-sandbox-` prefixes 14 days after upload;
   the app deletes sandboxes whose `created_at` is over 14 days old on startup and on the first request of each IST day.
   No new cloud service.
 - **Admin page** (`ADMIN_UIDS` only): list of sandboxes (judge email, created, usage per limit, today's global count)
@@ -111,7 +112,8 @@ when no pattern has emerged yet.
 - Limit hits return `429 {error: {code: "rate_limited", message: "You've used 5 of 5 recordings in this sandbox."}}`.
 
 ## Cloud changes (Cloud_Setup)
-- New step: bucket lifecycle rule (delete age 14 days, `matchesPrefix: ["sandbox-"]`).
+- Step 9: bucket lifecycle rule (delete at age 14 days, prefixes `sandbox-`, `essays-sandbox-`, `volunteers-sandbox-`),
+  and CORS `responseHeader` adds `x-goog-content-length-range` (sandbox uploads send it).
 - Deploy: add `SANDBOX_CODE` (and optional `SANDBOX_ENABLED`) to `--set-env-vars`.
 - No new services, roles or secrets.
 

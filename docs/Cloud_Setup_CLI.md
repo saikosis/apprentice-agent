@@ -170,7 +170,7 @@ gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAc
   --role=roles/storage.objectAdmin
 cat > /tmp/apprentice-cors.json <<'EOF'
 [{"origin": ["http://localhost:5173"], "method": ["PUT", "GET"],
-  "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]
+  "responseHeader": ["Content-Type", "x-goog-content-length-range"], "maxAgeSeconds": 3600}]
 EOF
 gcloud storage buckets update "gs://$BUCKET" --cors-file=/tmp/apprentice-cors.json
 ```
@@ -178,8 +178,18 @@ gcloud storage buckets update "gs://$BUCKET" --cors-file=/tmp/apprentice-cors.js
 If the name is taken ("already exists" and you don't own it), pick another suffix, update `BUCKET`, and use the same name in
 step 14. The Cloud Run URL is added to CORS in step 15.
 
-**Check:** `gcloud storage buckets describe "gs://$BUCKET" --format='value(location,cors_config)'` shows `ASIA-SOUTH1` and the
-localhost origin.
+Judges' sandbox recordings are deleted 14 days after upload (docs/Judge_Sandbox.md). Each workflow's sandbox folders
+start differently, so the rule lists all three prefixes:
+
+```bash
+cat > /tmp/apprentice-lifecycle.json <<'EOF'
+{"rule": [{"action": {"type": "Delete"}, "condition": {"age": 14, "matchesPrefix": ["sandbox-", "essays-sandbox-", "volunteers-sandbox-"]}}]}
+EOF
+gcloud storage buckets update "gs://$BUCKET" --lifecycle-file=/tmp/apprentice-lifecycle.json
+```
+
+**Check:** `gcloud storage buckets describe "gs://$BUCKET" --format='value(location,cors_config,lifecycle_config)'` shows
+`ASIA-SOUTH1`, the localhost origin, and the 14-day delete rule.
 
 ## 10. Firebase + Google sign-in (console only)
 
@@ -288,7 +298,7 @@ echo "$URL $URL2"   # both must be non-empty
    ```bash
    cat > ~/apprentice-cors.json <<EOF
    [{"origin": ["http://localhost:5173", "$URL", "$URL2"], "method": ["PUT", "GET"],
-     "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]
+     "responseHeader": ["Content-Type", "x-goog-content-length-range"], "maxAgeSeconds": 3600}]
    EOF
    gcloud storage buckets update "gs://$BUCKET" --cors-file="$HOME/apprentice-cors.json"
    gcloud storage buckets describe "gs://$BUCKET" --format='value(cors_config)'   # no empty "" origin
