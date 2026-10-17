@@ -1,10 +1,13 @@
 # Cloud setup: `gcloud` commands
 
-The 16 steps from [Cloud_Setup.md](Cloud_Setup.md) as commands. Paste them into a **bash** shell (Git Bash on Windows, or
-Cloud Shell) from the repo root. Each step ends with a **Check**; don't move on until it passes. Steps 10 and 11 have no CLI
+The 16 steps from [Cloud_Setup.md](Cloud_Setup.md) as commands. Each step says where to run it (**Run in:**): Cloud Shell for
+steps 1–9, the browser for 10–11, Git Bash on your laptop in the repo folder for 12–16. See
+[Where to run each step](Cloud_Setup.md#where-to-run-each-step). Each step ends with a **Check**; don't move on until it passes. Steps 10 and 11 have no CLI
 and point to the console.
 
 ## 1. Variables
+
+**Run in:** Cloud Shell for steps 1–9. Run this again in any new shell (including Git Bash before step 12): variables don't carry over between shells.
 
 Fill in the two emails. Nothing here is committed; keep it in this shell session.
 
@@ -24,6 +27,8 @@ gcloud config set project "$PROJECT"
 
 ## 2. Link billing
 
+**Run in:** Cloud Shell (or Git Bash on your laptop). Needs the step 1 variables in the same shell.
+
 ```bash
 gcloud billing projects link "$PROJECT" --billing-account="$BILLING_ACCOUNT"
 ```
@@ -31,6 +36,8 @@ gcloud billing projects link "$PROJECT" --billing-account="$BILLING_ACCOUNT"
 **Check:** `gcloud billing projects describe "$PROJECT" --format='value(billingEnabled)'` prints `True`.
 
 ## 3. Budget (₹5,000 / month; alerts at 50%, 90%, 100%)
+
+**Run in:** Cloud Shell (or Git Bash on your laptop). Needs the step 1 variables in the same shell.
 
 The budget API has to be on first; alerts go to the billing account admins by default.
 
@@ -47,6 +54,8 @@ shows `apprentice monthly  5000`.
 
 ## 4. Enable the APIs
 
+**Run in:** Cloud Shell (or Git Bash on your laptop). Needs the step 1 variables in the same shell.
+
 ```bash
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
   firestore.googleapis.com storage.googleapis.com secretmanager.googleapis.com iam.googleapis.com \
@@ -58,6 +67,8 @@ gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregi
 **Check:** `gcloud services list --enabled --format='value(config.name)' | grep -cE 'run|firestore|secretmanager|modelarmor|generativelanguage'` prints `5`.
 
 ## 5. Firestore (Native, `asia-south1`)
+
+**Run in:** Cloud Shell (or Git Bash on your laptop). Needs the step 1 variables in the same shell.
 
 ```bash
 gcloud firestore databases create --location="$REGION" --type=firestore-native
@@ -81,6 +92,8 @@ service cloud.firestore {
 
 ## 6. Gemini API key → Secret Manager
 
+**Run in:** Cloud Shell (or Git Bash on your laptop). Needs the step 1 variables in the same shell.
+
 Creates a key in this project, restricted to the Gemini API, and stores it without printing it.
 
 ```bash
@@ -98,8 +111,11 @@ into the same `gcloud secrets create` command. Don't paste it into a file in the
 
 ## 7. Runtime service account and roles
 
+**Run in:** Cloud Shell (or Git Bash on your laptop). Needs the step 1 variables in the same shell.
+
 ```bash
 gcloud iam service-accounts create apprentice-run --display-name="Apprentice Cloud Run runtime"
+sleep 30   # a new service account takes a few seconds to reach project IAM ("does not exist" otherwise)
 gcloud secrets add-iam-policy-binding gemini-api-key --member="serviceAccount:$SA" \
   --role=roles/secretmanager.secretAccessor
 gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$SA" --role=roles/datastore.user
@@ -109,15 +125,19 @@ gcloud iam service-accounts add-iam-policy-binding "$SA" --member="serviceAccoun
   --role=roles/iam.serviceAccountTokenCreator
 ```
 
-The bucket role (`roles/storage.objectAdmin`) is granted in step 9.
+The bucket role (`roles/storage.objectAdmin`) is granted in step 9. If a grant still says `Service account ... does not
+exist`, wait a minute and re-run just that line; re-running a grant that already worked is harmless.
 
 **Check:** `gcloud projects get-iam-policy "$PROJECT" --flatten='bindings[].members' --filter="bindings.members:$SA" --format='value(bindings.role)'`
 lists `roles/datastore.user` and `roles/modelarmor.user`.
 
 ## 8. Model Armor template `apprentice-default`
 
+**Run in:** Cloud Shell (or Git Bash on your laptop). Needs the step 1 variables in the same shell.
+
 Regional endpoint first, then the template (SPEC §6): prompt injection at LOW_AND_ABOVE, Sensitive Data Protection basic,
-malicious URLs, RAI at MEDIUM_AND_ABOVE.
+RAI at MEDIUM_AND_ABOVE. No malicious URL filter: `asia-south1` doesn't offer it (`CAPABILITY_NOT_SUPPORTED`), and the app
+doesn't rely on it.
 
 ```bash
 gcloud config set api_endpoint_overrides/modelarmor "https://modelarmor.${MA_LOCATION}.rep.googleapis.com/"
@@ -125,11 +145,11 @@ gcloud model-armor templates create apprentice-default --location="$MA_LOCATION"
   --pi-and-jailbreak-filter-settings-enforcement=enabled \
   --pi-and-jailbreak-filter-settings-confidence-level=low-and-above \
   --basic-config-filter-enforcement=enabled \
-  --malicious-uri-filter-settings-enforcement=enabled \
   --rai-settings-filters='[{"filterType":"HATE_SPEECH","confidenceLevel":"MEDIUM_AND_ABOVE"},{"filterType":"HARASSMENT","confidenceLevel":"MEDIUM_AND_ABOVE"},{"filterType":"DANGEROUS","confidenceLevel":"MEDIUM_AND_ABOVE"},{"filterType":"SEXUALLY_EXPLICIT","confidenceLevel":"MEDIUM_AND_ABOVE"}]'
 ```
 
-If `asia-south1` is refused (location not supported), use the fallback and remember it for step 14:
+If `asia-south1` is refused for another reason, use the fallback and remember it for step 14. Re-run **both** commands: the
+endpoint override must match `--location`, or the create fails with a misleading `PERMISSION_DENIED`.
 
 ```bash
 export MA_LOCATION=us-central1    # then re-run the two commands above
@@ -140,6 +160,8 @@ template's full name. Later (after step 12), test that bank-account numbers are 
 to advanced with an inspect template including FINANCIAL_ACCOUNT_NUMBER and IBAN_CODE.
 
 ## 9. Recordings bucket + CORS
+
+**Run in:** Cloud Shell (or Git Bash on your laptop). Needs the step 1 variables in the same shell.
 
 ```bash
 gcloud storage buckets create "gs://$BUCKET" --location="$REGION" \
@@ -161,6 +183,8 @@ localhost origin.
 
 ## 10. Firebase + Google sign-in (console only)
 
+**Run in:** the browser (Firebase console).
+
 1. https://console.firebase.google.com → **Add project** → choose the existing Google Cloud project `aibuildercup-india-2026`
    (don't create a new one). Analytics: off.
 2. **Build → Authentication → Get started → Sign-in method → Google → Enable**; support email = your account.
@@ -178,6 +202,8 @@ export VITE_FIREBASE_PROJECT_ID="aibuildercup-india-2026"
 
 ## 11. OAuth consent screen + client ID for Connect Sheet (console only)
 
+**Run in:** the browser (Cloud Console).
+
 Cloud Console → **Google Auth Platform** (APIs & Services → OAuth consent screen):
 
 1. **Branding:** app name `Apprentice`, support email = your account.
@@ -194,6 +220,8 @@ export VITE_GOOGLE_CLIENT_ID="....apps.googleusercontent.com"
 
 ## 12. Local credentials
 
+**Run in:** Git Bash, PowerShell or Command Prompt on your laptop. Type the project id; `$PROJECT` doesn't work in Command Prompt.
+
 ```bash
 gcloud auth application-default login
 gcloud auth application-default set-quota-project "$PROJECT"
@@ -204,6 +232,8 @@ prints the project id.
 
 ## 13. Store the SOP
 
+**Run in:** Git Bash on your laptop, from the repo folder (`cd ~/projects/aibuildercup/apprentice-agent`).
+
 ```bash
 GCP_PROJECT=$PROJECT uv run python -m scripts.make_synthetic --upload-sop
 ```
@@ -211,6 +241,8 @@ GCP_PROJECT=$PROJECT uv run python -m scripts.make_synthetic --upload-sop
 **Check:** Firebase console → Firestore → `workspaces/live/sop/AP-SOP-07` exists.
 
 ## 14. First deploy
+
+**Run in:** Git Bash on your laptop, from the repo folder (`cd ~/projects/aibuildercup/apprentice-agent`). Google Cloud builds the image; no Docker needed locally.
 
 `ADMIN_UIDS` isn't known until you sign in once (step 15); use a placeholder for now.
 
@@ -236,17 +268,30 @@ gcloud projects add-iam-policy-binding "$PROJECT" \
 
 ## 15. After the first deploy
 
-1. **Firebase authorised domain:** Authentication → Settings → Authorised domains → **Add** the host of `$URL`
-   (e.g. `apprentice-xxxxx-el.a.run.app`). Console only.
-2. **OAuth origin:** Google Auth Platform → Clients → `apprentice-web` → add `$URL` to Authorised JavaScript origins. Console only.
-3. **Bucket CORS** with the service URL:
+**Run in:** Git Bash on your laptop, from the repo folder (`cd ~/projects/aibuildercup/apprentice-agent`). Items 1 and 2 are in the browser.
+
+The service answers on **two** URLs; register both everywhere. Set them first (a fresh shell has no `$URL`, and an empty one
+silently writes `""` into CORS, so uploads then fail with "Failed to fetch"):
+
+```bash
+URL=$(gcloud run services describe apprentice --project="$PROJECT" --region="$REGION" --format='value(status.url)')
+URL2="https://apprentice-$(gcloud projects describe "$PROJECT" --format='value(projectNumber)').$REGION.run.app"
+echo "$URL $URL2"   # both must be non-empty
+```
+
+1. **Firebase authorised domains:** Authentication → Settings → Authorised domains → **Add** the host of `$URL` and of `$URL2`
+   (no `https://`). Console only.
+2. **OAuth origins:** Google Auth Platform → Clients → `apprentice-web` → add `$URL` and `$URL2` to Authorised JavaScript
+   origins. Console only.
+3. **Bucket CORS** with both URLs:
 
    ```bash
-   cat > /tmp/apprentice-cors.json <<EOF
-   [{"origin": ["http://localhost:5173", "$URL"], "method": ["PUT", "GET"],
+   cat > ~/apprentice-cors.json <<EOF
+   [{"origin": ["http://localhost:5173", "$URL", "$URL2"], "method": ["PUT", "GET"],
      "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]
    EOF
-   gcloud storage buckets update "gs://$BUCKET" --cors-file=/tmp/apprentice-cors.json
+   gcloud storage buckets update "gs://$BUCKET" --cors-file="$HOME/apprentice-cors.json"
+   gcloud storage buckets describe "gs://$BUCKET" --format='value(cors_config)'   # no empty "" origin
    ```
 
 4. **`ADMIN_UIDS`:** open `$URL`, sign in as `$EXPERT_EMAIL`; Firebase console → Authentication → Users → copy the **User UID**.
@@ -256,6 +301,8 @@ gcloud projects add-iam-policy-binding "$PROJECT" \
 workspace"; a short test recording uploads; `gcloud storage ls "gs://$BUCKET/live/"` lists it.
 
 ## 16. Seed the demo workspace
+
+**Run in:** Git Bash on your laptop, from the repo folder (`cd ~/projects/aibuildercup/apprentice-agent`).
 
 After the real run (sessions recorded, questions answered, exam labelled and run):
 

@@ -94,7 +94,7 @@ The bucket role is added in step 9.
   the deploy then needs `MA_LOCATION=us-central1`.
 - **Prompt injection and jailbreak detection:** on, confidence **Low and above**.
 - **Sensitive Data Protection:** on, **Basic**.
-- **Malicious URL detection:** on.
+- **Malicious URL detection:** off (not available in `asia-south1`; the app doesn't need it).
 - **Responsible AI:** all four categories (hate speech, harassment, dangerous, sexually explicit) at **Medium and above**.
 - Create.
 
@@ -177,14 +177,17 @@ access** → principal `<project-number>-compute@developer.gserviceaccount.com` 
 
 ## 15. After the first deploy
 
-1. Firebase → **Authentication → Settings → Authorised domains → Add domain** → the service URL's host
-   (e.g. `apprentice-xxxxx-el.a.run.app`).
-2. Google Auth Platform → **Clients → `apprentice-web`** → add the service URL to Authorised JavaScript origins → Save.
-3. Bucket CORS with the service URL (Cloud Shell):
+The service has **two** URLs; use both below. One is shown at the top of **Cloud Run → `apprentice`**
+(`https://apprentice-xxxxx-el.a.run.app`); the other is `https://apprentice-<project number>.asia-south1.run.app` (project
+number on the Cloud Console home page).
+
+1. Firebase → **Authentication → Settings → Authorised domains → Add domain** → each URL's host (no `https://`).
+2. Google Auth Platform → **Clients → `apprentice-web`** → add both URLs to Authorised JavaScript origins → Save.
+3. Bucket CORS with both URLs (Cloud Shell). A missing URL makes uploads fail with "Failed to fetch":
 
    ```bash
    cat > cors.json <<'EOF'
-   [{"origin": ["http://localhost:5173", "https://YOUR-SERVICE-URL"], "method": ["PUT", "GET"],
+   [{"origin": ["http://localhost:5173", "https://URL-ONE", "https://URL-TWO"], "method": ["PUT", "GET"],
      "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]
    EOF
    gcloud storage buckets update gs://apprentice-recordings-aibc2026 --cors-file=cors.json

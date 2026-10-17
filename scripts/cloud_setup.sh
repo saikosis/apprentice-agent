@@ -93,9 +93,14 @@ if run_from 7; then
   fi
   gcloud secrets add-iam-policy-binding gemini-api-key --member="serviceAccount:$SA" \
     --role=roles/secretmanager.secretAccessor --quiet >/dev/null
+  # A new SA takes a few seconds to reach project IAM ("does not exist"), so retry each grant.
   for role in roles/datastore.user roles/modelarmor.user; do
-    gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$SA" --role="$role" \
-      --condition=None --quiet >/dev/null
+    for i in 1 2 3 4 5 6; do
+      gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$SA" --role="$role" \
+        --condition=None --quiet >/dev/null && break
+      [ "$i" = 6 ] && exit 1
+      echo "service account not visible yet, retrying in 10s..."; sleep 10
+    done
   done
   gcloud iam service-accounts add-iam-policy-binding "$SA" --member="serviceAccount:$SA" \
     --role=roles/iam.serviceAccountTokenCreator --quiet >/dev/null
@@ -110,7 +115,6 @@ if run_from 8; then
       --pi-and-jailbreak-filter-settings-enforcement=enabled \
       --pi-and-jailbreak-filter-settings-confidence-level=low-and-above \
       --basic-config-filter-enforcement=enabled \
-      --malicious-uri-filter-settings-enforcement=enabled \
       --rai-settings-filters='[{"filterType":"HATE_SPEECH","confidenceLevel":"MEDIUM_AND_ABOVE"},{"filterType":"HARASSMENT","confidenceLevel":"MEDIUM_AND_ABOVE"},{"filterType":"DANGEROUS","confidenceLevel":"MEDIUM_AND_ABOVE"},{"filterType":"SEXUALLY_EXPLICIT","confidenceLevel":"MEDIUM_AND_ABOVE"}]' \
       || { echo "!! Template creation failed in $MA_LOCATION. Re-run with MA_LOCATION=us-central1 START=8."; exit 1; }
   fi
@@ -164,11 +168,14 @@ fi
 
 if run_from 15; then
   step 15 "after the first deploy"
+  # The service answers on two URLs (hash-style and project-number-style); register both.
   URL=$(gcloud run services describe apprentice --region="$REGION" --format='value(status.url)')
-  echo "service URL: $URL"
-  cors "\"http://localhost:5173\", \"$URL\""
+  URL2="https://apprentice-$(gcloud projects describe "$PROJECT" --format='value(projectNumber)').$REGION.run.app"
+  [ -n "$URL" ] || { echo "!! No service URL; deploy (step 14) first."; exit 1; }
+  echo "service URLs: $URL $URL2"
+  cors "\"http://localhost:5173\", \"$URL\", \"$URL2\""
   curl -fsS "$URL/api/health" && echo
-  pause "Firebase > Authentication > Settings > Authorised domains: add ${URL#https://}. Google Auth Platform > Clients > apprentice-web: add origin $URL."
+  pause "Firebase > Authentication > Settings > Authorised domains: add ${URL#https://} and ${URL2#https://}. Google Auth Platform > Clients > apprentice-web: add origins $URL and $URL2."
   echo "Next: sign in at $URL as $EXPERT_EMAIL, copy your User UID from Firebase > Authentication > Users,"
   echo "then: ADMIN_UIDS=<uid> START=14 ... bash scripts/cloud_setup.sh   (redeploys with the admin uid)"
 fi

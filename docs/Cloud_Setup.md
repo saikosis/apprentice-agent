@@ -25,26 +25,39 @@ appear in three forms; pick one per step, they are interchangeable:
 
 ## The 16 steps
 
-| # | Step | Who | Console only? |
+| # | Step | Who | Where |
 |---|---|---|---|
-| 1 | Set the variables (project, region, bucket, your emails) | A | |
-| 2 | Link billing to the project | A | |
-| 3 | Monthly budget with alerts | A | |
-| 4 | Enable the APIs | A | |
-| 5 | Firestore (Native, `asia-south1`); rules deny all client access | A | rules: yes |
-| 6 | Gemini API key in this project → Secret Manager `gemini-api-key` | A | |
-| 7 | Runtime service account and its roles | A | |
-| 8 | Model Armor template `apprentice-default` | A | |
-| 9 | Recordings bucket + CORS | B | |
-| 10 | Add Firebase to the project; enable Google sign-in; register the web app | B | yes |
-| 11 | OAuth consent screen, test user, OAuth client ID (Connect Sheet) | B | yes |
-| 12 | Local credentials (Application Default Credentials) | A | |
-| 13 | Store the SOP in Firestore | A | |
-| 14 | First deploy (`scripts/deploy.sh`) | B | |
-| 15 | After the first deploy: authorised domain, OAuth origin, bucket CORS, `ADMIN_UIDS`, redeploy | B | partly |
-| 16 | Seed the demo workspace (after the real run) | A | |
+| 1 | Set the variables (project, region, bucket, your emails) | A | Cloud Shell |
+| 2 | Link billing to the project | A | Cloud Shell |
+| 3 | Monthly budget with alerts | A | Cloud Shell |
+| 4 | Enable the APIs | A | Cloud Shell |
+| 5 | Firestore (Native, `asia-south1`); rules deny all client access | A | Cloud Shell; rules in the browser |
+| 6 | Gemini API key in this project → Secret Manager `gemini-api-key` | A | Cloud Shell |
+| 7 | Runtime service account and its roles | A | Cloud Shell |
+| 8 | Model Armor template `apprentice-default` | A | Cloud Shell |
+| 9 | Recordings bucket + CORS | B | Cloud Shell |
+| 10 | Add Firebase to the project; enable Google sign-in; register the web app | B | Browser |
+| 11 | OAuth consent screen, test user, OAuth client ID (Connect Sheet) | B | Browser |
+| 12 | Local credentials (Application Default Credentials) | A | Laptop (any terminal) |
+| 13 | Store the SOP in Firestore | A | Git Bash, repo folder |
+| 14 | First deploy (`scripts/deploy.sh`) | B | Git Bash, repo folder |
+| 15 | After the first deploy: authorised domains, OAuth origins, bucket CORS, `ADMIN_UIDS`, redeploy | B | Git Bash, repo folder + browser |
+| 16 | Seed the demo workspace (after the real run) | A | Git Bash, repo folder |
 
 "Who" follows the A/B split in `docs/TASKS.md`; one person can do all of it.
+
+## Where to run each step
+
+| Where | Steps | Why |
+|---|---|---|
+| **Cloud Shell** (`>_` in the Cloud Console top bar) | 1–9 | Only creates cloud resources; gcloud is already signed in. Git Bash on the laptop works too. |
+| **Browser** (Cloud Console / Firebase console) | 10, 11, rules in 5, items 1–2 of 15 | No command-line version. |
+| **Laptop terminal** (any) | 12 | Signs in the code on your laptop. Type the project id: Command Prompt doesn't expand `$PROJECT`. |
+| **Git Bash on the laptop, in the repo folder** | 13–16 | These run repo code (`uv run`, `scripts/deploy.sh`) and need step 12's credentials. Command Prompt can't run `VAR=value command` or bash scripts. |
+
+Shell variables (`$PROJECT`, `$URL`, ...) live only in the shell that set them. When you switch from Cloud Shell to Git
+Bash, re-run step 1 there, or type the values. An empty variable fails quietly: an empty `$URL` in step 15 wrote `""` into
+the bucket CORS and broke uploads.
 
 ## Order constraints
 

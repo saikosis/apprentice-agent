@@ -41,7 +41,7 @@ Split:
 - [ ] Model Armor template `apprentice-default` in `asia-south1` (SPEC §6):
   - [ ] Prompt injection and jailbreak detection, LOW_AND_ABOVE
   - [ ] Sensitive Data Protection basic. Test whether bank-account numbers are caught; if not, switch to advanced with FINANCIAL_ACCOUNT_NUMBER and IBAN_CODE
-  - [ ] Malicious URLs on
+  - [x] ~~Malicious URLs on~~: not offered in asia-south1; left off
   - [ ] RAI, MEDIUM_AND_ABOVE
 - [x] ~~Put `GEMINI_API_KEY` in `.env` (never commit it)~~
 - [ ] Local dev credentials: `gcloud auth application-default login`
