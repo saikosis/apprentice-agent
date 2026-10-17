@@ -106,7 +106,7 @@ when no pattern has emerged yet.
 - `GET /api/sandbox/files/{scenario}/{name}` → the download packs (judges only).
 - `GET /api/admin/sandboxes`; admin reads pass `?ws=sandbox&uid=<uid>`.
 - `GET /api/sessions/{id}` includes `summary` (null until processed); `GET /api/observed-workflow`.
-- Limit hits return `429 {error: {code: "limit", message: "You've used 5 of 5 recordings in this sandbox."}}`.
+- Limit hits return `429 {error: {code: "rate_limited", message: "You've used 5 of 5 recordings in this sandbox."}}`.
 
 ## Cloud changes (Cloud_Setup)
 - New step: bucket lifecycle rule (delete age 14 days, `matchesPrefix: ["sandbox-"]`).

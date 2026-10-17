@@ -19,6 +19,7 @@ import type { Session } from "../types/contract";
 import { Empty, ErrorNote, PageHeader, scenarioInfo, fmtDuration, go, useWs } from "../ui";
 
 type Phase = "idle" | "starting" | "recording" | "uploading" | "done" | "error";
+const SANDBOX_MAX_S = 300;
 
 const LIVE_LABEL: Record<LiveStatus, string> = {
   connecting: "Connecting to Apprentice…",
@@ -103,7 +104,7 @@ function Companion(props: {
 }
 
 export function Record() {
-  const { readOnly } = useWs();
+  const { readOnly, sandbox } = useWs();
   const pip = usePip();
   const [consent, setConsent] = useState(false);
   const [kind, setKind] = useState<Session["kind"]>("training");
@@ -202,6 +203,11 @@ export function Record() {
     }
   };
 
+  // Judge sandbox: recordings stop at 5:00 (the server refuses longer ones).
+  useEffect(() => {
+    if (sandbox && phase === "recording" && elapsed >= SANDBOX_MAX_S) void stop();
+  });
+
   if (readOnly)
     return (
       <Empty
@@ -250,7 +256,10 @@ export function Record() {
                 <Checkbox id="consent" checked={consent} disabled={busy} onCheckedChange={(v) => setConsent(v === true)} />
                 <FieldContent>
                   <FieldLabel htmlFor="consent">I agree to record my screen and voice for this session</FieldLabel>
-                  <FieldDescription>It captures how I make decisions. I can stop at any time.</FieldDescription>
+                  <FieldDescription>
+                    It captures how I make decisions. I can stop at any time.
+                    {sandbox && " In this sandbox a recording stops automatically at 5:00."}
+                  </FieldDescription>
                 </FieldContent>
               </Field>
               <Separator />

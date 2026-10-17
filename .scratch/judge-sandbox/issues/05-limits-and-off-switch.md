@@ -1,5 +1,7 @@
 # 05. Per-judge and global limits, off switch, 5:00 cap
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: `04-sandbox-workspace-and-code`

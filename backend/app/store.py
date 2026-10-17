@@ -150,6 +150,7 @@ class Store:
     ) -> None:
         self.ws, self.db, self.scenario = ws, db if db is not None else default_db(), scenario
         self.writable = ws != "demo" or allow_demo_writes
+        self.uid = uid  # the judge, for sandbox stores
         if ws == "sandbox" and not uid:
             raise ValueError("a sandbox store needs the judge's uid")
         base = f"sandbox-{uid}" if ws == "sandbox" else ws

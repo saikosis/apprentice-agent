@@ -7,6 +7,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException
 
+from backend.app import sandbox
 from backend.app.contract import Scenario
 from backend.app.routers.auth import CurrentRole, CurrentUser
 from backend.app.store import Store, Ws
@@ -31,6 +32,8 @@ def _read_store(
 
 
 def _writer_store(user: CurrentUser, role: CurrentRole, scenario: Scenario = "ap") -> Store:
+    if role == "judge":
+        sandbox.check_open()  # the off switch closes every sandbox write; reads keep working
     return _own(user.uid, role, scenario)
 
 

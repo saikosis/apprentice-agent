@@ -3,10 +3,10 @@
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app import errors, storage
+from backend.app import errors, sandbox, storage
 from backend.app.contract import Session
 from backend.app.routers.sessions import get_or_404
 from backend.app.workspace import LiveStore
@@ -52,6 +52,8 @@ async def finalize(session_id: str, body: FinalizeReq, store: LiveStore) -> Sess
     s = await get_or_404(store, session_id)
     if s.status != "uploading" or not s.gcs_uri:
         raise errors.conflict(f"Session {session_id} is {s.status}; request an upload URL first.")
+    if store.ws == "sandbox" and body.duration_s > sandbox.MAX_RECORDING_S:
+        raise HTTPException(422, "Sandbox recordings are limited to 5 minutes.")
     if not await storage.exists(s.gcs_uri):
         raise errors.conflict("The recording hasn't arrived in storage yet. Retry the upload.")
     done = s.model_copy(

@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app import errors, jobs
+from backend.app import errors, jobs, sandbox
 from backend.app.contract import AgentRun, Decision, ExamCase, ExamReport, ExpertLabel
 from backend.app.exam import report, scenarios
 from backend.app.routers.auth import CurrentUser
@@ -37,6 +37,7 @@ class RunReq(BaseModel):
 
 @router.post("/exam/generate")
 async def generate(body: GenerateReq, store: LiveStore) -> list[ExamCase]:
+    await sandbox.charge(store, "case_generations")
     for sid in body.heldout_session_ids:
         s = await store.sessions.get(sid)
         if s is None or s.kind != "heldout" or s.status != "processed":
@@ -65,6 +66,7 @@ async def label(case_id: str, body: LabelReq, user: CurrentUser, store: LiveStor
 
 @router.post("/exam/run", status_code=202)
 async def run(body: RunReq, store: LiveStore) -> dict[str, str]:
+    await sandbox.charge(store, "exam_runs")
     if not any(c.expert_label for c in await store.exam_cases.list()):
         raise errors.conflict("Label at least one exam case before running the exam.")
     report_id = new_id("r")

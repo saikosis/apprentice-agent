@@ -87,6 +87,15 @@ describe("views render against fixtures", () => {
     demo(<Record />);
     expect(screen.getByText("Recording is off in the demo")).toBeTruthy();
   });
+
+  it("Record in a judge sandbox says recordings stop at 5:00", () => {
+    render(
+      <WsContext.Provider value={{ ws: "live", readOnly: false, sandbox: true }}>
+        <Record />
+      </WsContext.Provider>,
+    );
+    expect(screen.getByText(/stops automatically at 5:00/)).toBeTruthy();
+  });
 });
 
 describe("rowsToRecords", () => {

@@ -676,3 +676,60 @@ def test_each_judge_works_in_a_private_sandbox(api: Api, monkeypatch: pytest.Mon
     as_user("expert@example.com", "u-expert")
     assert api.client.get("/api/sessions").json() == []  # the expert's live workspace is untouched
     assert api.client.get("/api/me").json()["role"] == "expert"
+
+
+# ---- sandbox limits (ticket 05) ----
+def judge(api: Api, monkeypatch: pytest.MonkeyPatch, uid: str = "u-j1") -> None:
+    monkeypatch.setenv("SANDBOX_CODE", "river-42")
+    as_user(f"{uid}@example.com", uid)
+    assert api.client.post("/api/sandbox/join", json={"code": "river-42"}).status_code == 200
+
+
+def test_a_judge_gets_five_recordings(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    judge(api, monkeypatch)
+    for _ in range(5):
+        new_session(api)
+    r = api.client.post("/api/sessions", json={"kind": "training"})
+    assert r.status_code == 429 and "5 of 5 recordings" in r.json()["error"]["message"]
+    info = api.client.get("/api/sandbox").json()
+    assert info["usage"]["recordings"] == 5 and info["global_today"] == 5
+
+
+def test_the_expert_is_never_limited(api: Api) -> None:
+    for _ in range(6):
+        new_session(api)
+
+
+def test_the_daily_limit_covers_all_judges(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    from backend.app import sandbox
+
+    monkeypatch.setattr(sandbox, "GLOBAL_LIMIT", 3)
+    judge(api, monkeypatch, "u-j1")
+    new_session(api)
+    new_session(api)
+    judge(api, monkeypatch, "u-j2")
+    new_session(api)
+    r = api.client.post("/api/sessions", json={"kind": "training"})
+    assert r.status_code == 429 and "today" in r.json()["error"]["message"]
+
+
+def test_the_off_switch_closes_sandbox_writes(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    judge(api, monkeypatch)
+    monkeypatch.setenv("SANDBOX_ENABLED", "0")
+    r = api.client.post("/api/sessions", json={"kind": "training"})
+    assert r.status_code == 403 and "closed" in r.json()["error"]["message"]
+    assert api.client.get("/api/sessions").status_code == 200  # reading still works
+
+
+def test_sandbox_recordings_stop_at_five_minutes(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    judge(api, monkeypatch)
+    sid = new_session(api)["id"]
+    r = api.client.post(
+        f"/api/sessions/{sid}/upload-url", json={"content_type": "video/webm", "size_bytes": 1000}
+    )
+    api.uploaded.add(r.json()["gcs_uri"])
+    end = {"ended_at": "2026-10-17T10:06:00+05:30"}
+    r = api.client.post(f"/api/sessions/{sid}/finalize", json={"duration_s": 400, **end})
+    assert r.status_code == 422 and "5 minutes" in r.json()["error"]["message"]
+    r = api.client.post(f"/api/sessions/{sid}/finalize", json={"duration_s": 300, **end})
+    assert r.status_code == 200

@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 
-from backend.app import jobs
+from backend.app import jobs, sandbox
 from backend.app.contract import DecisionGraph, ObservedWorkflow, Variant
 from backend.app.pipeline import graph, variants
 from backend.app.workspace import LiveStore, ReadStore
@@ -29,6 +29,7 @@ async def observed_workflow(store: ReadStore) -> ObservedWorkflow | None:
 
 @router.post("/graph/build", status_code=202)
 async def build(store: LiveStore) -> dict[str, str]:
+    await sandbox.charge(store, "graph_builds")
     jobs.spawn("build graph", graph.build(store))
     return {"status": "building"}
 

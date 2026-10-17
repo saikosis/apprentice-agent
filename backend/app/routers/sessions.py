@@ -6,7 +6,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app import errors, jobs, ts
+from backend.app import errors, jobs, sandbox, ts
 from backend.app.contract import ClipRef, Deviation, Probe, Segment, Session
 from backend.app.pipeline import segment
 from backend.app.routers.auth import CurrentUser
@@ -49,6 +49,7 @@ async def get_or_404(store: Store, session_id: str) -> Session:
 
 @router.post("/sessions")
 async def create_session(body: NewSession, user: CurrentUser, store: LiveStore) -> Session:
+    await sandbox.charge(store, "recordings")
     s = Session(
         id=new_id("s"),
         workspace=store.ws,  # type: ignore[arg-type]

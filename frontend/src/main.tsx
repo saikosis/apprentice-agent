@@ -296,7 +296,7 @@ function App() {
   const email = user?.email ?? (who && "email" in who ? who.email : undefined);
 
   return (
-    <WsContext.Provider value={{ ws, readOnly: IS_DEMO }}>
+    <WsContext.Provider value={{ ws, readOnly: IS_DEMO, sandbox: Boolean(who && "role" in who && who.role === "judge") }}>
       <ClipProvider>
         <SidebarProvider>
           <AppSidebar current={current} readOnly={IS_DEMO} />

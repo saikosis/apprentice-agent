@@ -11,7 +11,8 @@ import { cn } from "./lib/utils";
 import type { ClipRef, Decision, ModerationResult } from "./types/contract";
 
 // ---- workspace ----
-export const WsContext = createContext<{ ws: Ws; readOnly: boolean }>({ ws: "demo", readOnly: true });
+// sandbox: a judge's private workspace (limits apply; recordings stop at 5:00).
+export const WsContext = createContext<{ ws: Ws; readOnly: boolean; sandbox?: boolean }>({ ws: "demo", readOnly: true });
 export const useWs = () => useContext(WsContext);
 
 // ---- hash router: works on "/" and "/demo/" without server rewrites ----
