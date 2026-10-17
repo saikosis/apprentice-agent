@@ -38,9 +38,9 @@ export function Discovery() {
           if (variants.length === 0)
             return (
               <Empty title="No patterns yet">
-                {processed < 3
-                  ? `Patterns need at least 3 analysed sessions. You have ${processed}.`
-                  : "Run Find patterns to compare all analysed sessions."}
+                {processed === 0
+                  ? "Patterns appear once a session is analysed and the same departure shows up twice."
+                  : "No departure has shown up twice yet. Record another session, or run Find patterns again."}
               </Empty>
             );
           const max = Math.max(...variants.map((v) => v.frequency));

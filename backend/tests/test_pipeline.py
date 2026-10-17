@@ -172,22 +172,46 @@ def test_process_session_end_to_end(llm: FakeLLM, monkeypatch: Any) -> None:
     assert run(store.sessions.get("s-1")).status == "processed"  # type: ignore[union-attr]
 
 
-def test_variants_wait_for_three_processed_sessions(llm: FakeLLM) -> None:
+def _processed(store: Store, sid: str) -> None:
+    session = Session(
+        id=sid,
+        workspace="live",
+        expert_uid="u",
+        kind="training",
+        status="processed",
+        started_at=NOW,
+    )
+    asyncio.run(store.sessions.put(session))
+
+
+def test_one_session_with_a_repeated_departure_is_a_pattern(llm: FakeLLM) -> None:
+    """One-session learning (docs/Judge_Sandbox.md): twice in one recording is enough."""
     store = Store("live", FakeDb())
     asyncio.run(store.sop.put(build_sop()))
-    for i in (1, 2):
-        asyncio.run(
-            store.sessions.put(
-                Session(
-                    id=f"s-{i}",
-                    workspace="live",
-                    expert_uid="u",
-                    kind="training",
-                    status="processed",
-                    started_at=NOW,
-                )
-            )
-        )
+    _processed(store, "s-1")
+    devs = [dev(f"s-1-dev-0{i}", "§3.2", i * 60) for i in (1, 2)]
+    asyncio.run(store.deviations("s-1").replace(devs))
+    pattern = {
+        "id": "x",
+        "name": "Consignment vendor bypasses PO match",
+        "description": "Approves consignment invoices without a PO.",
+        "sop_rules": ["§3.2"],
+        "session_ids": ["s-1"],
+        "deviation_ids": ["s-1-dev-01", "s-1-dev-02"],
+        "exemplar_clips": [],
+        "frequency": 2,
+    }
+    llm.reply("variants", {"variants": [pattern]})
+    llm.reply("probes", {"probes": []})
+    found = asyncio.run(variants.discover(store))
+    assert [(v.name, v.frequency, v.session_ids) for v in found] == [
+        ("Consignment vendor bypasses PO match", 2, ["s-1"])
+    ]
+
+
+def test_patterns_need_a_processed_training_session(llm: FakeLLM) -> None:
+    store = Store("live", FakeDb())
+    asyncio.run(store.sop.put(build_sop()))
     assert asyncio.run(variants.discover(store)) == []
     assert llm.calls == []
 

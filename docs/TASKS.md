@@ -101,7 +101,7 @@ Split:
   - [x] ~~Treat `skipped` as not flagged, but log it~~
 - [x] ~~Model Armor on each segment's text; flagged segments get `quarantined=true` and are excluded from the graph~~ (their text is withheld from every later prompt)
 - [x] ~~`deviations.md` + `deviations.py`: SOP + segments + sheet diff + live deviations; dedup (same rule within 20 s, or same invoice)~~ (dedup decided in code)
-- [x] ~~`variants.md` + `variants.py`: one call over all sessions; runs once 3 or more sessions are processed~~ (auto after each processed session; counts from code)
+- [x] ~~`variants.md` + `variants.py`: one call over all sessions; runs after each processed session; a pattern = the same departure twice, in any number of sessions (Oct 17, `docs/Judge_Sandbox.md`)~~ (auto after each processed session; counts from code)
 - [x] ~~`probes.md` + `probes.py`: CDM types, at most 4 probes per item, at most 20 words each, few-shot examples from SPEC §5~~
 - [x] ~~Session status flow `processing → processed | failed` with `error`~~
 - [ ] **AC (Oct 14):** all 3 planted exception types are detected on the dry-run recording. Text-only dry run on real Gemini (synthetic steps, no video) detected all planted E1/E2/E3 and the injection session; still to do on a real recording (`scripts/local.py process`).

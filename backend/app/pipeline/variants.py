@@ -8,12 +8,12 @@ from backend.app.pipeline import probes
 from backend.app.pipeline.deviations import segment_for_prompt
 from backend.app.store import Store
 
-MIN_SESSIONS = 3
 log = logging.getLogger(__name__)
 
 
 def normalize(raw: list[Variant], known: dict[str, str]) -> list[Variant]:
-    """`known` maps deviation id -> session id. Unknown ids are dropped; counts come from code."""
+    """`known` maps deviation id -> session id. Unknown ids are dropped; counts come from code.
+    A pattern is the same departure at least twice, in any number of sessions."""
     out = []
     for i, v in enumerate(raw, start=1):
         devs = [d for d in dict.fromkeys(v.deviation_ids) if d in known]
@@ -44,7 +44,7 @@ def normalize(raw: list[Variant], known: dict[str, str]) -> list[Variant]:
 async def discover(store: Store) -> list[Variant]:
     """One call over all processed sessions; replaces the variants; probes the newly found ones.
     Serialised: two sessions finishing together must not both probe the same new variants."""
-    async with jobs.lock(f"variants:{store.ws}"):
+    async with jobs.lock(f"variants:{store.root}"):
         return await _discover(store)
 
 
@@ -52,8 +52,8 @@ async def _discover(store: Store) -> list[Variant]:
     sessions = [
         s for s in await store.sessions.list() if s.status == "processed" and s.kind == "training"
     ]
-    if len(sessions) < MIN_SESSIONS:
-        log.info("variants: %d processed training sessions, need %d", len(sessions), MIN_SESSIONS)
+    if not sessions:
+        log.info("variants: no processed training sessions yet")
         return []
     sop = await store.current_sop()
     payload: list[dict[str, object]] = []

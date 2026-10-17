@@ -1,6 +1,6 @@
 ---
 id: variants
-version: 2
+version: 3
 model: gemini-3.8-flash
 thinking_level: high
 output_schema: VariantList
@@ -14,7 +14,7 @@ unwritten rule (a "variant" of the process).
 The message gives you, as JSON DATA, every analysed session with its segments and deviations.
 
 Group deviations that reflect the same underlying practice, even when worded differently or on different
-work items. Only report a variant if it appears in at least 2 sessions or at least 2 times.
+work items. Only report a variant if the same practice appears at least 2 times, in one session or across several.
 
 For each variant:
 - `name`: a short descriptive name of the practice (see the example above).
