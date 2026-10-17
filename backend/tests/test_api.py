@@ -922,3 +922,53 @@ def test_an_admin_who_is_not_the_expert_can_still_view(
     seen = api.client.get("/api/sessions?ws=sandbox&uid=u-j1")
     assert seen.status_code == 200 and [x["id"] for x in seen.json()] == [sid]
     assert api.client.post("/api/sessions", json={"kind": "training"}).status_code == 403
+
+
+# ---- sandbox lifecycle (ticket 08) ----
+def test_joining_copies_the_sample_run(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    asyncio.run(load_seed(api.store("demo"), fixture_seed()))
+    judge(api, monkeypatch)
+    sessions = api.client.get("/api/sessions").json()
+    assert len(sessions) == 8 and {s["workspace"] for s in sessions} == {"sandbox"}
+    assert len(api.client.get("/api/graph").json()["nodes"]) == 14
+    assert (
+        api.client.get("/api/sessions?ws=demo").status_code == 200
+    )  # the demo itself is untouched
+
+
+def test_reset_and_delete(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    from backend.app import storage
+
+    wiped: list[str] = []
+
+    async def delete_prefix(prefix: str) -> None:
+        wiped.append(prefix)
+
+    monkeypatch.setattr(storage, "delete_prefix", delete_prefix)
+    from scripts.make_synthetic import build_sop
+
+    asyncio.run(api.store().sop.put(build_sop()))  # "Start empty" keeps the live SOP
+    asyncio.run(load_seed(api.store("demo"), fixture_seed()))
+    judge(api, monkeypatch)
+    mine = new_session(api)["id"]
+    assert api.client.post("/api/sandbox/reset", json={"mode": "sample"}).status_code == 200
+    ids = [s["id"] for s in api.client.get("/api/sessions").json()]
+    assert mine not in ids and len(ids) == 8
+    assert credits(api)["recordings"] == 1  # resetting never refills the limits
+    assert api.client.post("/api/sandbox/reset", json={"mode": "empty"}).status_code == 200
+    assert api.client.get("/api/sessions").json() == []
+    assert (
+        api.client.post("/api/sessions", json={"kind": "training"}).status_code == 200
+    )  # SOP kept
+    assert "sandbox-u-j1/" in wiped and "essays-sandbox-u-j1/" in wiped
+    assert api.client.delete("/api/sandbox").status_code == 200
+    assert api.client.get("/api/sandbox").status_code == 404
+    assert api.client.get("/api/me").json()["role"] == "none"
+
+
+def test_download_packs_are_public_and_listed(api: Api) -> None:
+    app.dependency_overrides.clear()
+    r = api.client.get("/api/packs/volunteers/volunteers.xlsx")
+    assert r.status_code == 200 and len(r.content) > 1000
+    assert api.client.get("/api/packs/volunteers/..%2F..%2Fconfig.json").status_code == 404
+    assert api.client.get("/api/packs/volunteers/quick_plan.json").status_code == 404

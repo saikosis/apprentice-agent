@@ -176,7 +176,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     setSrc(null);
     setErr(null);
     setOpen(true);
-    videoUrl(c.session_id).then(setSrc, () => setErr("This recording isn't available here. The clip reference is still valid."));
+    videoUrl(c.session_id).then(setSrc, () => setErr("No video for this clip. Sample sessions are written from steps, not recorded; in your own sessions clips play here."));
   }, []);
 
   const onLoaded = () => {

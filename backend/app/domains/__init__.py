@@ -23,6 +23,7 @@ class Domain:
     prompt: str  # for every prompt
     exam: str  # trap definitions and grading notes: scenarios + judge only (they would hint at answers)
     reference: list[dict[str, Any]]
+    quick_plan: dict[str, Any]  # the 6-item recording script and the download pack's file names
 
 
 @lru_cache
@@ -37,6 +38,7 @@ def load(name: str) -> Domain:
         prompt=prompt.strip() + "\n",
         exam=exam.partition("-->")[2].strip() + "\n",
         reference=json.loads((d / "reference.json").read_text(encoding="utf-8")),
+        quick_plan=json.loads((d / "quick_plan.json").read_text(encoding="utf-8")),
     )
 
 

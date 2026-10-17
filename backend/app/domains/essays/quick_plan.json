@@ -25,5 +25,10 @@
     "E1": "Late essay from a student with an approved accommodation: no late deduction",
     "E2": "A passage copied without quotation marks: talk to the student first, not a zero",
     "E3": "Late essay whose extension was asked for before the deadline: no deduction"
-  }
+  },
+  "files": [
+    "essays.xlsx",
+    "starter_emails.txt",
+    "essays.zip"
+  ]
 }

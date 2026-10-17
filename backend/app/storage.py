@@ -64,6 +64,20 @@ async def signed_url(
     return await run_in_threadpool(_sign, gcs_uri, method, minutes, content_type, max_bytes)
 
 
+async def delete_prefix(prefix: str) -> None:
+    """Every object under gs://BUCKET/<prefix> (a sandbox's recordings)."""
+    bucket = os.environ.get("BUCKET")
+    if not bucket:
+        return
+
+    def run() -> None:
+        b = _client().bucket(bucket)
+        for blob in b.list_blobs(prefix=prefix):
+            blob.delete()
+
+    await run_in_threadpool(run)
+
+
 async def exists(gcs_uri: str) -> bool:
     return bool(await run_in_threadpool(_blob(gcs_uri).exists))
 

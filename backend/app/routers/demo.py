@@ -3,9 +3,10 @@
 import asyncio
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
 
-from backend.app import storage
+from backend.app import domains, storage
 from backend.app.contract import (
     SOP,
     AgentRun,
@@ -99,6 +100,15 @@ async def bundle(scenario: Scenario = "ap") -> dict[str, object]:
     }
 
 
+@router.get("/packs/{scenario}/{name}")
+async def pack_file(scenario: Scenario, name: str) -> FileResponse:
+    """Judges' download pack (synthetic data, public): only the files the quick plan lists."""
+    files = domains.load(scenario).quick_plan.get("files", [])
+    if name not in files:
+        raise HTTPException(404, f"No file {name} for {scenario}.")
+    return FileResponse(domains.DOMAINS_DIR / scenario / "files" / name, filename=name)
+
+
 @router.get("/sessions/{session_id}/video-url")
 async def video_url(
     session_id: str,
@@ -126,6 +136,32 @@ async def video_url(
     raise HTTPException(404, f"No recording for session {session_id}.")
 
 
+async def export_seed(store: Store) -> DemoSeed:
+    """A workspace as a DemoSeed (scripts/export_demo.py, and the sample copied into judges' sandboxes)."""
+    sessions = await store.sessions.list()
+    reports = await store.exam_reports.list()
+    sops = await store.sop.list()
+    return DemoSeed(
+        workspace="demo",
+        sop=max(sops, key=lambda s: s.version) if sops else None,
+        sessions=[s.model_copy(update={"workspace": "demo"}) for s in sessions],
+        segments={s.id: await store.segments(s.id).list() for s in sessions},
+        deviations={s.id: await store.deviations(s.id).list() for s in sessions},
+        summaries={s.id: x for s in sessions if (x := await store.get_summary(s.id))},
+        variants=await store.variants.list(),
+        probes=[
+            SeedProbe(**p.model_dump(), answer=a) for p, a in await store.probes.with_answers()
+        ],
+        graph=await store.get_graph(),
+        observed_workflow=await store.get_observed_workflow(),
+        exam_cases=await store.exam_cases.list(),
+        agent_runs=await store.agent_runs.list(),
+        judge_scores=await store.judge_scores.list(),
+        report=max(reports, key=lambda r: r.created_at) if reports else None,
+        clips={s.id: s.gcs_uri for s in sessions if s.gcs_uri},
+    )
+
+
 async def load_seed(store: Store, seed: DemoSeed) -> None:
     # ponytail: overwrites by id and never deletes, so re-seeding with fewer docs leaves old ones.
     if seed.sop:
@@ -133,7 +169,7 @@ async def load_seed(store: Store, seed: DemoSeed) -> None:
     for s in seed.sessions:
         uri = seed.clips.get(s.id)
         await store.sessions.put(
-            s.model_copy(update={"workspace": "demo", **({"gcs_uri": uri} if uri else {})})
+            s.model_copy(update={"workspace": store.ws, **({"gcs_uri": uri} if uri else {})})
         )
     for sid, segs in seed.segments.items():
         for seg in segs:

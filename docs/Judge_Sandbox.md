@@ -104,7 +104,8 @@ when no pattern has emerged yet.
 ## API changes
 - `POST /api/sandbox/join {code}` → `SandboxInfo` (copies the sample on first join).
 - `GET /api/sandbox` → `SandboxInfo`; `POST /api/sandbox/reset {mode: "sample" | "empty"}`; `DELETE /api/sandbox`.
-- `GET /api/sandbox/files/{scenario}/{name}` → the download packs (judges only).
+- `GET /api/packs/{scenario}/{name}` → the download packs (public: synthetic data; only the files listed in the
+  workflow's `quick_plan.json`).
 - `GET /api/admin/sandboxes`; admin reads pass `?ws=sandbox&uid=<uid>`.
 - `GET /api/sessions/{id}` includes `summary` (null until processed); `GET /api/observed-workflow`.
 - Limit hits return `429 {error: {code: "rate_limited", message: "You've used 5 of 5 recordings in this sandbox."}}`.

@@ -9,6 +9,7 @@ import { Discovery } from "./Discovery";
 import { JoinSandbox } from "./JoinSandbox";
 import { Exam } from "./Exam";
 import { Overview } from "./Overview";
+import { SandboxHome } from "./SandboxHome";
 import { GraphView } from "./Graph";
 import { Probes } from "./Probes";
 import { Record } from "./Record";
@@ -230,5 +231,33 @@ describe("admin", () => {
     expect(urls.at(-1)).toBe("/api/variants?ws=sandbox&uid=u-j1");
     const { viewSandbox } = await import("../api/client");
     viewSandbox(null);
+  });
+});
+
+describe("judge sandbox home", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("shows usage, the quick plan and the downloads for this workflow", async () => {
+    const info = {
+      uid: "u-j1",
+      email: "judge1@example.com",
+      created_at: "2026-10-17T10:00:00Z",
+      usage: { recordings: 1, graph_builds: 0, exam_runs: 0, case_generations: 0 },
+      limit_each: 5,
+      global_today: 7,
+      global_limit: 100,
+    };
+    vi.stubGlobal("fetch", () => Promise.resolve(new Response(JSON.stringify(info), { status: 200 })));
+    render(
+      <WsContext.Provider value={{ ws: "live", readOnly: false, sandbox: true }}>
+        <SandboxHome />
+      </WsContext.Provider>,
+    );
+    expect(await screen.findByText("1 of 5")).toBeTruthy();
+    expect(screen.getByText(/INV-2101, INV-2102/)).toBeTruthy();
+    const link = screen.getByRole("link", { name: /ap\.xlsx/ });
+    expect(link.getAttribute("href")).toBe("/api/packs/ap/ap.xlsx");
+    expect(screen.getByRole("button", { name: "Reset to sample" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Delete my sandbox" })).toBeTruthy();
   });
 });

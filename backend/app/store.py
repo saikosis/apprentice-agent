@@ -177,6 +177,11 @@ class Store:
             raise HTTPException(409, f"No SOP in workspace {self.ws} yet. Store one first.")
         return max(sops, key=lambda s: s.version)
 
+    async def wipe(self) -> None:
+        """Delete everything in this workspace (judge sandbox reset/delete)."""
+        self.check_writable()
+        await self.db.recursive_delete(self.db.document(self.root))
+
     def check_writable(self) -> None:
         if not self.writable:
             raise HTTPException(403, "The demo workspace is read-only.")

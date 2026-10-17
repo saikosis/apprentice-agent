@@ -1,5 +1,7 @@
 # 08. Sample copy on join, reset, delete
 
+Status: done
+
 Spec: `docs/Judge_Sandbox.md`
 
 Blocked by: `04-sandbox-workspace-and-code`, `07-sample-run-script`

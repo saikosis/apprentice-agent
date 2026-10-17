@@ -493,8 +493,9 @@ def write_pack(
     (pack / "reference.json").write_text(
         json.dumps(reference, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
+    names = [f"{scenario}.xlsx", "starter_emails.txt", *(["essays.zip"] if docs else [])]
     (pack / "quick_plan.json").write_text(
-        json.dumps(quick, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        json.dumps({**quick, "files": names}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     write_xlsx(files / f"{scenario}.xlsx", tabs)
     (files / "starter_emails.txt").write_text(starter_emails(emails), encoding="utf-8")

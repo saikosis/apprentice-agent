@@ -118,16 +118,55 @@ async def join(uid: str, email: str, code: str) -> SandboxInfo:
         return existing
     info = SandboxInfo(uid=uid, email=email, created_at=datetime.now(UTC))
     await _doc(uid).set(info.model_dump(mode="json"))  # type: ignore[attr-defined]
-    await copy_sops(uid)
+    await fill(uid, sample=True)
     return info
+
+
+def _stores(uid: str) -> list[store.Store]:
+    return [store.Store("sandbox", uid=uid, scenario=sc) for sc in get_args(Scenario)]
+
+
+async def fill(uid: str, *, sample: bool) -> None:
+    """Each workflow's sandbox gets a copy of that workflow's sample run (its demo workspace), or
+    starts empty; either way with the workflow's SOP, so the judge can record straight away."""
+    from backend.app.routers.demo import export_seed, load_seed
+
+    if sample:
+        for target in _stores(uid):
+            seed = await export_seed(store.Store("demo", scenario=target.scenario))
+            if seed.sessions or seed.graph:
+                await load_seed(target, seed)
+    await copy_sops(uid)
+
+
+async def wipe(uid: str) -> None:
+    """Delete every workflow's sandbox data and recordings. Usage counters live elsewhere and stay."""
+    from backend.app import storage
+
+    for target in _stores(uid):
+        await target.wipe()
+        await storage.delete_prefix(f"{target.root_name}/")
+
+
+async def reset(uid: str, mode: Literal["sample", "empty"]) -> None:
+    check_open()
+    await wipe(uid)
+    await fill(uid, sample=mode == "sample")
+
+
+async def delete(uid: str) -> None:
+    await wipe(uid)
+    await _doc(uid).delete()  # type: ignore[attr-defined]
 
 
 async def copy_sops(uid: str) -> None:
     """Every workflow's sandbox starts with that workflow's SOP (the live one, else the demo's)."""
     for scenario in get_args(Scenario):
+        target = store.Store("sandbox", uid=uid, scenario=scenario)
+        if await target.sop.list():
+            continue  # the sample brought its own
         for source in ("live", "demo"):
             sops = await store.Store(source, scenario=scenario).sop.list()  # type: ignore[arg-type]
             if sops:
-                target = store.Store("sandbox", uid=uid, scenario=scenario)
                 await target.sop.put(max(sops, key=lambda s: s.version))
                 break

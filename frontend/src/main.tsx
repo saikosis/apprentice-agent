@@ -4,6 +4,7 @@ import {
   GraduationCapIcon,
   LayoutDashboardIcon,
   UsersIcon,
+  FlaskConicalIcon,
   MessageCircleQuestionIcon,
   MoonIcon,
   NetworkIcon,
@@ -51,6 +52,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import "./index.css";
 import { ClipProvider, ErrorNote, WsContext, useRoute } from "./ui";
 import { Admin } from "./views/Admin";
+import { SandboxHome } from "./views/SandboxHome";
 import { Discovery } from "./views/Discovery";
 import { JoinSandbox } from "./views/JoinSandbox";
 import { Probes } from "./views/Probes";
@@ -90,6 +92,7 @@ function Page({ parts }: { parts: string[] }) {
   if (head === "graph") return <GraphView />;
   if (head === "exam") return <Exam />;
   if (head === "admin") return <Admin />;
+  if (head === "sandbox") return <SandboxHome />;
   return <Overview />;
 }
 
@@ -187,7 +190,17 @@ function NotExpert({ email, error }: { email?: string; error?: string }) {
 const useScenarioId = () => useSyncExternalStore(subscribeScenario, () => currentScenario().id);
 const useViewKey = () => useSyncExternalStore(subscribeScenario, viewKey);
 
-function AppSidebar({ current, readOnly, admin }: { current: string; readOnly: boolean; admin: boolean }) {
+function AppSidebar({
+  current,
+  readOnly,
+  admin,
+  judge,
+}: {
+  current: string;
+  readOnly: boolean;
+  admin: boolean;
+  judge: boolean;
+}) {
   const scenario = useScenarioId();
   return (
     <Sidebar>
@@ -219,7 +232,11 @@ function AppSidebar({ current, readOnly, admin }: { current: string; readOnly: b
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {[...NAV, ...(admin ? ([["admin", "Judge sandboxes", UsersIcon]] as typeof NAV) : [])].map(([path, label, Icon]) => (
+              {[
+                ...(judge ? ([["sandbox", "My sandbox", FlaskConicalIcon]] as typeof NAV) : []),
+                ...NAV,
+                ...(admin ? ([["admin", "Judge sandboxes", UsersIcon]] as typeof NAV) : []),
+              ].map(([path, label, Icon]) => (
                 <SidebarMenuItem key={path}>
                   <SidebarMenuButton asChild isActive={current === path} size="lg" tooltip={label}>
                     <a href={`#/${path}`} aria-current={current === path ? "page" : undefined}>
@@ -268,6 +285,11 @@ function App() {
       current = false;
     };
   }, [account, meNonce]);
+  useEffect(() => {
+    const again = () => setMeNonce((n) => n + 1); // e.g. the judge deleted their sandbox
+    window.addEventListener("apprentice:account", again);
+    return () => window.removeEventListener("apprentice:account", again);
+  }, []);
   const who = answer && answer.account === account ? answer.who : undefined;
 
   const ws = IS_DEMO ? "demo" : "live";
@@ -291,7 +313,7 @@ function App() {
         <main className="flex min-h-svh items-center justify-center p-4">
           <JoinSandbox
             email={who.email}
-            onJoined={() => setMeNonce((n) => n + 1)}
+            onJoined={() => ((window.location.hash = "#/sandbox"), setMeNonce((n) => n + 1))}
             footer={
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" asChild>
@@ -316,7 +338,12 @@ function App() {
     >
       <ClipProvider>
         <SidebarProvider>
-          <AppSidebar current={current} readOnly={IS_DEMO || Boolean(viewing)} admin={isAdmin} />
+          <AppSidebar
+            current={current}
+            readOnly={IS_DEMO || Boolean(viewing)}
+            admin={isAdmin}
+            judge={Boolean(who && "role" in who && who.role === "judge")}
+          />
           <SidebarInset className="min-w-0">
             <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-6">
               <SidebarTrigger />

@@ -25,5 +25,9 @@
     "E1": "Consignment vendor (Kaveri): approve after checking the Consignment Statement tab, with no PO",
     "E2": "Urgent critical-vendor invoice of ₹1–2 lakh after the CFO's line-stoppage email: one approval",
     "E3": "Resent duplicate (new number; same vendor, amount and items): reject"
-  }
+  },
+  "files": [
+    "ap.xlsx",
+    "starter_emails.txt"
+  ]
 }

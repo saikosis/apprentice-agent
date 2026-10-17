@@ -285,6 +285,17 @@ export const me = () =>
     "/api/me",
   );
 export const listSandboxes = () => api<SandboxInfo[]>("/api/admin/sandboxes");
+export const getSandbox = () => api<SandboxInfo>("/api/sandbox");
+export const resetSandbox = (mode: "sample" | "empty") => post<SandboxInfo>("/api/sandbox/reset", { mode });
+export const deleteSandbox = () => api<{ ok: boolean }>("/api/sandbox", { method: "DELETE" });
+
+// The quick plan and download pack per workflow, straight from the domain packs (like SCENARIOS).
+export type QuickPlan = { items: string[]; planted_items: Record<string, string[]>; rules: Record<string, string>; files: string[] };
+const plans = import.meta.glob<QuickPlan>("../../../backend/app/domains/*/quick_plan.json", { eager: true, import: "default" });
+export const quickPlan = (id: string): QuickPlan | undefined =>
+  Object.entries(plans).find(([path]) => path.includes(`/domains/${id}/`))?.[1];
+// Tell the app the account changed (sandbox deleted), so it asks the server who we are again.
+export const accountChanged = () => window.dispatchEvent(new Event("apprentice:account"));
 export const joinSandbox = (code: string) => post<SandboxInfo>("/api/sandbox/join", { code });
 export const answerProbe = (id: string, text: string, source: ProbeAnswer["source"]) =>
   post<{ probe: Probe; answer: ProbeAnswer }>(`/api/probes/${id}/answer`, { text, source });
