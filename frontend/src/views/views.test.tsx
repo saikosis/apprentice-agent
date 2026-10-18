@@ -3,12 +3,13 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SCENARIOS, currentScenario, subscribeScenario, switchScenario, viewingSandbox } from "../api/client";
 import { rowsToRecords } from "../recorder/sheets";
+import type { Session } from "../types/contract";
 import { ClipProvider, WsContext } from "../ui";
 import { Admin } from "./Admin";
 import { Discovery } from "./Discovery";
 import { JoinSandbox } from "./JoinSandbox";
 import { Exam } from "./Exam";
-import { Overview } from "./Overview";
+import { Overview, behind } from "./Overview";
 import { SandboxHome } from "./SandboxHome";
 import { GraphView } from "./Graph";
 import { Probes } from "./Probes";
@@ -41,6 +42,20 @@ describe("views render against fixtures", () => {
     expect(screen.getByText("Instructions hidden in an email")).toBeTruthy();
     expect(screen.getByText(/Want to try it yourself\?/)).toBeTruthy(); // demo only: invites judges to their sandbox
     expect(screen.getByRole("link", { name: "Sign in to try it" }).getAttribute("href")).toBe("/");
+  });
+
+  it("behind: the graph and exam say when they predate the judge's latest session", () => {
+    const s = (started_at: string, status: Session["status"] = "processed") =>
+      ({ id: started_at, started_at, expert_uid: "u-1", workspace: "sandbox", kind: "training", status }) as const;
+    const graph = { version: 2, built_at: "2026-10-17T10:00:00Z" } as const;
+    const report = { graph_version: 2 } as const;
+    const sample = [s("2026-10-16T10:00:00+00:00")];
+    expect(behind(sample, graph, report)).toEqual({ graph: false, exam: false });
+    const mine = [...sample, s("2026-10-18T09:00:00+05:30")];
+    expect(behind(mine, graph, report)).toEqual({ graph: true, exam: true });
+    expect(behind([...sample, s("2026-10-18T09:00:00Z", "processing")], graph, report)).toEqual({ graph: false, exam: false });
+    expect(behind(mine, { version: 3, built_at: "2026-10-18T12:00:00Z" }, report)).toEqual({ graph: false, exam: true });
+    expect(behind(mine, null, null)).toEqual({ graph: false, exam: false });
   });
 
   it("Sessions", async () => {
@@ -104,13 +119,13 @@ describe("views render against fixtures", () => {
     expect(screen.getByText("Recording is off in the demo")).toBeTruthy();
   });
 
-  it("Record in a judge sandbox says recordings stop at 5:00", () => {
+  it("Record in a judge sandbox says recordings stop at 60 minutes", () => {
     render(
       <WsContext.Provider value={{ ws: "live", readOnly: false, sandbox: true }}>
         <Record />
       </WsContext.Provider>,
     );
-    expect(screen.getByText(/stops automatically at 5:00/)).toBeTruthy();
+    expect(screen.getByText(/stops automatically at 60 minutes/)).toBeTruthy();
     expect(screen.getByText(/visible to you and the Apprentice organisers, and are deleted after 14 days/)).toBeTruthy();
   });
 });

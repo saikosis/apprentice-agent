@@ -37,7 +37,7 @@ async def upload_url(session_id: str, body: UploadReq, store: LiveStore) -> dict
         raise errors.conflict(f"Session {session_id} is {s.status}; it already has a recording.")
     cap = sandbox.MAX_RECORDING_BYTES if store.ws == "sandbox" else None
     if cap and body.size_bytes > cap:
-        raise HTTPException(422, "Sandbox recordings are limited to 5 minutes (200 MB).")
+        raise HTTPException(422, "Sandbox recordings are limited to 60 minutes (1 GB).")
     gcs_uri = storage.object_uri(store.root_name, session_id)
     url = await storage.signed_url(
         gcs_uri, "PUT", UPLOAD_URL_MINUTES, body.content_type, max_bytes=cap
@@ -58,7 +58,7 @@ async def finalize(session_id: str, body: FinalizeReq, store: LiveStore) -> Sess
     if s.status != "uploading" or not s.gcs_uri:
         raise errors.conflict(f"Session {session_id} is {s.status}; request an upload URL first.")
     if store.ws == "sandbox" and body.duration_s > sandbox.MAX_RECORDING_S:
-        raise HTTPException(422, "Sandbox recordings are limited to 5 minutes.")
+        raise HTTPException(422, "Sandbox recordings are limited to 60 minutes.")
     if not await storage.exists(s.gcs_uri):
         raise errors.conflict("The recording hasn't arrived in storage yet. Retry the upload.")
     done = s.model_copy(

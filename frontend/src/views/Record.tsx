@@ -19,7 +19,7 @@ import type { Session } from "../types/contract";
 import { Empty, ErrorNote, PageHeader, scenarioInfo, fmtDuration, go, useWs } from "../ui";
 
 type Phase = "idle" | "starting" | "recording" | "uploading" | "done" | "error";
-const SANDBOX_MAX_S = 300;
+const SANDBOX_MAX_S = 3600;
 
 const LIVE_LABEL: Record<LiveStatus, string> = {
   connecting: "Connecting to Apprentice…",
@@ -203,7 +203,7 @@ export function Record() {
     }
   };
 
-  // Judge sandbox: recordings stop at 5:00 (the server refuses longer ones).
+  // Judge sandbox: recordings stop at 60:00 (the server refuses longer ones).
   useEffect(() => {
     if (sandbox && phase === "recording" && elapsed >= SANDBOX_MAX_S) void stop();
   });
@@ -259,7 +259,7 @@ export function Record() {
                   <FieldDescription>
                     It captures how I make decisions. I can stop at any time.
                     {sandbox &&
-                      " In this sandbox a recording stops automatically at 5:00. Recordings and answers in this sandbox are visible to you and the Apprentice organisers, and are deleted after 14 days."}
+                      " In this sandbox a recording stops automatically at 60 minutes. Recordings and answers in this sandbox are visible to you and the Apprentice organisers, and are deleted after 14 days."}
                   </FieldDescription>
                 </FieldContent>
               </Field>

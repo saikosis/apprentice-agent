@@ -110,7 +110,7 @@ async def live_token(body: TokenReq, store: LiveStore) -> dict[str, object]:
         raise errors.conflict(f"Session {s.id} isn't recording with live questions.")
     now = datetime.now(UTC)
     if store.ws == "sandbox" and (now - s.started_at).total_seconds() > sandbox.LIVE_WINDOW_S:
-        raise errors.conflict("Live questions end with the 5 minutes of a sandbox recording.")
+        raise errors.conflict("Live questions end with the 60 minutes of a sandbox recording.")
     token = await _client().aio.auth_tokens.create(
         config=token_config(await store.current_sop(), body.resume_handle, now, store.scenario)
     )

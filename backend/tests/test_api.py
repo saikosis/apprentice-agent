@@ -765,17 +765,19 @@ def test_the_off_switch_closes_sandbox_writes(api: Api, monkeypatch: pytest.Monk
     assert api.client.get("/api/sessions").status_code == 200  # reading still works
 
 
-def test_sandbox_recordings_stop_at_five_minutes(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_sandbox_recordings_stop_at_sixty_minutes(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
     judge(api, monkeypatch)
     sid = new_session(api)["id"]
     r = api.client.post(
         f"/api/sessions/{sid}/upload-url", json={"content_type": "video/webm", "size_bytes": 1000}
     )
     api.uploaded.add(r.json()["gcs_uri"])
-    end = {"ended_at": "2026-10-17T10:06:00+05:30"}
-    r = api.client.post(f"/api/sessions/{sid}/finalize", json={"duration_s": 400, **end})
-    assert r.status_code == 422 and "5 minutes" in r.json()["error"]["message"]
-    r = api.client.post(f"/api/sessions/{sid}/finalize", json={"duration_s": 300, **end})
+    end = {"ended_at": "2026-10-17T11:02:00+05:30"}
+    r = api.client.post(f"/api/sessions/{sid}/finalize", json={"duration_s": 3700, **end})
+    assert r.status_code == 422 and "60 minutes" in r.json()["error"]["message"]
+    r = api.client.post(f"/api/sessions/{sid}/finalize", json={"duration_s": 3600, **end})
     assert r.status_code == 200
 
 
@@ -873,11 +875,11 @@ def test_sandbox_uploads_are_capped_at_storage(api: Api, monkeypatch: pytest.Mon
     judge(api, monkeypatch)
     sid = new_session(api)["id"]
     url = f"/api/sessions/{sid}/upload-url"
-    r = api.client.post(url, json={"content_type": "video/webm", "size_bytes": 300 * 1024**2})
+    r = api.client.post(url, json={"content_type": "video/webm", "size_bytes": 1100 * 1024**2})
     assert r.status_code == 422
     r = api.client.post(url, json={"content_type": "video/webm", "size_bytes": 1000})
     # the signed URL enforces the cap at Cloud Storage, whatever the browser claims
-    assert r.json()["headers"]["x-goog-content-length-range"] == f"0,{200 * 1024**2}"
+    assert r.json()["headers"]["x-goog-content-length-range"] == f"0,{1024**3}"
 
 
 def test_a_sandbox_session_is_processed_once(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -899,10 +901,29 @@ def test_live_tokens_end_with_the_recording_window(
     sid = new_session(api)["id"]
     st = store.Store("sandbox", api.db, uid="u-j1")
     s = asyncio.run(st.sessions.get(sid))
-    old = s.started_at - timedelta(minutes=7)  # type: ignore[union-attr]
+    old = s.started_at - timedelta(minutes=62)  # type: ignore[union-attr]
     asyncio.run(st.sessions.put(s.model_copy(update={"started_at": old})))  # type: ignore[union-attr]
     r = api.client.post("/api/live/token", json={"session_id": sid})
-    assert r.status_code == 409 and "5 minutes" in r.json()["error"]["message"]
+    assert r.status_code == 409 and "60 minutes" in r.json()["error"]["message"]
+
+
+def test_a_judge_can_record_for_most_of_an_hour(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    judge(api, monkeypatch)
+    assert api.client.get("/api/sandbox").json()["global_limit"] == 500
+    sid = new_session(api)["id"]
+    r = api.client.post(
+        f"/api/sessions/{sid}/upload-url",
+        json={"content_type": "video/webm", "size_bytes": 700 * 1024**2},  # ~60 min at 1.5 Mbps
+    )
+    assert r.status_code == 200
+    api.uploaded.add(r.json()["gcs_uri"])
+    end = {"ended_at": "2026-10-17T10:50:00+05:30"}
+    assert (
+        api.client.post(
+            f"/api/sessions/{sid}/finalize", json={"duration_s": 2700, **end}
+        ).status_code
+        == 200
+    )
 
 
 def test_finding_patterns_in_a_sandbox_costs_a_graph_build(
@@ -1220,3 +1241,52 @@ def test_a_pattern_seen_in_other_sessions_keeps_them(
     assert kept["frequency"] == 2 and all(c["session_id"] != sid for c in kept["exemplar_clips"])
     steps = api.client.get("/api/observed-workflow").json()["steps"]
     assert [(x["text"], x["session_ids"]) for x in steps] == [("kept", ["s-b"])]
+
+
+def test_deleting_a_session_removes_every_question_about_it(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from backend.app.contract import ClipRef, Probe, Variant
+
+    judge(api, monkeypatch)
+    sid = new_session(api)["id"]
+    mine = store.Store("sandbox", api.db, uid="u-j1")
+
+    def probe(pid: str, clip_session: str, variant: str | None = None) -> Probe:
+        return Probe(
+            id=pid,
+            source="batch",
+            cdm_type="cue",
+            question=pid,
+            variant_id=variant,
+            clip=ClipRef(session_id=clip_session, start_ts="00:10", end_ts="00:30"),
+            created_at=NOW,
+        )
+
+    async def setup() -> None:
+        clips = [ClipRef(session_id=x, start_ts="01:00", end_ts="01:20") for x in (sid, "s-b")]
+        await mine.variants.put(
+            Variant(
+                id="v-kept",
+                name="n",
+                description="d",
+                sop_rules=["§3.2"],
+                session_ids=[sid, "s-b", "s-c"],
+                deviation_ids=["d-a", "d-b", "d-c"],
+                exemplar_clips=clips,
+                frequency=3,
+            )
+        )
+        await mine.probes.put(
+            probe("p-renamed", sid, "var-old-name")
+        )  # its pattern was renamed by a later run
+        await mine.probes.put(
+            probe("p-kept", sid, "v-kept")
+        )  # the pattern lives on in other sessions
+        await mine.probes.put(probe("p-other", "s-b"))
+
+    asyncio.run(setup())
+    assert api.client.delete(f"/api/sessions/{sid}").status_code == 200
+    left = {p["id"]: p for p in api.client.get("/api/probes").json()}
+    assert set(left) == {"p-kept", "p-other"}
+    assert left["p-kept"]["clip"]["session_id"] == "s-b"  # no clip of a deleted recording
