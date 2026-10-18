@@ -35,9 +35,9 @@ when no pattern has emerged yet.
 
 ### Everything the expert can do, within limits
 - Per judge, per day-independent totals: **5 recordings, 20 graph builds, 20 exam runs, 20 case generations** (raised from 5 each on Oct 18; recordings stay at 5 because they are the costly video calls).
-- Recording: **auto-stops at 5:00** in the browser; the server rejects `duration_s > 330` (5:30 grace) for sandbox
+- Recording: **auto-stops at 60:00** in the browser (raised from 5:00 on Oct 18); the server rejects `duration_s > 3630` (60:30 grace) for sandbox
   sessions. No minimum.
-- Across all judges: **300 sandbox actions per day** (raised from 100 on Oct 18) (IST day; an action = any of the four above). Off switch:
+- Across all judges: **500 sandbox actions per day** (raised from 100 to 300, then 500, on Oct 18) (IST day; an action = any of the four above). Off switch:
   `SANDBOX_ENABLED=0`.
 - Limits are enforced on the server and shown on the sandbox start page ("2 of 5 recordings used").
 

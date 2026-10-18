@@ -18,8 +18,8 @@ PROBE_MIN_INTERVAL_S = 45; PROBE_MAX_PER_SESSION = 3
 DEDUP_WINDOW_S = 20
 EXAM_RUNS_PER_ARM = 3                          # 1 in a sandbox
 PATTERN_MIN_REPEATS = 2                        # a pattern = the same departure twice, any number of sessions
-SANDBOX: LIMITS per judge = 5 recordings; 20 graph builds (incl. pattern runs), 20 exam runs, 20 case sets; GLOBAL_LIMIT = 300/day;
-         MAX_RECORDING_S = 330 (UI stops at 300); MAX_RECORDING_BYTES = 200 MB; LIVE_WINDOW_S = 360;
+SANDBOX: LIMITS per judge = 5 recordings; 20 graph builds (incl. pattern runs), 20 exam runs, 20 case sets; GLOBAL_LIMIT = 500/day;
+         MAX_RECORDING_S = 3630 (UI stops at 3600); MAX_RECORDING_BYTES = 1 GB; LIVE_WINDOW_S = 3660;
          MAX_CODE_TRIES = 10; RETENTION = 14 days; SANDBOX_CASES = 6
 ```
 

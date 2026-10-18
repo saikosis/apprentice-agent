@@ -242,13 +242,13 @@ flowchart TD
   JC --> CP[Copy each workflow's sample run from its demo workspace]
   CP --> W[(workspaces/sandbox-uid and the essays-/volunteers- versions)]
   R -- judge --> W
-  W --> LIM{Within limits?<br/>5 recordings + 20 of each other kind per judge, 300 actions/day overall}
-  LIM -- yes --> RUN[Record ≤5 min, process once, discover, build, 6 cases, exam ×1]
+  W --> LIM{Within limits?<br/>5 recordings + 20 of each other kind per judge, 500 actions/day overall}
+  LIM -- yes --> RUN[Record ≤60 min, process once, discover, build, 6 cases, exam ×1]
   LIM -- no --> E429[429 with the reason]
   SW[Daily sweep on first request + bucket lifecycle rule] -. 14 days .-> W
   A[Admin: Judge sandboxes page] -. read-only ?ws=sandbox&uid= .-> W
 ````
 - Usage is stored in `sandbox_usage_by_judge/{uid}`, which deleting a sandbox never touches, so deleting and rejoining doesn't refill the limits. The day's global count is in `sandbox_usage/{date}`.
-- Limits are charged only after a request is validated. The upload size is enforced by the signed URL (`x-goog-content-length-range`, 200 MB). Each Live token covers one 6-minute recording window.
+- Limits are charged only after a request is validated. The upload size is enforced by the signed URL (`x-goog-content-length-range`, 1 GB). Live tokens are issued only within 61 minutes of a recording's start.
 - `SANDBOX_ENABLED=0` closes the sandbox: judges can still read theirs but can't change it, and the 14-day deletion keeps running.
 - Design and decisions: `docs/Judge_Sandbox.md`. Setup steps and the text for the submission notes: `docs/Judge_Guide.md`.

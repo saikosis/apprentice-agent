@@ -1544,7 +1544,7 @@
           "type": "integer"
         },
         "global_limit": {
-          "default": 300,
+          "default": 500,
           "title": "Global Limit",
           "type": "integer"
         }

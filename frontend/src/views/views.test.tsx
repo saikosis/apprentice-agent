@@ -104,13 +104,13 @@ describe("views render against fixtures", () => {
     expect(screen.getByText("Recording is off in the demo")).toBeTruthy();
   });
 
-  it("Record in a judge sandbox says recordings stop at 5:00", () => {
+  it("Record in a judge sandbox says recordings stop at 60 minutes", () => {
     render(
       <WsContext.Provider value={{ ws: "live", readOnly: false, sandbox: true }}>
         <Record />
       </WsContext.Provider>,
     );
-    expect(screen.getByText(/stops automatically at 5:00/)).toBeTruthy();
+    expect(screen.getByText(/stops automatically at 60 minutes/)).toBeTruthy();
     expect(screen.getByText(/visible to you and the Apprentice organisers, and are deleted after 14 days/)).toBeTruthy();
   });
 });

@@ -67,7 +67,7 @@ EXPERT_EMAIL="<expert's gmail>" ADMIN_UIDS="<your uid>" SANDBOX_CODE="$SANDBOX_C
 
 **5. Check with a second Google account.** Open the app in an incognito window, sign in with an account that isn't the
 expert's, and enter the code. You land on **My sandbox** with the sample run loaded. Record 1 minute (it stops on its own
-at 5:00), check that questions appear, rebuild the graph and run the exam. Then, signed in as yourself, open **Judge
+at 60 minutes), check that questions appear, rebuild the graph and run the exam. Then, signed in as yourself, open **Judge
 sandboxes** in the sidebar: that sandbox is listed, and **View** opens it read-only.
 
 **Controls**
@@ -75,7 +75,7 @@ sandboxes** in the sidebar: that sandbox is listed, and **View** opens it read-o
 - **Change the code:** redeploy with a new `SANDBOX_CODE`. Judges who already joined keep their sandbox.
 - **Limits:**
   - per judge: 5 recordings, 20 graph builds (including pattern runs), 20 exam runs and 20 exam case sets
-  - across all judges: 300 actions a day
+  - across all judges: 500 actions a day
 - **Deletion:** sandboxes are deleted after 14 days. Judges can also reset or delete their own.
 
 ## Part 2: text for the submission notes
@@ -86,7 +86,7 @@ sandboxes** in the sidebar: that sandbox is listed, and **View** opens it read-o
 > 1. **My sandbox:** pick a workflow at the top of the sidebar (invoices, essay marking or volunteer sign-ups). Download
 >    its files, upload them to Google Drive and open them with Google Sheets or Docs.
 > 2. **Record a session:** share that tab and work through the 6 listed items for 3–5 minutes (2–3 items is fine).
->    Apprentice asks a question out loud when you step outside the SOP. Recording stops at 5:00.
+>    Apprentice asks a question out loud when you step outside the SOP. Recording stops at 60 minutes.
 > 3. **Questions:** answer in your own words. You are the expert here; your reasons shape the graph.
 > 4. **Patterns** and **Decision graph:** see what Apprentice learned from your session.
 > 5. **Successor exam:** generate 6 practice cases, label them as you would decide, and run the exam. It compares an AI

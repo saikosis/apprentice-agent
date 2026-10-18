@@ -13,10 +13,10 @@ from backend.app.contract import SandboxInfo, SandboxUsage, Scenario
 Kind = Literal["recordings", "graph_builds", "exam_runs", "case_generations"]
 # Per judge, for the life of the sandbox: recordings are the costly part (video through Gemini), the rest is text.
 LIMITS = SandboxUsage(recordings=5, graph_builds=20, exam_runs=20, case_generations=20)
-GLOBAL_LIMIT = 300  # sandbox actions per IST day, all judges together
-MAX_RECORDING_S = 330  # 5:00 plus grace; the browser stops at 5:00
-MAX_RECORDING_BYTES = 200 * 1024**2  # a 5-minute tab recording is well under this
-LIVE_WINDOW_S = 360  # Live tokens only within 6 minutes of a sandbox session's start
+GLOBAL_LIMIT = 500  # sandbox actions per IST day, all judges together
+MAX_RECORDING_S = 3630  # 60:00 plus grace; the browser stops at 60:00
+MAX_RECORDING_BYTES = 1024**3  # 60 minutes at the recorder's 1.5 Mbps is about 700 MB
+LIVE_WINDOW_S = 3660  # Live tokens only within 61 minutes of a sandbox session's start
 MAX_CODE_TRIES = 10  # wrong judge codes per account, then locked out
 RETENTION = timedelta(
     days=14

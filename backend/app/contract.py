@@ -34,7 +34,7 @@ class SandboxInfo(M):
     usage: SandboxUsage = SandboxUsage()
     limits: SandboxUsage = SandboxUsage()  # per kind, filled on read
     global_today: int = 0
-    global_limit: int = 300
+    global_limit: int = 500
 
 
 class ScenarioInfo(M):
