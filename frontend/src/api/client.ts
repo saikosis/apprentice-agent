@@ -288,6 +288,7 @@ export const listSandboxes = () => api<SandboxInfo[]>("/api/admin/sandboxes");
 export const getSandbox = () => api<SandboxInfo>("/api/sandbox");
 export const resetSandbox = (mode: "sample" | "empty") => post<SandboxInfo>("/api/sandbox/reset", { mode });
 export const deleteSandbox = () => api<{ ok: boolean }>("/api/sandbox", { method: "DELETE" });
+export const deleteSession = (id: string) => api<{ ok: boolean }>(`/api/sessions/${id}`, { method: "DELETE" });
 
 // The quick plan and download pack per workflow, straight from the domain packs (like SCENARIOS).
 export type QuickPlan = { items: string[]; planted_items: Record<string, string[]>; rules: Record<string, string>; files: string[] };

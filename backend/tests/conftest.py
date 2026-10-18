@@ -43,8 +43,12 @@ def api(monkeypatch: pytest.MonkeyPatch) -> Iterator[Api]:
     async def exists(uri: str) -> bool:
         return uri in a.uploaded
 
+    async def delete(uri: str) -> None:
+        a.uploaded.discard(uri)
+
     monkeypatch.setattr(storage, "signed_url", signed_url)
     monkeypatch.setattr(storage, "exists", exists)
+    monkeypatch.setattr(storage, "delete", delete)
     expert = auth.User(uid="u-expert", email="expert@example.com", email_verified=True)
     app.dependency_overrides[auth.require_user] = lambda: expert
     app.dependency_overrides[auth.optional_user] = lambda: expert

@@ -1,7 +1,9 @@
-import { CheckIcon, MessageCircleQuestionIcon, MessageSquareTextIcon, ShieldAlertIcon, TrendingUpIcon, XIcon } from "lucide-react";
+import { CheckIcon, FlaskConicalIcon, MessageCircleQuestionIcon, MessageSquareTextIcon, ShieldAlertIcon, TrendingUpIcon, XIcon } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from "recharts";
 import { getGraph, latestReport, listProbes, listSessions, listVariants, type ProbeWithAnswer } from "../api/client";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "../components/ui/chart";
 import { Progress } from "../components/ui/progress";
@@ -10,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import type { ExamReport, Session } from "../types/contract";
 import { Loadable, PageHeader, scenarioInfo, fmtDate, fmtDuration, go, trapLabel, useAsync, useWs } from "../ui";
 import { CDM } from "./Probes";
-import { SessionStatus } from "./Sessions";
+import { SessionName, SessionStatus, sessionNames } from "./Sessions";
 
 
 const caseConfig = {
@@ -163,7 +165,9 @@ function Patterns({ variants }: { variants: Awaited<ReturnType<typeof listVarian
               <span className="ml-auto shrink-0 text-muted-foreground tabular-nums">{v.frequency}×</span>
             </div>
             <Progress value={(v.frequency / max) * 100} className="h-2 [&>[data-slot=progress-indicator]]:bg-chart-1" aria-label={`${v.name}: seen ${v.frequency} times`} />
-            <span className="text-xs text-muted-foreground">in {v.session_ids.length} sessions</span>
+            <span className="text-xs text-muted-foreground">
+                  in {v.session_ids.length} {v.session_ids.length === 1 ? "session" : "sessions"}
+                </span>
           </a>
         ))}
       </CardContent>
@@ -213,6 +217,7 @@ function Traps({ r }: { r: ExamReport | null }) {
 }
 
 function SessionsTable({ sessions }: { sessions: Session[] }) {
+  const names = sessionNames(sessions);
   return (
     <Card className="gap-0 pb-0 lg:col-span-2">
       <CardHeader className="border-b">
@@ -236,10 +241,7 @@ function SessionsTable({ sessions }: { sessions: Session[] }) {
             .map((s) => (
               <TableRow key={s.id} className="cursor-pointer" onClick={() => go(`/sessions/${s.id}`)}>
                 <TableCell className="pl-4">
-                  <a href={`#/sessions/${s.id}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-3 font-medium">
-                    <span className="flex size-8 items-center justify-center rounded-md bg-muted font-mono text-xs">{s.id.replace("s-", "")}</span>
-                    Session {s.id}
-                  </a>
+                  <SessionName s={s} name={names.get(s.id) ?? s.id} />
                 </TableCell>
                 <TableCell>{fmtDate(s.started_at)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmtDuration(s.duration_s)}</TableCell>
@@ -306,8 +308,22 @@ export function Overview() {
           <>
             <PageHeader
               title="Overview"
-              description={`${sessions.length} sessions recorded, ${processed} analysed. What the expert knows that the SOP doesn't say, and whether it carries over.`}
+              description={`${sessions.length} ${sessions.length === 1 ? "session" : "sessions"} recorded, ${processed} analysed. What the expert knows that the SOP doesn't say, and whether it carries over.`}
             />
+            {ws === "demo" && (
+              <Alert className="mb-4">
+                <FlaskConicalIcon />
+                <AlertTitle>Want to try it yourself?</AlertTitle>
+                <AlertDescription>
+                  Sign in, enter the judge code from the submission notes, and record in your own sandbox.
+                </AlertDescription>
+                <AlertAction>
+                  <Button size="sm" asChild>
+                    <a href="/">Sign in to try it</a>
+                  </Button>
+                </AlertAction>
+              </Alert>
+            )}
             <div className="grid gap-4 lg:grid-cols-3">
               {report?.per_arm.sop_only && report.per_arm.sop_graph ? (
                 <ExamHero r={report} />

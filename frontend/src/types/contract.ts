@@ -170,7 +170,6 @@ export type Recordings = number;
 export type GraphBuilds = number;
 export type ExamRuns = number;
 export type CaseGenerations = number;
-export type LimitEach = number;
 export type GlobalToday = number;
 export type GlobalLimit = number;
 export type Id11 = "ap" | "essays" | "volunteers";
@@ -264,7 +263,7 @@ export interface Contract {
   SOP?: SOP;
   SOPSection?: SOPSection;
   SandboxInfo?: SandboxInfo;
-  SandboxUsage?: SandboxUsage1;
+  SandboxUsage?: SandboxUsage2;
   ScenarioInfo?: ScenarioInfo;
   Segment?: Segment;
   SegmentList?: SegmentList;
@@ -520,7 +519,7 @@ export interface SandboxInfo {
   email: Email1;
   created_at: CreatedAt2;
   usage?: SandboxUsage;
-  limit_each?: LimitEach;
+  limits?: SandboxUsage1;
   global_today?: GlobalToday;
   global_limit?: GlobalLimit;
 }
@@ -531,6 +530,12 @@ export interface SandboxUsage {
   case_generations?: CaseGenerations;
 }
 export interface SandboxUsage1 {
+  recordings?: Recordings;
+  graph_builds?: GraphBuilds;
+  exam_runs?: ExamRuns;
+  case_generations?: CaseGenerations;
+}
+export interface SandboxUsage2 {
   recordings?: Recordings;
   graph_builds?: GraphBuilds;
   exam_runs?: ExamRuns;

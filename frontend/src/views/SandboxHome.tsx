@@ -43,7 +43,7 @@ export function SandboxHome() {
                   <CardHeader>
                     <CardDescription>{label}</CardDescription>
                     <CardTitle className="text-2xl tabular-nums">
-                      {info.usage?.[k] ?? 0} of {info.limit_each}
+                      {info.usage?.[k] ?? 0} of {info.limits?.[k] ?? 0}
                     </CardTitle>
                   </CardHeader>
                 </Card>

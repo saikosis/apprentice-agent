@@ -8,6 +8,7 @@ from typing import Any
 import google.auth
 from fastapi import HTTPException
 from fastapi.concurrency import run_in_threadpool
+from google.api_core.exceptions import NotFound
 from google.auth.transport.requests import Request
 from google.cloud import storage  # type: ignore[attr-defined]
 
@@ -74,6 +75,18 @@ async def delete_prefix(prefix: str) -> None:
         b = _client().bucket(bucket)
         for blob in b.list_blobs(prefix=prefix):
             blob.delete()
+
+    await run_in_threadpool(run)
+
+
+async def delete(gcs_uri: str) -> None:
+    """One recording; already gone is fine."""
+
+    def run() -> None:
+        try:
+            _blob(gcs_uri).delete()
+        except NotFound:
+            pass
 
     await run_in_threadpool(run)
 

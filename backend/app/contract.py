@@ -32,9 +32,9 @@ class SandboxInfo(M):
     email: str
     created_at: datetime
     usage: SandboxUsage = SandboxUsage()
-    limit_each: int = 5
+    limits: SandboxUsage = SandboxUsage()  # per kind, filled on read
     global_today: int = 0
-    global_limit: int = 100
+    global_limit: int = 300
 
 
 class ScenarioInfo(M):

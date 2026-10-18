@@ -18,7 +18,7 @@ PROBE_MIN_INTERVAL_S = 45; PROBE_MAX_PER_SESSION = 3
 DEDUP_WINDOW_S = 20
 EXAM_RUNS_PER_ARM = 3                          # 1 in a sandbox
 PATTERN_MIN_REPEATS = 2                        # a pattern = the same departure twice, any number of sessions
-SANDBOX: LIMIT_EACH = 5 (recordings, graph builds incl. pattern runs, exam runs, case sets); GLOBAL_LIMIT = 100/day;
+SANDBOX: LIMITS per judge = 5 recordings; 20 graph builds (incl. pattern runs), 20 exam runs, 20 case sets; GLOBAL_LIMIT = 300/day;
          MAX_RECORDING_S = 330 (UI stops at 300); MAX_RECORDING_BYTES = 200 MB; LIVE_WINDOW_S = 360;
          MAX_CODE_TRIES = 10; RETENTION = 14 days; SANDBOX_CASES = 6
 ```
@@ -315,6 +315,7 @@ Security: all Firestore access is server-side (Admin SDK). Firestore rules deny 
 | GET /api/sessions | `?ws=live\|demo` | `Session[]` |
 | GET /api/sessions/{id} | – | `{session: Session, segments: Segment[], deviations: Deviation[], diff: SheetDiff\|null, summary: SessionSummary\|null}` |
 | GET /api/sessions/{id}/video-url | – | `{url}` (signed GET, 1 h) |
+| DELETE /api/sessions/{id} | – | `{ok}`. Judge sandboxes only (403 otherwise): removes the session, its steps, departures, summary, questions and recording, and its part of patterns and the observed workflow; 409 while analysing; refunds the recording credit for sessions the judge recorded |
 | POST /api/sessions/{id}/deviations | `{sop_rule, question, invoice_id?, t_seconds, model_timestamp?}` | `{deviation: Deviation, probe: Probe}` |
 | POST /api/variants/discover | `{}` | 202; then GET /api/variants → `Variant[]` |
 | GET /api/probes | `?status=open&session_id=` | `Probe[]` |

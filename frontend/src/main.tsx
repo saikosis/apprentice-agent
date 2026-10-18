@@ -145,56 +145,122 @@ function Brand() {
   );
 }
 
+// The landing page: what Apprentice does, and one way in (Google sign-in).
+const STEPS: [LucideIcon, string, string][] = [
+  [VideoIcon, "Record real work", "Share the tab you work in, Sheets, Docs or Gmail, and talk as you go."],
+  [MessageCircleQuestionIcon, "Answer why", "When you step outside the SOP, Apprentice asks what you saw and why you chose it."],
+  [GraduationCapIcon, "Test the successor", "An AI with only the SOP takes the same exam as one that also has your reasons."],
+];
+
+// The product in one picture: a written rule, the expert's exception that overrides it, and the reason behind it.
+function GraphMotif() {
+  const node = (x: number, y: number, w: number, title: string, text: string, strong = false) => (
+    <g>
+      <rect x={x} y={y} width={w} height={52} rx={12} className={strong ? "fill-card stroke-primary" : "fill-card stroke-border"} strokeWidth={strong ? 2 : 1.5} />
+      <text x={x + 14} y={y + 21} className={strong ? "fill-primary text-[11px] font-semibold" : "fill-muted-foreground text-[11px] font-medium"}>
+        {title}
+      </text>
+      <text x={x + 14} y={y + 39} className="fill-foreground text-[13px]">
+        {text}
+      </text>
+    </g>
+  );
+  return (
+    <svg viewBox="0 0 360 196" className="w-full max-w-sm" role="img" aria-label="A decision graph: the SOP rule, the expert's exception that overrides it, and the reason">
+      <path d="M110 58 C110 84, 180 84, 180 110" className="fill-none stroke-primary" strokeWidth={2} strokeDasharray="4 4" />
+      <path d="M262 58 C262 84, 200 84, 200 110" className="fill-none stroke-border" strokeWidth={1.5} />
+      {node(8, 6, 204, "SOP §3.2", "Match every invoice to a PO")}
+      {node(224, 6, 128, "Why", "No PO ever exists")}
+      {node(30, 112, 300, "Expert's exception", "Consignment vendor: tick the statement", true)}
+    </svg>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 48 48" className="size-5" aria-hidden>
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+      <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+    </svg>
+  );
+}
+
 function SignIn() {
   const [err, setErr] = useState<string | null>(null);
   return (
-    <main className="flex min-h-svh items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="items-center gap-3 text-center">
-          <div className="flex justify-center">
-            <Brand />
-          </div>
-          <CardTitle className="text-xl">Capture why your expert decides</CardTitle>
-          <CardDescription>
-            Apprentice watches an expert work, asks why, and checks that the reasons carry over to whoever comes next.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <Button size="lg" disabled={!authConfigured()} onClick={() => signIn().catch((e: Error) => setErr(e.message))}>
-            Sign in with Google
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <a href="/demo/">Open the demo</a>
-          </Button>
-          {err && <ErrorNote>{err}</ErrorNote>}
-        </CardContent>
-        <CardFooter className="justify-center text-center text-xs text-muted-foreground">
-          {authConfigured()
-            ? "Sign in with the expert's Google account to record sessions and answer questions."
-            : "Sign-in isn't configured on this build. The demo works without it."}
-        </CardFooter>
-      </Card>
+    <main className="grid min-h-svh bg-background lg:grid-cols-[1.15fr_1fr]">
+      <section className="flex flex-col justify-between gap-12 px-6 py-8 sm:px-10 lg:px-16 lg:py-12">
+        <Brand />
+        <div className="max-w-xl">
+          <h1 className="text-4xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-5xl">
+            Keep the judgement when your expert moves on.
+          </h1>
+          <p className="mt-5 max-w-lg text-lg text-muted-foreground">
+            Apprentice watches an expert work, asks why whenever they depart from the written procedure, and proves the
+            reasons carried over to whoever comes next.
+          </p>
+          <ol className="mt-10 flex flex-col gap-6">
+            {STEPS.map(([Icon, title, text]) => (
+              <li key={title} className="flex gap-4">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <div>
+                  <p className="font-medium">{title}</p>
+                  <p className="text-sm text-muted-foreground">{text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <p className="text-sm text-muted-foreground">Built with Gemini on Google Cloud for the AI Builder Cup 2026.</p>
+      </section>
+
+      <section className="flex flex-col items-center justify-center gap-8 border-t bg-accent/40 px-6 py-12 lg:border-t-0 lg:border-l">
+        <GraphMotif />
+        <Card className="w-full max-w-sm shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-xl">Sign in</CardTitle>
+            <CardDescription>Use any Google account. Nothing is posted to it, and Apprentice never writes to your Sheets or Gmail.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Button
+              size="lg"
+              variant="outline"
+              className="h-11 gap-3 bg-card text-base"
+              disabled={!authConfigured()}
+              onClick={() => signIn().catch((e: Error) => setErr(e.message))}
+            >
+              <GoogleMark />
+              Sign in with Google
+            </Button>
+            {err && <ErrorNote>{err}</ErrorNote>}
+          </CardContent>
+          <CardFooter className="text-sm text-muted-foreground">
+            {authConfigured()
+              ? "Judges: after signing in, enter the code from the submission notes to open your own sandbox."
+              : "Sign-in isn't configured on this build."}
+          </CardFooter>
+        </Card>
+      </section>
     </main>
   );
 }
 
-function NotExpert({ email, error }: { email?: string; error?: string }) {
+function AccessError({ error }: { error: string }) {
   return (
-    <main className="flex min-h-svh items-center justify-center p-4">
+    <main className="flex min-h-svh items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="items-center gap-3 text-center">
-          <div className="flex justify-center">
-            <Brand />
-          </div>
-          <CardTitle className="text-xl">{error ? "Couldn't open the live workspace" : "This account can't open the live workspace"}</CardTitle>
-          <CardDescription>
-            {error ??
-              `The live workspace belongs to the expert being recorded. ${email ?? "This account"} isn't that account. The demo shows a full run on synthetic data.`}
-          </CardDescription>
+        <CardHeader className="gap-3">
+          <Brand />
+          <CardTitle className="text-xl">Couldn't open Apprentice</CardTitle>
+          <CardDescription>{error}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <Button size="lg" asChild>
-            <a href="/demo/">Open the demo</a>
+          <Button size="lg" onClick={() => location.reload()}>
+            Try again
           </Button>
           {!DEV_AUTH && (
             <Button size="lg" variant="outline" onClick={() => void signOut()}>
@@ -341,7 +407,7 @@ function App() {
     if (user === undefined) return checking("Checking sign-in");
     if (!signedIn) return <SignIn />;
     if (who === undefined) return checking("Checking access");
-    if ("error" in who) return <NotExpert error={who.error} />;
+    if ("error" in who) return <AccessError error={who.error} />;
     if (who.role === "none")
       return (
         <main className="flex min-h-svh items-center justify-center p-4">
@@ -349,16 +415,11 @@ function App() {
             email={who.email}
             onJoined={() => ((window.location.hash = "#/sandbox"), setMeNonce((n) => n + 1))}
             footer={
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" asChild>
-                  <a href="/demo/">Open the read-only demo</a>
+              !DEV_AUTH && (
+                <Button variant="ghost" onClick={() => void signOut()}>
+                  Use another account
                 </Button>
-                {!DEV_AUTH && (
-                  <Button variant="ghost" onClick={() => void signOut()}>
-                    Use another account
-                  </Button>
-                )}
-              </div>
+              )
             }
           />
         </main>

@@ -233,7 +233,7 @@ flowchart TD
   JC --> CP[Copy each workflow's sample run from its demo workspace]
   CP --> W[(workspaces/sandbox-uid and the essays-/volunteers- versions)]
   R -- judge --> W
-  W --> LIM{Within limits?<br/>5 per kind per judge, 100 actions/day overall}
+  W --> LIM{Within limits?<br/>5 recordings + 20 of each other kind per judge, 300 actions/day overall}
   LIM -- yes --> RUN[Record ≤5 min, process once, discover, build, 6 cases, exam ×1]
   LIM -- no --> E429[429 with the reason]
   SW[Daily sweep on first request + bucket lifecycle rule] -. 14 days .-> W

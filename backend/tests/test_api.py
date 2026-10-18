@@ -715,6 +715,30 @@ def test_a_judge_gets_five_recordings(api: Api, monkeypatch: pytest.MonkeyPatch)
     assert info["usage"]["recordings"] == 5 and info["global_today"] == 5
 
 
+def test_a_judge_gets_twenty_of_everything_else(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    from fastapi import HTTPException
+
+    from backend.app import sandbox
+
+    judge(api, monkeypatch)
+    limits = api.client.get("/api/sandbox").json()["limits"]
+    assert limits == {"recordings": 5, "graph_builds": 20, "exam_runs": 20, "case_generations": 20}
+    mine = store.Store("sandbox", api.db, uid="u-j1")
+    for _ in range(20):
+        asyncio.run(sandbox.charge(mine, "graph_builds"))
+    with pytest.raises(HTTPException, match="20 of 20 graph builds"):
+        asyncio.run(sandbox.charge(mine, "graph_builds"))
+
+
+def test_sandboxes_saved_with_the_old_single_limit_still_load(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    judge(api, monkeypatch)
+    doc = api.db.document("sandboxes/u-j1")
+    asyncio.run(doc.set({**asyncio.run(doc.get()).to_dict(), "limit_each": 5}))
+    assert api.client.get("/api/sandbox").json()["limits"]["exam_runs"] == 20
+
+
 def test_the_expert_is_never_limited(api: Api) -> None:
     for _ in range(6):
         new_session(api)
@@ -1031,3 +1055,168 @@ def test_a_closed_sandbox_is_still_swept_and_a_failed_sweep_retries(
     with pytest.raises(RuntimeError):
         asyncio.run(sandbox.maybe_sweep())
     assert sandbox.should_sweep()  # not marked done: the next request tries again
+
+
+# ---- deleting a session ----
+def test_a_judge_deletes_a_session_and_gets_the_recording_back(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from backend.app.contract import ObservedWorkflow, Probe, Variant, WorkflowStep
+
+    judge(api, monkeypatch)
+    sid = new_session(api)["id"]
+    r = api.client.post(
+        f"/api/sessions/{sid}/upload-url", json={"content_type": "video/webm", "size_bytes": 1000}
+    )
+    api.uploaded.add(r.json()["gcs_uri"])
+    fin = {"duration_s": 300, "ended_at": NOW.isoformat()}
+    assert api.client.post(f"/api/sessions/{sid}/finalize", json=fin).status_code == 200
+    uri = api.client.get(f"/api/sessions/{sid}").json()["session"]["gcs_uri"]
+    mine = store.Store("sandbox", api.db, uid="u-j1")
+    now = datetime.now(UTC)
+
+    def probe(pid: str, **link: str) -> Probe:
+        return Probe(
+            id=pid, source="batch", cdm_type="cue", question="Why?", created_at=now, **link
+        )
+
+    async def analysed() -> None:
+        await mine.probes.put(probe("p-mine", session_id=sid))
+        await mine.probes.put(probe("p-pattern", variant_id="v-1"))
+        await mine.probes.put(probe("p-other", session_id="s-other"))
+        await mine.variants.put(
+            Variant(
+                id="v-1",
+                name="n",
+                description="d",
+                sop_rules=[],
+                session_ids=[sid],
+                deviation_ids=[],
+                exemplar_clips=[],
+                frequency=2,
+            )
+        )
+        await mine.put_observed_workflow(
+            ObservedWorkflow(steps=[WorkflowStep(n=1, text="t", in_sop=False, session_ids=[sid])])
+        )
+
+    asyncio.run(analysed())
+    assert credits(api)["recordings"] == 1
+
+    assert api.client.delete(f"/api/sessions/{sid}").status_code == 200
+    assert all(s["id"] != sid for s in api.client.get("/api/sessions").json())
+    assert api.client.get(f"/api/sessions/{sid}").status_code == 404
+    assert {p["id"] for p in api.client.get("/api/probes").json()} == {"p-other"}
+    assert api.client.get("/api/variants").json() == []
+    assert api.client.get("/api/observed-workflow").json() is None
+    assert uri not in api.uploaded  # the recording is gone too
+    assert credits(api)["recordings"] == 0  # the judge can record again
+
+
+def test_deleting_the_sample_session_gives_no_credit(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from backend.app.contract import Session
+
+    judge(api, monkeypatch)
+    new_session(api)
+    sample = Session(
+        id="s-quick",
+        workspace="sandbox",
+        expert_uid="sample",
+        kind="training",
+        status="processed",
+        started_at=datetime.now(UTC),
+    )
+    asyncio.run(store.Store("sandbox", api.db, uid="u-j1").sessions.put(sample))
+    assert api.client.delete("/api/sessions/s-quick").status_code == 200
+    assert credits(api)["recordings"] == 1  # only the judge's own recordings are refunded
+
+
+def test_a_session_being_analysed_cant_be_deleted(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    judge(api, monkeypatch)
+    sid = new_session(api)["id"]
+    mine = store.Store("sandbox", api.db, uid="u-j1")
+    s = asyncio.run(mine.sessions.get(sid))
+    assert s
+    asyncio.run(mine.sessions.put(s.model_copy(update={"status": "processing"})))
+    assert api.client.delete(f"/api/sessions/{sid}").status_code == 409
+
+
+def test_the_expert_cant_delete_live_sessions(api: Api) -> None:
+    sid = new_session(api)["id"]
+    assert api.client.delete(f"/api/sessions/{sid}").status_code == 403
+    assert api.client.get(f"/api/sessions/{sid}").status_code == 200
+
+
+def test_a_pattern_seen_in_other_sessions_keeps_them(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from backend.app.contract import ClipRef, Deviation, ObservedWorkflow, Variant, WorkflowStep
+
+    judge(api, monkeypatch)
+    sid = new_session(api)["id"]
+    mine = store.Store("sandbox", api.db, uid="u-j1")
+
+    def dev(did: str, session: str) -> Deviation:
+        return Deviation(
+            id=did,
+            session_id=session,
+            source="batch",
+            sop_rule="§3.2",
+            timestamp="00:10",
+            t_seconds=10,
+            description="d",
+            question="q",
+            confidence=0.9,
+        )
+
+    async def analysed() -> None:
+        await mine.deviations(sid).put(dev("d-gone", sid))
+        clips = [
+            ClipRef(session_id=x, start_ts="00:10", end_ts="00:20") for x in (sid, "s-b", "s-c")
+        ]
+        await mine.variants.put(
+            Variant(
+                id="v-kept",
+                name="n",
+                description="d",
+                sop_rules=["§3.2"],
+                session_ids=[sid, "s-b", "s-c"],
+                deviation_ids=["d-gone", "d-b", "d-c"],
+                exemplar_clips=clips,
+                frequency=3,
+            )
+        )
+        await mine.variants.put(
+            Variant(
+                id="v-gone",
+                name="n",
+                description="d",
+                sop_rules=["§3.2"],
+                session_ids=[sid, "s-b"],
+                deviation_ids=["d-gone", "d-b"],
+                exemplar_clips=[],
+                frequency=2,
+            )
+        )
+        await mine.put_observed_workflow(
+            ObservedWorkflow(
+                steps=[
+                    WorkflowStep(n=1, text="kept", in_sop=True, session_ids=[sid, "s-b"]),
+                    WorkflowStep(n=2, text="only this one", in_sop=False, session_ids=[sid]),
+                ]
+            )
+        )
+
+    asyncio.run(analysed())
+    assert api.client.delete(f"/api/sessions/{sid}").status_code == 200
+    variants = {v["id"]: v for v in api.client.get("/api/variants").json()}
+    assert set(variants) == {"v-kept"}  # v-gone fell to one occurrence: no longer a pattern
+    kept = variants["v-kept"]
+    assert kept["session_ids"] == ["s-b", "s-c"] and kept["deviation_ids"] == ["d-b", "d-c"]
+    assert kept["frequency"] == 2 and all(c["session_id"] != sid for c in kept["exemplar_clips"])
+    steps = api.client.get("/api/observed-workflow").json()["steps"]
+    assert [(x["text"], x["session_ids"]) for x in steps] == [("kept", ["s-b"])]

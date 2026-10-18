@@ -11,8 +11,9 @@ from backend.app import store
 from backend.app.contract import SandboxInfo, SandboxUsage, Scenario
 
 Kind = Literal["recordings", "graph_builds", "exam_runs", "case_generations"]
-LIMIT_EACH = 5  # per judge, per kind, for the life of the sandbox
-GLOBAL_LIMIT = 100  # sandbox actions per IST day, all judges together
+# Per judge, for the life of the sandbox: recordings are the costly part (video through Gemini), the rest is text.
+LIMITS = SandboxUsage(recordings=5, graph_builds=20, exam_runs=20, case_generations=20)
+GLOBAL_LIMIT = 300  # sandbox actions per IST day, all judges together
 MAX_RECORDING_S = 330  # 5:00 plus grace; the browser stops at 5:00
 MAX_RECORDING_BYTES = 200 * 1024**2  # a 5-minute tab recording is well under this
 LIVE_WINDOW_S = 360  # Live tokens only within 6 minutes of a sandbox session's start
@@ -58,15 +59,20 @@ async def _usage(uid: str) -> SandboxUsage:
     return SandboxUsage.model_validate(snap.to_dict()) if snap.exists else SandboxUsage()
 
 
+def _load(data: dict[str, object]) -> SandboxInfo:
+    data.pop("limit_each", None)  # written by sandboxes joined before per-kind limits
+    return SandboxInfo.model_validate(data)
+
+
 async def get(uid: str) -> SandboxInfo | None:
     snap = await _doc(uid).get()  # type: ignore[attr-defined]
     if not snap.exists:
         return None
-    info = SandboxInfo.model_validate(snap.to_dict())
+    info = _load(snap.to_dict())
     return info.model_copy(
         update={
             "usage": await _usage(uid),
-            "limit_each": LIMIT_EACH,
+            "limits": LIMITS,
             "global_today": await _today(),
             "global_limit": GLOBAL_LIMIT,
         }
@@ -77,11 +83,12 @@ async def all_sandboxes() -> list[SandboxInfo]:
     today = await _today()
     out = []
     async for snap in store.default_db().collection("sandboxes").stream():
-        info = SandboxInfo.model_validate(snap.to_dict())
+        info = _load(snap.to_dict())
         out.append(
             info.model_copy(
                 update={
                     "usage": await _usage(info.uid),
+                    "limits": LIMITS,
                     "global_today": today,
                     "global_limit": GLOBAL_LIMIT,
                 }
@@ -121,6 +128,17 @@ def check_open() -> None:
         raise HTTPException(403, "The judge sandbox is closed.")
 
 
+async def refund(ws_store: store.Store, kind: Kind) -> None:
+    """Give one credit back (the judge deleted a session they recorded). The day's global count stays."""
+    if ws_store.ws != "sandbox":
+        return
+    uid = ws_store.uid or ""
+    usage = await _usage(uid)
+    used = getattr(usage, kind)
+    if used > 0:
+        await _usage_doc(uid).set(usage.model_copy(update={kind: used - 1}).model_dump())  # type: ignore[attr-defined]
+
+
 async def charge(ws_store: store.Store, kind: Kind) -> None:
     """Count one sandbox action before it starts; refuse past the judge's or the day's limit.
     No-op outside a sandbox (the expert is never limited)."""
@@ -131,11 +149,9 @@ async def charge(ws_store: store.Store, kind: Kind) -> None:
     info = await get(uid)
     if info is None:
         raise HTTPException(403, "Enter the judge code to use Apprentice.")
-    used = getattr(info.usage, kind)
-    if used >= LIMIT_EACH:
-        raise HTTPException(
-            429, f"You've used {used} of {LIMIT_EACH} {_WHAT[kind]} in this sandbox."
-        )
+    used, limit = getattr(info.usage, kind), getattr(LIMITS, kind)
+    if used >= limit:
+        raise HTTPException(429, f"You've used {used} of {limit} {_WHAT[kind]} in this sandbox.")
     today = await _today()
     if today >= GLOBAL_LIMIT:
         raise HTTPException(429, "The judge sandbox has reached today's limit. Try again tomorrow.")
@@ -161,9 +177,9 @@ async def join(uid: str, email: str, code: str) -> SandboxInfo:
     if existing := await get(uid):
         return existing
     info = SandboxInfo(uid=uid, email=email, created_at=datetime.now(UTC))
-    await _doc(uid).set(info.model_dump(mode="json"))  # type: ignore[attr-defined]
+    await _doc(uid).set(info.model_dump(mode="json", include={"uid", "email", "created_at"}))  # type: ignore[attr-defined]
     await fill(uid, sample=True)
-    return info
+    return await get(uid) or info
 
 
 def _stores(uid: str) -> list[store.Store]:
