@@ -17,6 +17,9 @@ Apprentice watches an expert work in Google Sheets + Gmail (screen + voice), ask
   app/safety/armor.py
   app/store.py       # Firestore access (workspace-scoped)
   app/gemini.py      # client, model IDs, structured-call helper
+  app/domains/       # one pack per scenario (ap, essays, volunteers): domain.md, config.json, reference.json, quick_plan.json, files/
+  app/workspace.py   # which workspace a request reads/writes: expert -> live, judge -> own sandbox
+  app/sandbox.py     # judge sandbox: code, limits, sample copy, reset/delete, 14-day sweep
   tests/
 /frontend/           # Person B owns (Vite + React + TS)
   src/types/contract.ts   # GENERATED from backend contract — do not hand-edit
@@ -33,7 +36,7 @@ Apprentice watches an expert work in Google Sheets + Gmail (screen + voice), ask
 - Python 3.12, `uv`; FastAPI, uvicorn, pydantic v2, `google-genai` (latest 2026-10), `google-cloud-firestore`, `google-cloud-storage`, `google-cloud-modelarmor`, `firebase-admin`, `pytest`, `ruff`, `mypy` (lenient).
 - Node 22, pnpm; Vite, React 19, TypeScript strict, `@google/genai` (latest 2026-10), `firebase` (Auth), `cytoscape` + `react-cytoscapejs`, `recharts`, `json-schema-to-typescript`.
 - Models (env-overridable): `LIVE_MODEL=gemini-3.8-live`, `FLASH_MODEL=gemini-3.8-flash`, `PRO_MODEL=gemini-3.1-pro-preview` (optional, graph builder only).
-- GCP: project `apprentice-aibc`, region `asia-south1`; Cloud Run service `apprentice`; bucket `apprentice-recordings-<suffix>`; Firestore (Native) asia-south1; Model Armor template `apprentice-default` in asia-south1.
+- GCP: project `aibuildercup-india-2026`, region `asia-south1`; Cloud Run service `apprentice`; bucket `apprentice-recordings-aibc2026`; Firestore (Native) asia-south1; Model Armor template `apprentice-default` in asia-south1.
 
 ## Commands
 ````
@@ -46,7 +49,7 @@ make build        # pnpm --dir frontend build → backend/app/static
 make seed-demo    # uv run python scripts/seed_demo.py fixtures/demo_seed.json
 make deploy       # scripts/deploy.sh (gcloud run deploy --source .)
 ````
-Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --region asia-south1 --allow-unauthenticated --min-instances 1 --no-cpu-throttling --timeout 900 --memory 1Gi --service-account apprentice-run@apprentice-aibc.iam.gserviceaccount.com --set-secrets GEMINI_API_KEY=gemini-api-key:latest --set-env-vars GCP_PROJECT=apprentice-aibc,BUCKET=...,MA_LOCATION=asia-south1,MA_TEMPLATE=apprentice-default`
+Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --region asia-south1 --allow-unauthenticated --min-instances 1 --no-cpu-throttling --timeout 900 --memory 1Gi --service-account apprentice-run@aibuildercup-india-2026.iam.gserviceaccount.com --set-secrets GEMINI_API_KEY=gemini-api-key:latest --set-env-vars GCP_PROJECT=aibuildercup-india-2026,BUCKET=apprentice-recordings-aibc2026,MA_LOCATION=asia-south1,MA_TEMPLATE=apprentice-default,EXPERT_EMAIL=...,ADMIN_UIDS=...,SANDBOX_CODE=...`. One-time Google Cloud setup: `docs/Cloud_Setup.md`. Judge sandbox: `docs/Judge_Sandbox.md`, `docs/Judge_Guide.md`.
 
 ## Coding conventions
 - Python: full type hints; Pydantic v2 models only (`model_config = ConfigDict(extra="forbid")`); async FastAPI handlers; ruff defaults + isort; no bare `except`; log with `structlog`/`logging` JSON.
@@ -78,9 +81,10 @@ Deploy flags (scripts/deploy.sh): `gcloud run deploy apprentice --source . --reg
 - Do not add new cloud services, databases, vector stores or frameworks without both people agreeing.
 
 ## Prompts
-- One file per call in `/prompts`: `segmenter.md, deviations.md, variants.md, probes.md, graph.md, scenarios.md, arm_sop.md, arm_graph.md, judge.md, live_system.md`.
+- One file per call in `/prompts`: `segmenter.md, deviations.md, variants.md, probes.md, graph.md, scenarios.md, arm_sop.md, arm_graph.md, judge.md, live_system.md, summary.md, observed_workflow.md` (the last two are display only).
 - Front-matter: `id`, `version` (int), `model`, `thinking_level`, `output_schema` (Pydantic class name). Bump `version` on any change; outputs store `prompt_id@version`.
 - Use `{{SOP}}`, `{{SEGMENTS}}`-style placeholders filled by `app/prompts.py`.
+- Prompts are scenario-neutral: every one has `{{DOMAIN}}`, filled from `app/domains/<scenario>/domain.md` via `domains.values(...)`. The part after `<!-- exam-only` (trap definitions) goes only to `scenarios` and `judge`. Scenarios: `docs/Scenarios.md`.
 
 ## Fixtures
 - `fixtures/*.json` mirror API responses (session list, session detail, probes, graph, exam report). B builds the UI against these until A's endpoints are live (`VITE_USE_FIXTURES=1`).

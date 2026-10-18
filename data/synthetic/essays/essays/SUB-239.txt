@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Rehan Qureshi (SUB-239)
+
+The question is no longer whether machines can decide, but whether they should. When a decision goes wrong, a person can explain and apologise; a system can only be audited.
+
+A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern. Some decisions are reversible and cheap, and those are the ones machines handle best.
+
+Machines should advise, and people should decide when the stakes are high.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

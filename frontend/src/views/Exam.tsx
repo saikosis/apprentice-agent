@@ -11,17 +11,9 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { cn } from "../lib/utils";
 import type { AgentRun, Arm, ArmSummary, Decision, ExamCase, ExamReport } from "../types/contract";
-import { DecisionChip, Empty, ErrorNote, Loadable, PageHeader, fmtDate, useAsync, useWs } from "../ui";
+import { DecisionChip, Empty, ErrorNote, Loadable, PageHeader, scenarioInfo, decisionLabel, fmtDate, trapLabel, useAsync, useWs } from "../ui";
 
-const TRAP: Record<string, string> = {
-  none: "",
-  consignment_lookalike: "Lookalike vendor name",
-  prompt_injection: "Instructions hidden in an email",
-  duplicate_renumbered: "Duplicate with a new number",
-};
 const DECISIONS: Decision[] = ["approve", "reject", "hold", "escalate"];
-const DECISION_LABEL: Record<Decision, string> = { approve: "Approve", reject: "Reject", hold: "On hold", escalate: "Escalate" };
-const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
 function ArmCard({ title, sub, s, traps, strong }: { title: string; sub: string; s: ArmSummary; traps: number; strong?: boolean }) {
   return (
@@ -175,7 +167,7 @@ function Report({ r }: { r: ExamReport }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Pilot run, {fmtDate(r.created_at)}: {r.n_cases} cases, {r.runs_per_arm} runs per agent, synthetic invoices, one expert.
+        Pilot run, {fmtDate(r.created_at)}: {r.n_cases} cases, {r.runs_per_arm} runs per agent, synthetic {scenarioInfo().item_label}s, one expert.
         Graph version {r.graph_version}.
       </p>
       <div className="grid gap-4 md:grid-cols-2">
@@ -211,7 +203,7 @@ function Report({ r }: { r: ExamReport }) {
                 <TableCell className="pl-4">
                   <div className="flex flex-col items-start gap-1">
                     <span className="font-medium">{c.case_id}</span>
-                    {TRAP[c.trap_type] && <Badge variant="outline">Trap: {TRAP[c.trap_type]}</Badge>}
+                    {trapLabel(c.trap_type) && <Badge variant="outline">Trap: {trapLabel(c.trap_type)}</Badge>}
                     <Button
                       variant="link"
                       size="sm"
@@ -276,16 +268,15 @@ function CaseLabel({ c }: { c: ExamCase }) {
   const [rationale, setRationale] = useState(c.expert_label?.rationale ?? "");
   const [saved, setSaved] = useState(Boolean(c.expert_label));
   const [err, setErr] = useState<string | null>(null);
-  const inv = c.invoice;
+  const title = scenarioInfo().title_fields.map((f) => c.item[f]).filter(Boolean).join(", ");
+  const details = Object.entries(c.item).filter(([k, v]) => v && !scenarioInfo().title_fields.includes(k));
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          {c.id}: {inv.vendor_name} ({inv.vendor_id}), {inv.invoice_no}, {inr(inv.amount_inr)}
+          {c.id}: {title}
         </CardTitle>
-        <CardDescription>
-          PO {inv.po_number ?? "none"}, GRN {inv.grn_number ?? "none"}, due {inv.due_date}
-        </CardDescription>
+        <CardDescription>{details.map(([k, v]) => `${k.replace(/_/g, " ")} ${v}`).join(", ")}</CardDescription>
         <CardAction>
           <Badge variant="secondary">{c.origin === "heldout" ? "From a held-out session" : "Generated"}</Badge>
         </CardAction>
@@ -309,7 +300,7 @@ function CaseLabel({ c }: { c: ExamCase }) {
               <SelectGroup>
                 {DECISIONS.map((d) => (
                   <SelectItem key={d} value={d}>
-                    {DECISION_LABEL[d]}
+                    {decisionLabel(d)}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -341,7 +332,7 @@ function CaseLabel({ c }: { c: ExamCase }) {
 }
 
 function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
-  const { ws } = useWs();
+  const { ws, sandbox } = useWs();
   const sessions = useAsync(() => listSessions(ws), [ws]);
   const saved = useAsync(() => listCases(ws), [ws]); // labelled cases survive a reload
   const [fresh, setFresh] = useState<ExamCase[] | null>(null);
@@ -352,9 +343,10 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
   const [err, setErr] = useState<string | null>(null);
 
   const heldout = (sessions.data ?? []).filter((s) => s.kind === "heldout" && s.status === "processed").map((s) => s.id);
+  const canGenerate = sandbox || heldout.length >= 2; // a sandbox writes its cases from the graph alone
 
   const generate = async () => {
-    setBusy("Writing exam cases from the graph and held-out sessions…");
+    setBusy(sandbox ? "Writing 6 practice cases from your graph…" : "Writing exam cases from the graph and held-out sessions…");
     setErr(null);
     try {
       setCases(await generateCases(heldout.slice(0, 2)));
@@ -366,10 +358,14 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
   };
 
   const run = async () => {
-    setBusy("Running both agents three times per case, then scoring. This takes a few minutes.");
+    setBusy(
+      sandbox
+        ? "Running both agents once per case, then scoring. This takes a minute or two."
+        : "Running both agents three times per case, then scoring. This takes a few minutes.",
+    );
     setErr(null);
     try {
-      const { report_id } = await runExam(3);
+      const { report_id } = await runExam(sandbox ? 1 : 3);
       for (let i = 0; ; i++) {
         await new Promise((r) => setTimeout(r, 5000));
         try {
@@ -395,7 +391,7 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
           <p className="text-muted-foreground">The expert labels each case with the decision they would make. Labels go to the judge only.</p>
         </div>
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" disabled={Boolean(busy) || heldout.length < 2} onClick={() => void generate()}>
+          <Button variant="outline" disabled={Boolean(busy) || !canGenerate} onClick={() => void generate()}>
             Generate cases
           </Button>
           <Button disabled={Boolean(busy) || !cases?.length} aria-busy={Boolean(busy)} onClick={() => void run()}>
@@ -403,8 +399,15 @@ function Prepare({ onReport }: { onReport: (r: ExamReport) => void }) {
           </Button>
         </div>
       </div>
-      {heldout.length < 2 && (
-        <p className="text-sm text-muted-foreground">Generating cases needs 2 analysed held-out sessions. You have {heldout.length}.</p>
+      {sandbox ? (
+        <p className="text-sm text-muted-foreground">
+          Apprentice writes 6 practice cases from your graph. Label each one as you would decide; only the judge sees your
+          labels.
+        </p>
+      ) : (
+        heldout.length < 2 && (
+          <p className="text-sm text-muted-foreground">Generating cases needs 2 analysed held-out sessions. You have {heldout.length}.</p>
+        )
       )}
       {busy && (
         <Alert>
@@ -426,7 +429,7 @@ export function Exam() {
     <>
       <PageHeader
         title="Successor exam"
-        description="Two new-analyst agents face the same invoices. One has only the SOP. The other also has the expert's decision graph. A judge compares both against the expert's own calls."
+        description={`Two successor agents face the same ${scenarioInfo().item_label}s. One has only the SOP. The other also has the expert's decision graph. A judge compares both against the expert's own calls.`}
       />
       <Loadable state={state}>
         {(report) => {

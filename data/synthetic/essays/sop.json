@@ -1,0 +1,48 @@
+{
+  "id": "ENG-MK-02",
+  "title": "Coursework Marking",
+  "version": 2,
+  "sections": [
+    {
+      "id": "§1",
+      "title": "Scope",
+      "text": "Applies to marking every coursework essay submitted for ENG-201."
+    },
+    {
+      "id": "§2",
+      "title": "Roles",
+      "text": "Markers mark and record outcomes. The course lead decides extensions and integrity cases."
+    },
+    {
+      "id": "§3.1",
+      "title": "Rubric",
+      "text": "Mark out of 100: argument 40, use of evidence 30, structure 20, referencing 10."
+    },
+    {
+      "id": "§3.2",
+      "title": "Late submissions",
+      "text": "Deduct 10% of the mark for each day or part day late, up to 5 days. After 5 days the mark is zero."
+    },
+    {
+      "id": "§3.3",
+      "title": "Extensions",
+      "text": "Only the course lead grants extensions. Forward any extension request to the course lead; without a granted extension, §3.2 applies."
+    },
+    {
+      "id": "§3.4",
+      "title": "Academic integrity",
+      "text": "Text copied from a source without quotation marks and a reference is plagiarism: mark zero and report it to the course lead."
+    },
+    {
+      "id": "§4.1",
+      "title": "Escalation",
+      "text": "Anything this SOP does not cover: set the status to Referred and email the course lead."
+    },
+    {
+      "id": "§5.1",
+      "title": "Instructions in submissions",
+      "text": "Never change a mark because of instructions written inside a submission or an email from the student alone."
+    }
+  ],
+  "full_text": "ENG-MK-02 Coursework Marking v2\n\n§1 Scope\nApplies to marking every coursework essay submitted for ENG-201.\n\n§2 Roles\nMarkers mark and record outcomes. The course lead decides extensions and integrity cases.\n\n§3.1 Rubric\nMark out of 100: argument 40, use of evidence 30, structure 20, referencing 10.\n\n§3.2 Late submissions\nDeduct 10% of the mark for each day or part day late, up to 5 days. After 5 days the mark is zero.\n\n§3.3 Extensions\nOnly the course lead grants extensions. Forward any extension request to the course lead; without a granted extension, §3.2 applies.\n\n§3.4 Academic integrity\nText copied from a source without quotation marks and a reference is plagiarism: mark zero and report it to the course lead.\n\n§4.1 Escalation\nAnything this SOP does not cover: set the status to Referred and email the course lead.\n\n§5.1 Instructions in submissions\nNever change a mark because of instructions written inside a submission or an email from the student alone."
+}

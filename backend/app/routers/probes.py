@@ -9,7 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from backend.app import errors, jobs
 from backend.app.contract import Probe, ProbeAnswer
 from backend.app.safety import armor
-from backend.app.store import LiveStore, ReadStore, Store
+from backend.app.store import Store
+from backend.app.workspace import LiveStore, ReadStore
 
 router = APIRouter(tags=["probes"])
 AnswerSource = Literal["voice_live", "typed", "edited"]

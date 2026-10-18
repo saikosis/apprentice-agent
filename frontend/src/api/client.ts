@@ -6,15 +6,83 @@ import type {
   Deviation,
   ExamCase,
   ExamReport,
-  InvoiceRow,
+  ObservedWorkflow,
   Probe,
   ProbeAnswer,
+  SandboxInfo,
   Segment,
+  ScenarioInfo,
   Session,
+  SessionSummary,
   SheetDiff,
   SheetSnapshot,
   Variant,
 } from "../types/contract";
+
+// ---- scenario: which workflow the app is showing (invoices, essays, volunteers) ----
+// Labels come straight from the backend's domain packs, so the UI and the prompts never disagree.
+const configs = import.meta.glob<ScenarioInfo>("../../../backend/app/domains/*/config.json", {
+  eager: true,
+  import: "default",
+});
+export const SCENARIOS: ScenarioInfo[] = Object.values(configs).sort((a, b) =>
+  a.id === "ap" ? -1 : b.id === "ap" ? 1 : a.title.localeCompare(b.title),
+);
+type Scenario = ScenarioInfo["id"];
+const SCENARIO_KEY = "apprentice.scenario"; // a view preference, not a token
+function initialScenario(): Scenario {
+  try {
+    const saved = localStorage.getItem(SCENARIO_KEY);
+    if (SCENARIOS.some((s) => s.id === saved)) return saved as Scenario;
+  } catch {
+    // storage blocked: default scenario
+  }
+  return "ap";
+}
+let scenario: Scenario = initialScenario();
+export const currentScenario = (): ScenarioInfo => SCENARIOS.find((s) => s.id === scenario) ?? SCENARIOS[0];
+// No page reload: sign-in lives in memory only (AGENTS.md), so a reload would sign the expert out. Drop the cached
+// scenario data instead; main.tsx remounts the pages on change so every view refetches.
+const scenarioListeners = new Set<() => void>();
+export function subscribeScenario(cb: () => void): () => void {
+  scenarioListeners.add(cb);
+  return () => scenarioListeners.delete(cb);
+}
+export function switchScenario(next: Scenario): void {
+  try {
+    localStorage.setItem(SCENARIO_KEY, next);
+  } catch {
+    // storage blocked: the choice lasts until reload
+  }
+  scenario = next;
+  bundlePromise = null;
+  videoUrls.clear();
+  scenarioListeners.forEach((cb) => cb());
+}
+// Admin only: read a judge's sandbox. Every GET then targets it; writes still go to the admin's own workspace.
+let viewing: { uid: string; email: string } | null = null;
+export const viewingSandbox = () => viewing;
+export function viewSandbox(judge: { uid: string; email: string } | null): void {
+  viewing = judge;
+  bundlePromise = null;
+  videoUrls.clear();
+  scenarioListeners.forEach((cb) => cb());
+}
+// Changes whenever the data the pages show should change (workflow switch, admin view).
+export const viewKey = () => `${scenario}|${viewing?.uid ?? ""}`;
+
+function withScenario(path: string, method = "GET"): string {
+  if (!path.startsWith("/api/")) return path;
+  const [base, query = ""] = path.split("?");
+  const q = new URLSearchParams(query);
+  if (viewing && method === "GET") {
+    q.set("ws", "sandbox");
+    q.set("uid", viewing.uid);
+  }
+  if (scenario !== "ap") q.set("scenario", scenario);
+  const qs = q.toString();
+  return qs ? `${base}?${qs}` : base;
+}
 
 let idToken: string | null = null;
 
@@ -35,7 +103,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   if (idToken) headers.set("Authorization", `Bearer ${idToken}`);
   if (init.body) headers.set("Content-Type", "application/json");
-  const res = await fetch(path, { ...init, headers });
+  const res = await fetch(withScenario(path, init.method), { ...init, headers });
   if (!res.ok) {
     let message = `${res.status} ${res.statusText}`;
     try {
@@ -53,7 +121,13 @@ const post = <T>(path: string, body: unknown = {}) => api<T>(path, { method: "PO
 
 export type Ws = "demo" | "live";
 export type ProbeWithAnswer = Probe & { answer?: ProbeAnswer | null };
-export type SessionDetail = { session: Session; segments: Segment[]; deviations: Deviation[]; diff: SheetDiff | null };
+export type SessionDetail = {
+  session: Session;
+  segments: Segment[];
+  deviations: Deviation[];
+  diff: SheetDiff | null;
+  summary: SessionSummary | null;
+};
 
 // GET /api/demo/bundle per SPEC §3. segments/deviations/answers are optional extras the seed carries (SPEC §8).
 export type DemoBundle = {
@@ -64,6 +138,8 @@ export type DemoBundle = {
   report: ExamReport | null;
   segments?: Record<string, Segment[]>;
   deviations?: Record<string, Deviation[]>;
+  summaries?: Record<string, SessionSummary>;
+  observed_workflow?: ObservedWorkflow | null;
   exam_cases?: ExamCase[];
   agent_runs?: AgentRun[];
 };
@@ -71,7 +147,8 @@ export type DemoBundle = {
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === "1";
 
 async function fixtureBundle(): Promise<DemoBundle> {
-  const [sessions, segments, deviations, variants, probes, answers, graph, report, cases, runs] = await Promise.all([
+  const [sessions, segments, deviations, variants, probes, answers, graph, report, cases, runs, summaries, workflow] =
+    await Promise.all([
     import("../../../fixtures/sessions.json"),
     import("../../../fixtures/segments.json"),
     import("../../../fixtures/deviations.json"),
@@ -82,6 +159,8 @@ async function fixtureBundle(): Promise<DemoBundle> {
     import("../../../fixtures/exam_report.json"),
     import("../../../fixtures/exam_cases.json"),
     import("../../../fixtures/agent_runs.json"),
+    import("../../../fixtures/summaries.json"),
+    import("../../../fixtures/observed_workflow.json"),
   ]);
   const group = <X extends { session_id: string }>(xs: X[]) =>
     xs.reduce<Record<string, X[]>>((acc, x) => ((acc[x.session_id] ??= []).push(x), acc), {});
@@ -96,15 +175,21 @@ async function fixtureBundle(): Promise<DemoBundle> {
     report: report.default as ExamReport,
     exam_cases: cases.default as ExamCase[],
     agent_runs: runs.default as AgentRun[],
+    summaries: Object.fromEntries((summaries.default as SessionSummary[]).map((s) => [s.session_id, s])),
+    observed_workflow: workflow.default as ObservedWorkflow,
   };
 }
 
+const EMPTY_BUNDLE: DemoBundle = { sessions: [], variants: [], probes: [], graph: null, report: null };
+
 let bundlePromise: Promise<DemoBundle> | null = null;
 // ponytail: falls back to bundled fixtures when the demo endpoint isn't seeded yet, so /demo always loads.
+// The fixtures are invoice data, so other scenarios fall back to an empty demo instead.
 export function demoBundle(): Promise<DemoBundle> {
+  const fallback = () => (scenario === "ap" ? fixtureBundle() : Promise.resolve(EMPTY_BUNDLE));
   bundlePromise ??= (USE_FIXTURES ? Promise.reject(new Error("fixtures")) : api<DemoBundle>("/api/demo/bundle"))
-    .then((b) => (b.sessions?.length ? b : fixtureBundle()))
-    .catch(() => fixtureBundle());
+    .then((b) => (b.sessions?.length ? b : fallback()))
+    .catch(fallback);
   return bundlePromise;
 }
 
@@ -121,7 +206,13 @@ export async function getSession(ws: Ws, id: string): Promise<SessionDetail> {
     const b = await demoBundle();
     const session = b.sessions.find((s) => s.id === id);
     if (!session) throw new ApiError(404, `Session ${id} not found`);
-    return { session, segments: b.segments?.[id] ?? [], deviations: b.deviations?.[id] ?? [], diff: null };
+    return {
+      session,
+      segments: b.segments?.[id] ?? [],
+      deviations: b.deviations?.[id] ?? [],
+      diff: null,
+      summary: b.summaries?.[id] ?? null,
+    };
   }
   return api(`/api/sessions/${id}`);
 }
@@ -137,6 +228,11 @@ export async function listProbes(ws: Ws, status?: Probe["status"]): Promise<Prob
 export async function listVariants(ws: Ws): Promise<Variant[]> {
   if (fromBundle(ws)) return (await demoBundle()).variants;
   return api("/api/variants");
+}
+
+export async function getObservedWorkflow(ws: Ws): Promise<ObservedWorkflow | null> {
+  if (fromBundle(ws)) return (await demoBundle()).observed_workflow ?? null;
+  return api(`/api/observed-workflow?ws=${ws}`);
 }
 
 export async function getGraph(ws: Ws): Promise<DecisionGraph | null> {
@@ -184,7 +280,23 @@ export function videoUrl(sessionId: string): Promise<string> {
 }
 
 // ---- writes (live workspace only) ----
-export const me = () => api<{ uid: string; email: string; is_demo_expert: boolean }>("/api/me");
+export const me = () =>
+  api<{ uid: string; email: string; is_demo_expert: boolean; role: "expert" | "judge" | "none"; is_admin: boolean }>(
+    "/api/me",
+  );
+export const listSandboxes = () => api<SandboxInfo[]>("/api/admin/sandboxes");
+export const getSandbox = () => api<SandboxInfo>("/api/sandbox");
+export const resetSandbox = (mode: "sample" | "empty") => post<SandboxInfo>("/api/sandbox/reset", { mode });
+export const deleteSandbox = () => api<{ ok: boolean }>("/api/sandbox", { method: "DELETE" });
+
+// The quick plan and download pack per workflow, straight from the domain packs (like SCENARIOS).
+export type QuickPlan = { items: string[]; planted_items: Record<string, string[]>; rules: Record<string, string>; files: string[] };
+const plans = import.meta.glob<QuickPlan>("../../../backend/app/domains/*/quick_plan.json", { eager: true, import: "default" });
+export const quickPlan = (id: string): QuickPlan | undefined =>
+  Object.entries(plans).find(([path]) => path.includes(`/domains/${id}/`))?.[1];
+// Tell the app the account changed (sandbox deleted), so it asks the server who we are again.
+export const accountChanged = () => window.dispatchEvent(new Event("apprentice:account"));
+export const joinSandbox = (code: string) => post<SandboxInfo>("/api/sandbox/join", { code });
 export const answerProbe = (id: string, text: string, source: ProbeAnswer["source"]) =>
   post<{ probe: Probe; answer: ProbeAnswer }>(`/api/probes/${id}/answer`, { text, source });
 export const editAnswer = (id: string, text: string) =>
@@ -217,7 +329,7 @@ export const postDeviation = (
   id: string,
   body: { sop_rule: string; question: string; invoice_id?: string; t_seconds: number; model_timestamp?: string },
 ) => post<{ deviation: Deviation; probe: Probe }>(`/api/sessions/${id}/deviations`, body);
-export const sheetSnapshot = (session_id: string, phase: "before" | "after", rows: InvoiceRow[]) =>
+export const sheetSnapshot = (session_id: string, phase: "before" | "after", rows: Record<string, string>[]) =>
   post<SheetSnapshot>("/api/sheets/snapshot", { session_id, phase, rows });
 
 // Signed GCS PUT — no bearer token, the URL carries the signature.

@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Tejas Kamath (SUB-304)
+
+Machines already decide which loans are approved and which videos we watch. Consistency is only a virtue when the rule being applied consistently is a fair one.
+
+Automation does not remove judgment from work; it moves judgment to the people who design the system and hides it from the people who live with its results. Workers who supervise automated systems report that they stop questioning the output after a few months. When a decision goes wrong, a person can explain and apologise; a system can only be audited.
+
+The right test is whether someone affected by the decision could still appeal to a human.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

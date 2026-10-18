@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Nikhil Jain (SUB-233)
+
+Automated decisions promise speed and consistency, and they often deliver both. When a decision goes wrong, a person can explain and apologise; a system can only be audited.
+
+Some decisions are reversible and cheap, and those are the ones machines handle best. A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern.
+
+Machines should advise, and people should decide when the stakes are high.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

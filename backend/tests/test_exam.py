@@ -15,7 +15,6 @@ from backend.app.contract import (
     Email,
     ExamCase,
     ExpertLabel,
-    InvoiceRow,
     JudgeScore,
     Probe,
     ProbeAnswer,
@@ -34,25 +33,22 @@ CLIP = ClipRef(session_id="s-1", start_ts="02:02", end_ts="03:10")
 
 
 def case(id: str, decision: str = "approve", trap: str = "none") -> ExamCase:
-    inv = InvoiceRow(
-        invoice_id="INV-2001",
-        vendor_id="V-011",
-        vendor_name="Kaveri Consolidated Traders",
-        invoice_no="KAV/2026/0901",
-        invoice_date="2026-10-10",
-        amount_inr=46900,
-        gst_inr=8442,
-        due_date="2026-11-09",
-        category="Trading goods",
-        status="Pending",
-    )
+    inv = {
+        "invoice_id": "INV-2001",
+        "vendor_id": "V-011",
+        "vendor_name": "Kaveri Consolidated Traders",
+        "invoice_no": "KAV/2026/0901",
+        "amount_inr": "46900",
+        "po_number": "",
+        "status": "Pending",
+    }
     return ExamCase(
         id=id,
         origin="generated",
         trap_type=trap,
         tests_rule="Consignment vendor: skip PO match",  # type: ignore[arg-type]
-        invoice=inv,
-        vendor_master_row={"vendor_id": "V-011", "type": "standard"},
+        item=inv,
+        reference_row={"vendor_id": "V-011", "type": "standard"},
         emails=[
             Email(
                 id="em",
@@ -146,9 +142,18 @@ def test_aggregate_counts_agreement_traps_and_blocked() -> None:
 
 def test_miss_question_describes_the_case_never_the_answer() -> None:
     q = report.miss_question(case("c-1", "reject"))
-    assert "Kaveri Consolidated Traders (standard vendor)" in q and "₹46,900" in q and "no PO" in q
+    assert q.startswith("Invoice INV-2001 (Kaveri Consolidated Traders, KAV/2026/0901, 46900)")
+    assert "type: standard" in q and "po_number: none" in q
     assert SECRET not in q and "reject" not in q.lower()
     assert "Re: payment" not in q and "pay now" not in q  # untrusted email text is never quoted
+    v = case("c-2").model_copy(
+        update={
+            "item": {"response_id": "R-307", "name": "Riya Sen", "preferred_shift": "SH-3"},
+            "reference_row": {"kind": "shift", "floor": "first", "capacity": "5"},
+        }
+    )
+    q = report.miss_question(v, "volunteers")
+    assert q.startswith("Sign-up R-307 (Riya Sen, R-307, SH-3)") and "floor: first" in q
 
 
 def seeded_store(labelled: list[ExamCase]) -> Store:
@@ -296,6 +301,12 @@ def test_no_label_leakage(llm: FakeLLM) -> None:
         },
     )
 
+    from backend.app.contract import ObservedWorkflow, WorkflowStep
+
+    observed = ObservedWorkflow(
+        steps=[WorkflowStep(n=1, text="OBSERVED-7c1 opens the queue", in_sop=True, session_ids=[])]
+    )
+    asyncio.run(store.put_observed_workflow(observed))  # display only: must reach no model below
     asyncio.run(graph.build(store))
     from backend.app.contract import Deviation
 
@@ -320,6 +331,7 @@ def test_no_label_leakage(llm: FakeLLM) -> None:
         assert "prompt_injection" not in seen and "tests_rule" not in seen, (
             f"trap hint leaked into {pid}"
         )
+        assert "OBSERVED-7c1" not in seen, f"observed workflow leaked into {pid}"
     assert SECRET in llm.seen("judge")
     assert "sop_graph" not in llm.seen("judge") and "cited_nodes" not in llm.seen(
         "judge"
@@ -328,4 +340,4 @@ def test_no_label_leakage(llm: FakeLLM) -> None:
 
 def test_arm_input_has_only_what_a_new_analyst_sees() -> None:
     view = arms.case_input(case("c-1"))
-    assert set(view) == {"id", "invoice", "vendor_master_row", "emails", "context"}
+    assert set(view) == {"id", "item", "reference_row", "emails", "context"}

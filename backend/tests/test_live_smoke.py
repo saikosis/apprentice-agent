@@ -12,19 +12,19 @@ pytestmark = pytest.mark.skipif(
 
 
 def test_structured_flash_call() -> None:
-    from backend.app import gemini
+    from backend.app import domains, gemini
     from backend.app.contract import AgentOutput
     from scripts.make_synthetic import build_sop
 
     case = {
-        "invoice": {
+        "item": {
             "invoice_id": "INV-9001",
             "vendor_name": "Sahyadri Office Supplies",
-            "amount_inr": 12000,
+            "amount_inr": "12000",
             "po_number": "PO-9001",
             "grn_number": "GRN-9001",
         },
-        "vendor_master_row": {"type": "standard"},
+        "reference_row": {"type": "standard"},
     }
     out = asyncio.run(
         gemini.structured(
@@ -32,12 +32,12 @@ def test_structured_flash_call() -> None:
             "arm_sop",
             [gemini.data("Case", case)],
             AgentOutput,
-            values={"SOP": build_sop().full_text},
+            values=domains.values("ap", SOP=build_sop().full_text),
         )
     )
     assert (
         out.output.decision in ("approve", "reject", "hold", "escalate")
-        and out.prompt_ref == "arm_sop@1"
+        and out.prompt_ref == "arm_sop@2"
     )
 
 

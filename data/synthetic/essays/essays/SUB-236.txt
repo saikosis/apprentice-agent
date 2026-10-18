@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Ira Bhatt (SUB-236)
+
+Automated decisions promise speed and consistency, and they often deliver both. Some decisions are reversible and cheap, and those are the ones machines handle best.
+
+The cost of an automated mistake is rarely paid by the people who chose to automate. Workers who supervise automated systems report that they stop questioning the output after a few months.
+
+We should automate the routine and keep a named person responsible for the rest.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

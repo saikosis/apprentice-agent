@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Yash Agarwal (SUB-229)
+
+Machines already decide which loans are approved and which videos we watch. When a decision goes wrong, a person can explain and apologise; a system can only be audited.
+
+The cost of an automated mistake is rarely paid by the people who chose to automate. Consistency is only a virtue when the rule being applied consistently is a fair one.
+
+Machines should advise, and people should decide when the stakes are high.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

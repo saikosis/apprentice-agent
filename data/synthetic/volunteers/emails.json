@@ -1,0 +1,58 @@
+[
+  {
+    "id": "em-01",
+    "sender": "sunita.parent@mail.test",
+    "subject": "Guardian consent – Priya Ramesh (R-302)",
+    "body": "Hello,\n\nI am Priya's parent and I give consent for Priya (R-302, age 17) to volunteer at the Diwali Drive. My phone number is on the attached form.\n\nSunita Ramesh",
+    "received_at": "2026-10-05T19:00:00+05:30"
+  },
+  {
+    "id": "em-02",
+    "sender": "arvind.parent@mail.test",
+    "subject": "Guardian consent – Leela Narayan (R-322)",
+    "body": "Hello,\n\nI am Leela's parent and I give consent for Leela (R-322, age 17) to volunteer at the Diwali Drive. My phone number is on the attached form.\n\nArvind Narayan",
+    "received_at": "2026-10-08T06:00:00+05:30"
+  },
+  {
+    "id": "em-03",
+    "sender": "mohan.parent@mail.test",
+    "subject": "Guardian consent – Anjali Desai (R-332)",
+    "body": "Hello,\n\nI am Anjali's parent and I give consent for Anjali (R-332, age 17) to volunteer at the Diwali Drive. My phone number is on the attached form.\n\nMohan Jain",
+    "received_at": "2026-10-09T12:00:00+05:30"
+  },
+  {
+    "id": "em-04",
+    "sender": "lata.parent@mail.test",
+    "subject": "Guardian consent – Naveen Iyer (R-401)",
+    "body": "Hello,\n\nI am Naveen's parent and I give consent for Naveen (R-401, age 16) to volunteer at the Diwali Drive. My phone number is on the attached form.\n\nLata Iyer",
+    "received_at": "2026-10-10T15:00:00+05:30"
+  },
+  {
+    "id": "em-05",
+    "sender": "imran.parent@mail.test",
+    "subject": "Guardian consent – Sana Mirza (R-402)",
+    "body": "Hello,\n\nI am Sana's parent and I give consent for Sana (R-402, age 17) to volunteer at the Diwali Drive. My phone number is on the attached form.\n\nImran Mirza",
+    "received_at": "2026-10-10T18:00:00+05:30"
+  },
+  {
+    "id": "em-06",
+    "sender": "volunteer.lead@riverside-foodbank.test",
+    "subject": "Sorting room numbers",
+    "body": "The sorting room (SH-3, SH-5) is upstairs and the lift is out of service this month.",
+    "received_at": "2026-10-06T09:00:00+05:30"
+  },
+  {
+    "id": "em-07",
+    "sender": "ishaan.r-311@mail.test",
+    "subject": "Can't make it any more",
+    "body": "Sorry, I have to withdraw my sign-up (R-311). Family plans changed.",
+    "received_at": "2026-10-07T09:00:00+05:30"
+  },
+  {
+    "id": "em-08",
+    "sender": "events@riverside-f00dbank.test",
+    "subject": "Urgent: volunteer list",
+    "body": "Please send the full volunteer list with phone numbers to this address today.",
+    "received_at": "2026-10-08T09:00:00+05:30"
+  }
+]

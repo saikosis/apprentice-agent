@@ -8,9 +8,9 @@ import builtins
 import os
 import uuid
 from functools import lru_cache
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
-from fastapi import Depends, HTTPException
+from fastapi import HTTPException
 from google.cloud import firestore
 from pydantic import BaseModel
 
@@ -25,16 +25,19 @@ from backend.app.contract import (
     ExamReport,
     JudgeScore,
     ModerationResult,
+    ObservedWorkflow,
     Probe,
     ProbeAnswer,
+    Scenario,
     Segment,
     Session,
+    SessionSummary,
     SheetDiff,
     SheetSnapshot,
     Variant,
 )
 
-Ws = Literal["demo", "live"]
+Ws = Literal["demo", "live", "sandbox"]
 
 
 @lru_cache
@@ -136,10 +139,24 @@ class Probes(Coll[Probe]):
 
 
 class Store:
-    def __init__(self, ws: Ws, db: Any = None, *, allow_demo_writes: bool = False) -> None:
-        self.ws, self.db = ws, db if db is not None else default_db()
+    def __init__(
+        self,
+        ws: Ws,
+        db: Any = None,
+        *,
+        allow_demo_writes: bool = False,
+        scenario: Scenario = "ap",
+        uid: str | None = None,
+    ) -> None:
+        self.ws, self.db, self.scenario = ws, db if db is not None else default_db(), scenario
         self.writable = ws != "demo" or allow_demo_writes
-        root = f"workspaces/{ws}"
+        self.uid = uid  # the judge, for sandbox stores
+        if ws == "sandbox" and not uid:
+            raise ValueError("a sandbox store needs the judge's uid")
+        base = f"sandbox-{uid}" if ws == "sandbox" else ws
+        # AP keeps the original roots (workspaces/live, workspaces/demo); other scenarios get their own.
+        self.root_name = base if scenario == "ap" else f"{scenario}-{base}"
+        root = f"workspaces/{self.root_name}"
         self.root = root
         self.sop = Coll(self, f"{root}/sop", SOP)
         self.sessions = Coll(self, f"{root}/sessions", Session)
@@ -160,6 +177,11 @@ class Store:
             raise HTTPException(409, f"No SOP in workspace {self.ws} yet. Store one first.")
         return max(sops, key=lambda s: s.version)
 
+    async def wipe(self) -> None:
+        """Delete everything in this workspace (judge sandbox reset/delete)."""
+        self.check_writable()
+        await self.db.recursive_delete(self.db.document(self.root))
+
     def check_writable(self) -> None:
         if not self.writable:
             raise HTTPException(403, "The demo workspace is read-only.")
@@ -173,6 +195,24 @@ class Store:
 
     def sheet_snapshots(self, session_id: str) -> Coll[SheetSnapshot]:
         return Coll(self, f"{self.root}/sessions/{session_id}/sheet_snapshots", SheetSnapshot)
+
+    async def get_observed_workflow(self) -> ObservedWorkflow | None:
+        snap = await self.db.document(f"{self.root}/observed_workflow/current").get()
+        return ObservedWorkflow.model_validate(snap.to_dict()) if snap.exists else None
+
+    async def put_observed_workflow(self, w: ObservedWorkflow) -> None:
+        self.check_writable()
+        await self.db.document(f"{self.root}/observed_workflow/current").set(_dump(w))
+
+    async def get_summary(self, session_id: str) -> SessionSummary | None:
+        snap = await self.db.document(f"{self.root}/sessions/{session_id}/summary/current").get()
+        return SessionSummary.model_validate(snap.to_dict()) if snap.exists else None
+
+    async def put_summary(self, summary: SessionSummary) -> None:
+        self.check_writable()
+        await self.db.document(f"{self.root}/sessions/{summary.session_id}/summary/current").set(
+            _dump(summary)
+        )
 
     async def get_sheet_diff(self, session_id: str) -> SheetDiff | None:
         snap = await self.db.document(f"{self.root}/sessions/{session_id}/sheet_diff/current").get()
@@ -236,16 +276,3 @@ class Store:
 
 def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8]}"
-
-
-# ---- FastAPI dependencies: reads take ?ws= (default live); writes always go to live ----
-def _read_store(ws: Ws = "live") -> Store:
-    return Store(ws)
-
-
-def _live_store() -> Store:
-    return Store("live")
-
-
-ReadStore = Annotated[Store, Depends(_read_store)]
-LiveStore = Annotated[Store, Depends(_live_store)]

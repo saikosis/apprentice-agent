@@ -62,7 +62,13 @@ def test_me_with_a_verified_token(monkeypatch) -> None:  # type: ignore[no-untyp
     )
     monkeypatch.setenv("EXPERT_EMAIL", "expert@example.com")
     r = TestClient(app).get("/api/me", headers={"Authorization": "Bearer good"})
-    assert r.json() == {"uid": "u1", "email": "expert@example.com", "is_demo_expert": True}
+    assert r.json() == {
+        "uid": "u1",
+        "email": "expert@example.com",
+        "is_demo_expert": True,
+        "role": "expert",
+        "is_admin": False,
+    }
 
 
 def test_unverified_email_is_not_the_expert(monkeypatch) -> None:  # type: ignore[no-untyped-def]
@@ -155,6 +161,8 @@ def test_local_dev_bypass_only_with_local_db_and_never_on_cloud_run(monkeypatch)
         "uid": "dev",
         "email": "expert@example.com",
         "is_demo_expert": True,
+        "role": "expert",
+        "is_admin": False,
     }
 
     monkeypatch.setenv("K_SERVICE", "apprentice")  # Cloud Run sets this: bypass is off

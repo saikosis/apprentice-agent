@@ -14,11 +14,12 @@ import { Switch } from "../components/ui/switch";
 import { startLive, type LiveProbe, type LiveStatus } from "../live/live";
 import { PipPortal, pipSupported, usePip } from "../pip/pip";
 import { startCapture, uploadAndProcess, type Capture } from "../recorder/recorder";
-import { readInvoices, requestSheetsToken, sheetsConfigured } from "../recorder/sheets";
+import { readTab, requestSheetsToken, sheetsConfigured } from "../recorder/sheets";
 import type { Session } from "../types/contract";
-import { Empty, ErrorNote, PageHeader, fmtDuration, go, useWs } from "../ui";
+import { Empty, ErrorNote, PageHeader, scenarioInfo, fmtDuration, go, useWs } from "../ui";
 
 type Phase = "idle" | "starting" | "recording" | "uploading" | "done" | "error";
+const SANDBOX_MAX_S = 300;
 
 const LIVE_LABEL: Record<LiveStatus, string> = {
   connecting: "Connecting to Apprentice…",
@@ -95,7 +96,7 @@ function Companion(props: {
             Start recording
           </Button>
         ) : phase === "starting" ? (
-          <p className="text-sm text-muted-foreground">Pick the Sheets or Gmail tab to share…</p>
+          <p className="text-sm text-muted-foreground">Pick the tab you work in to share…</p>
         ) : null}
       </div>
     </div>
@@ -103,7 +104,7 @@ function Companion(props: {
 }
 
 export function Record() {
-  const { readOnly } = useWs();
+  const { readOnly, sandbox } = useWs();
   const pip = usePip();
   const [consent, setConsent] = useState(false);
   const [kind, setKind] = useState<Session["kind"]>("training");
@@ -134,7 +135,7 @@ export function Record() {
   const snapshot = async (phaseName: "before" | "after") => {
     if (!sheetToken || !sheetId || !sessionRef.current) return;
     try {
-      await sheetSnapshot(sessionRef.current.id, phaseName, await readInvoices(sheetId, sheetToken));
+      await sheetSnapshot(sessionRef.current.id, phaseName, await readTab(sheetId, scenarioInfo().sheet_tab, sheetToken));
     } catch (e) {
       setSheetMsg(`Sheet snapshot (${phaseName}) failed: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -202,6 +203,11 @@ export function Record() {
     }
   };
 
+  // Judge sandbox: recordings stop at 5:00 (the server refuses longer ones).
+  useEffect(() => {
+    if (sandbox && phase === "recording" && elapsed >= SANDBOX_MAX_S) void stop();
+  });
+
   if (readOnly)
     return (
       <Empty
@@ -235,7 +241,7 @@ export function Record() {
     <>
       <PageHeader
         title="Record a session"
-        description="Share the tab where you work the invoice queue. Apprentice records the tab and your microphone. Nothing is written to your Sheet or mailbox."
+        description={`Share the tab where you work (${scenarioInfo().title.toLowerCase()}). Apprentice records the tab and your microphone. Nothing is written to your Sheet, documents or mailbox.`}
       />
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -250,7 +256,11 @@ export function Record() {
                 <Checkbox id="consent" checked={consent} disabled={busy} onCheckedChange={(v) => setConsent(v === true)} />
                 <FieldContent>
                   <FieldLabel htmlFor="consent">I agree to record my screen and voice for this session</FieldLabel>
-                  <FieldDescription>It captures how I make decisions. I can stop at any time.</FieldDescription>
+                  <FieldDescription>
+                    It captures how I make decisions. I can stop at any time.
+                    {sandbox &&
+                      " In this sandbox a recording stops automatically at 5:00. Recordings and answers in this sandbox are visible to you and the Apprentice organisers, and are deleted after 14 days."}
+                  </FieldDescription>
                 </FieldContent>
               </Field>
               <Separator />
@@ -277,7 +287,7 @@ export function Record() {
               </Field>
               {sheetsConfigured() && (
                 <Field data-disabled={busy || undefined}>
-                  <FieldLabel htmlFor="sheet">Connect the invoice Sheet (optional)</FieldLabel>
+                  <FieldLabel htmlFor="sheet">Connect the work Sheet (optional)</FieldLabel>
                   <div className="flex gap-2">
                     <Input id="sheet" placeholder="Spreadsheet ID from the Sheet's URL" value={sheetId} disabled={busy} onChange={(e) => setSheetId(e.target.value.trim())} />
                     <Button
@@ -294,7 +304,7 @@ export function Record() {
                     </Button>
                   </div>
                   <FieldDescription>
-                    {sheetMsg ?? "Apprentice reads the Invoices tab before and after the session to see what changed. Read-only."}
+                    {sheetMsg ?? `Apprentice reads the "${scenarioInfo().sheet_tab}" tab before and after the session to see what changed. Read-only.`}
                   </FieldDescription>
                 </Field>
               )}

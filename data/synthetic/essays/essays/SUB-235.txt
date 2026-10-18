@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Aman Trivedi (SUB-235)
+
+The question is no longer whether machines can decide, but whether they should. A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern.
+
+As Okafor puts it, "Automation does not remove judgment from work; it moves judgment to the people who design the system and hides it from the people who live with its results." (Okafor, 2024, p. 41). Some decisions are reversible and cheap, and those are the ones machines handle best. The cost of an automated mistake is rarely paid by the people who chose to automate.
+
+We should automate the routine and keep a named person responsible for the rest.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

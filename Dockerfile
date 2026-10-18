@@ -8,6 +8,7 @@ RUN cd frontend && pnpm install --frozen-lockfile
 COPY frontend frontend
 COPY fixtures fixtures
 COPY shared shared
+COPY backend/app/domains backend/app/domains
 RUN mkdir -p backend/app && pnpm --dir frontend build
 
 # API: FastAPI + the built web app, one Cloud Run service.

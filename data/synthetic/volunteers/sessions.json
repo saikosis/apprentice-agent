@@ -1,0 +1,152 @@
+{
+  "s-01": {
+    "kind": "training",
+    "items": [
+      "R-301",
+      "R-302",
+      "R-303",
+      "R-304",
+      "R-305"
+    ],
+    "planted": [
+      "E1"
+    ],
+    "planted_items": {
+      "E1": [
+        "R-302"
+      ]
+    },
+    "notes": "Coordinator narrates lightly; the why comes from probes, not narration."
+  },
+  "s-02": {
+    "kind": "training",
+    "items": [
+      "R-306",
+      "R-307",
+      "R-308",
+      "R-309",
+      "R-310"
+    ],
+    "planted": [
+      "E2"
+    ],
+    "planted_items": {
+      "E2": [
+        "R-307"
+      ]
+    },
+    "notes": "Coordinator narrates lightly; the why comes from probes, not narration."
+  },
+  "s-03": {
+    "kind": "training",
+    "items": [
+      "R-311",
+      "R-312",
+      "R-313",
+      "R-314",
+      "R-315"
+    ],
+    "planted": [],
+    "planted_items": {},
+    "notes": "Coordinator narrates lightly; the why comes from probes, not narration."
+  },
+  "s-04": {
+    "kind": "training",
+    "items": [
+      "R-316",
+      "R-317",
+      "R-318",
+      "R-319",
+      "R-320"
+    ],
+    "planted": [
+      "E3"
+    ],
+    "planted_items": {
+      "E3": [
+        "R-318"
+      ]
+    },
+    "notes": "Coordinator narrates lightly; the why comes from probes, not narration."
+  },
+  "s-05": {
+    "kind": "training",
+    "items": [
+      "R-321",
+      "R-322",
+      "R-323",
+      "R-324",
+      "R-325"
+    ],
+    "planted": [
+      "E1"
+    ],
+    "planted_items": {
+      "E1": [
+        "R-322"
+      ]
+    },
+    "notes": "Coordinator narrates lightly; the why comes from probes, not narration."
+  },
+  "s-06": {
+    "kind": "training",
+    "items": [
+      "R-326",
+      "R-327",
+      "R-328",
+      "R-329",
+      "R-330"
+    ],
+    "planted": [
+      "E2",
+      "E3"
+    ],
+    "planted_items": {
+      "E2": [
+        "R-326"
+      ],
+      "E3": [
+        "R-327"
+      ]
+    },
+    "notes": "Coordinator narrates lightly; the why comes from probes, not narration."
+  },
+  "s-07": {
+    "kind": "heldout",
+    "items": [
+      "R-331",
+      "R-332",
+      "R-333",
+      "R-334",
+      "R-335"
+    ],
+    "planted": [
+      "E1"
+    ],
+    "planted_items": {
+      "E1": [
+        "R-332"
+      ]
+    },
+    "notes": "Coordinator narrates lightly; the why comes from probes, not narration."
+  },
+  "s-08": {
+    "kind": "heldout",
+    "items": [
+      "R-336",
+      "R-337",
+      "R-338",
+      "R-339",
+      "R-340"
+    ],
+    "planted": [
+      "E3"
+    ],
+    "planted_items": {
+      "E3": [
+        "R-338"
+      ]
+    },
+    "notes": "Coordinator narrates lightly; the why comes from probes, not narration."
+  }
+}

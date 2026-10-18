@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Rohan Das (SUB-205)
+
+The question is no longer whether machines can decide, but whether they should. The cost of an automated mistake is rarely paid by the people who chose to automate.
+
+A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern. Workers who supervise automated systems report that they stop questioning the output after a few months.
+
+We should automate the routine and keep a named person responsible for the rest.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

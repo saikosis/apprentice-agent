@@ -3,8 +3,8 @@
 import hashlib
 from typing import Any
 
-from backend.app import gemini
-from backend.app.contract import AgentRun, ExamCase, JudgeScore
+from backend.app import domains, gemini
+from backend.app.contract import AgentRun, ExamCase, JudgeScore, Scenario
 from backend.app.exam.arms import case_input
 
 WEIGHTS = (0.5, 0.25, 0.25)  # decision, rationale, edge case (SPEC §5)
@@ -26,7 +26,7 @@ def judge_view(case: ExamCase, run: AgentRun) -> dict[str, Any]:
     }
 
 
-async def score(case: ExamCase, run: AgentRun) -> JudgeScore:
+async def score(case: ExamCase, run: AgentRun, scenario: Scenario = "ap") -> JudgeScore:
     label = case.expert_label
     if label is None:
         raise ValueError(f"case {case.id} has no label")
@@ -48,6 +48,7 @@ async def score(case: ExamCase, run: AgentRun) -> JudgeScore:
         "judge",
         [gemini.data("Grading input", judge_view(case, run))],
         JudgeScore,
+        values=domains.values(scenario, exam=True),
     )
     j = out.output
     return j.model_copy(

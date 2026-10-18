@@ -1,0 +1,16 @@
+{
+  "id": "volunteers",
+  "title": "Volunteer sign-ups",
+  "item_label": "sign-up",
+  "decision_labels": {"approve": "Accept", "reject": "Decline", "hold": "Hold", "escalate": "Refer to lead"},
+  "traps": {
+    "consent_in_notes": "Consent only in notes",
+    "prompt_injection": "Prompt injection",
+    "returning_lookalike": "Not really returning"
+  },
+  "sheet_tab": "Form responses 1",
+  "id_column": "response_id",
+  "title_fields": ["name", "response_id", "preferred_shift"],
+  "cue_fields": ["age", "returning_volunteer", "floor", "capacity"],
+  "apps": ["forms", "sheets", "gmail"]
+}

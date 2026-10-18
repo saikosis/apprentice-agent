@@ -11,10 +11,10 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app import errors, gemini, prompts
-from backend.app.contract import SOP
+from backend.app import domains, errors, gemini, prompts, sandbox
+from backend.app.contract import SOP, Scenario
 from backend.app.routers.sessions import get_or_404
-from backend.app.store import LiveStore
+from backend.app.workspace import LiveStore
 
 router = APIRouter(tags=["live"])
 
@@ -26,7 +26,7 @@ LOG_DEVIATION = types.FunctionDeclaration(
     description=(
         "Call ONLY when the expert visibly does something that departs from a numbered SOP rule "
         "(skips a step, approves without a required check, rejects outside the rule). Do not call for "
-        "normal steps. Call at most once per invoice."
+        "normal steps. Call at most once per work item."
     ),
     behavior=types.Behavior.NON_BLOCKING,
     parameters=types.Schema(
@@ -36,7 +36,8 @@ LOG_DEVIATION = types.FunctionDeclaration(
                 type=types.Type.STRING, description="SOP section id, e.g. §3.2"
             ),
             "invoice_id": types.Schema(
-                type=types.Type.STRING, description="Invoice id visible on screen, e.g. INV-1043"
+                type=types.Type.STRING,
+                description="Id of the work item visible on screen (invoice, submission, sign-up)",
             ),
             "question": types.Schema(
                 type=types.Type.STRING,
@@ -58,10 +59,14 @@ class TokenReq(BaseModel):
     resume_handle: str | None = Field(default=None, max_length=4096)
 
 
-def live_config(sop: SOP, resume_handle: str | None) -> types.LiveConnectConfig:
+def live_config(
+    sop: SOP, resume_handle: str | None, scenario: Scenario = "ap"
+) -> types.LiveConnectConfig:
     return types.LiveConnectConfig(
         response_modalities=[types.Modality.AUDIO],
-        system_instruction=prompts.load("live_system").render(SOP=sop.full_text),
+        system_instruction=prompts.load("live_system").render(
+            **domains.values(scenario, SOP=sop.full_text)
+        ),
         tools=[types.Tool(function_declarations=[LOG_DEVIATION])],
         input_audio_transcription=types.AudioTranscriptionConfig(),
         output_audio_transcription=types.AudioTranscriptionConfig(),
@@ -77,14 +82,16 @@ def live_config(sop: SOP, resume_handle: str | None) -> types.LiveConnectConfig:
     )
 
 
-def token_config(sop: SOP, resume_handle: str | None, now: datetime) -> types.CreateAuthTokenConfig:
+def token_config(
+    sop: SOP, resume_handle: str | None, now: datetime, scenario: Scenario = "ap"
+) -> types.CreateAuthTokenConfig:
     # No lock_additional_fields: the whole setup comes from the token; browser setup is ignored.
     return types.CreateAuthTokenConfig(
         uses=1,
         expire_time=now + TOKEN_TTL,
         new_session_expire_time=now + NEW_SESSION_WINDOW,
         live_connect_constraints=types.LiveConnectConstraints(
-            model=gemini.LIVE_MODEL, config=live_config(sop, resume_handle)
+            model=gemini.LIVE_MODEL, config=live_config(sop, resume_handle, scenario)
         ),
     )
 
@@ -102,8 +109,10 @@ async def live_token(body: TokenReq, store: LiveStore) -> dict[str, object]:
     if not s.live_enabled or s.status not in ("created", "uploading"):
         raise errors.conflict(f"Session {s.id} isn't recording with live questions.")
     now = datetime.now(UTC)
+    if store.ws == "sandbox" and (now - s.started_at).total_seconds() > sandbox.LIVE_WINDOW_S:
+        raise errors.conflict("Live questions end with the 5 minutes of a sandbox recording.")
     token = await _client().aio.auth_tokens.create(
-        config=token_config(await store.current_sop(), body.resume_handle, now)
+        config=token_config(await store.current_sop(), body.resume_handle, now, store.scenario)
     )
     return {
         "token": token.name,

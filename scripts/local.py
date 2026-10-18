@@ -12,6 +12,8 @@ GCP_PROJECT + MA_TEMPLATE are set and you have credentials.
     uv run --env-file .env python -m scripts.local generate-cases --heldout s-xxxx s-yyyy
     uv run --env-file .env python -m scripts.local label c-01 approve "Ties to the consignment statement."
     uv run --env-file .env python -m scripts.run_exam --ws live --runs 3
+
+Other scenarios: put --scenario essays|volunteers before the command (and on run_exam).
 """
 
 import argparse
@@ -20,11 +22,11 @@ import json
 import os
 import sys
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, get_args
 
 os.environ.setdefault("LOCAL_DB", "data/local.json")
 
-from backend.app.contract import ExpertLabel, ProbeAnswer, Session
+from backend.app.contract import ExpertLabel, ProbeAnswer, Scenario, Session
 from backend.app.store import Store, new_id
 
 
@@ -33,13 +35,19 @@ def show(obj: Any) -> None:
 
 
 async def main(args: argparse.Namespace) -> None:
-    store = Store("live")
+    store = Store("live", scenario=args.scenario)
     match args.cmd:
         case "seed-sop":
-            from scripts.make_synthetic import build_sop
+            from scripts import make_synthetic, synthetic_essays, synthetic_volunteers
 
-            await store.sop.put(build_sop())
-            print("stored SOP AP-SOP-07")
+            builders = {
+                "ap": make_synthetic.build_sop,
+                "essays": synthetic_essays.build_sop,
+                "volunteers": synthetic_volunteers.build_sop,
+            }
+            sop = builders[args.scenario]()
+            await store.sop.put(sop)
+            print(f"stored SOP {sop.id}")
         case "process":
             from backend.app.pipeline import files, segment
 
@@ -129,8 +137,7 @@ async def main(args: argparse.Namespace) -> None:
                         "id": c.id,
                         "origin": c.origin,
                         "trap": c.trap_type,
-                        "vendor": c.invoice.vendor_name,
-                        "amount": c.invoice.amount_inr,
+                        "item": c.item,
                         "tests": c.tests_rule,
                     }
                     for c in cases
@@ -155,6 +162,7 @@ def cli() -> None:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    ap.add_argument("--scenario", choices=get_args(Scenario), default="ap")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("seed-sop")
     p = sub.add_parser("process")

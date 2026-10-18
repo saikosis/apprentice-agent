@@ -15,6 +15,41 @@ class M(BaseModel):
 Timestamp = str  # "MM:SS" (H:MM:SS if > 1h)
 Decision = Literal["approve", "reject", "hold", "escalate"]
 Arm = Literal["sop_only", "sop_graph"]
+Scenario = Literal["ap", "essays", "volunteers"]  # domain packs in backend/app/domains/
+
+
+class SandboxUsage(M):
+    recordings: int = 0
+    graph_builds: int = 0
+    exam_runs: int = 0
+    case_generations: int = 0
+
+
+class SandboxInfo(M):
+    """A judge's sandbox (docs/Judge_Sandbox.md). Stored at sandboxes/{uid}; global counts filled on read."""
+
+    uid: str
+    email: str
+    created_at: datetime
+    usage: SandboxUsage = SandboxUsage()
+    limit_each: int = 5
+    global_today: int = 0
+    global_limit: int = 100
+
+
+class ScenarioInfo(M):
+    """What the UI needs to know about a scenario (backend/app/domains/<id>/config.json)."""
+
+    id: Scenario
+    title: str
+    item_label: str  # "invoice" / "submission" / "registration"
+    decision_labels: dict[str, str]  # Decision -> label shown in this scenario
+    traps: dict[str, str]  # trap_type -> label
+    sheet_tab: str  # tab Connect Sheet reads
+    id_column: str  # column holding the work item id
+    title_fields: list[str]  # item fields that name an exam case
+    cue_fields: list[str]  # item/reference fields an exam-miss question mentions (never the answer)
+    apps: list[str]
 
 
 class ClipRef(M):
@@ -39,7 +74,9 @@ class SOP(M):
 
 class ModerationResult(M):
     id: str
-    target_kind: Literal["segment", "probe_answer", "exam_input", "agent_output", "email"]
+    target_kind: Literal[
+        "segment", "probe_answer", "exam_input", "agent_output", "email", "summary", "workflow"
+    ]
     target_id: str
     template: str
     match_found: bool
@@ -51,7 +88,7 @@ class ModerationResult(M):
 
 class Session(M):
     id: str
-    workspace: Literal["demo", "live"]
+    workspace: Literal["demo", "live", "sandbox"]
     expert_uid: str
     kind: Literal["training", "heldout"]
     status: Literal["created", "uploading", "uploaded", "processing", "processed", "failed"]
@@ -67,12 +104,15 @@ class Session(M):
     error: str | None = None
 
 
+# `invoice_id` / `vendor` (Segment, Deviation, CellChange) hold the work item's id and its owner in every scenario:
+# an invoice and vendor (ap), a submission and student (essays), a sign-up and volunteer (volunteers). The names are
+# kept from the first scenario; the UI labels them with ScenarioInfo.item_label.
 class Segment(M):
     id: str
     session_id: str
     start_ts: Timestamp
     end_ts: Timestamp
-    app: Literal["sheets", "gmail", "other"]
+    app: Literal["sheets", "gmail", "docs", "forms", "calendar", "other"]
     action: str
     invoice_id: str | None = None
     vendor: str | None = None
@@ -81,6 +121,22 @@ class Segment(M):
     on_screen_text: str = ""
     moderation_id: str | None = None
     quarantined: bool = False
+
+
+class SummaryItem(M):
+    invoice_id: str | None = None  # the work item (see the note above Segment)
+    steps: list[str]  # what the expert did with it, in order
+
+
+class SessionSummary(M):
+    """Plain-language account of one session (prompts/summary.md). Display only."""
+
+    session_id: str
+    summary: str  # 3-5 sentences
+    items: list[SummaryItem]
+    prompt_version: str = ""
+    moderation_id: str | None = None
+    flagged: bool = False  # Model Armor matched: shown as "kept out", never as trusted text
 
 
 class Deviation(M):
@@ -106,6 +162,25 @@ class Variant(M):
     deviation_ids: list[str]
     exemplar_clips: list[ClipRef]
     frequency: int
+
+
+class WorkflowStep(M):
+    n: int
+    text: str
+    sop_rule: str | None = None  # the section it matches, when it does
+    in_sop: bool
+    session_ids: list[str]
+
+
+class ObservedWorkflow(M):
+    """The expert's actual procedure across sessions (prompts/observed_workflow.md). Display only:
+    never an input to the graph builder, the case writer or the agents."""
+
+    steps: list[WorkflowStep]
+    built_at: datetime | None = None
+    prompt_version: str = ""
+    moderation_id: str | None = None
+    flagged: bool = False
 
 
 class Probe(M):
@@ -156,7 +231,7 @@ class DecisionGraph(M):
     edges: list[DecisionEdge]
 
 
-class InvoiceRow(M):
+class InvoiceRow(M):  # the AP synthetic generator's row shape (scripts/make_synthetic.py)
     invoice_id: str
     vendor_id: str
     vendor_name: str
@@ -192,10 +267,14 @@ class ExpertLabel(M):
 class ExamCase(M):
     id: str
     origin: Literal["heldout", "generated"]
-    trap_type: Literal["none", "consignment_lookalike", "prompt_injection", "duplicate_renumbered"]
+    trap_type: str  # "none" or a key of the scenario's ScenarioInfo.traps
     tests_rule: str | None = None  # exception/variant name being tested
-    invoice: InvoiceRow
-    vendor_master_row: dict[str, str]
+    item: dict[
+        str, str
+    ]  # the work item as the successor sees it (invoice row, grade-book row, sign-up)
+    reference_row: dict[
+        str, str
+    ]  # its row in the scenario's reference table (vendor, student, shift)
     emails: list[Email]
     context: str
     expert_label: ExpertLabel | None = None  # judge-only
@@ -283,7 +362,7 @@ class SheetSnapshot(M):
     session_id: str
     phase: Literal["before", "after"]
     taken_at: datetime
-    rows: list[InvoiceRow]
+    rows: list[dict[str, str]]  # header -> cell text, from the scenario's sheet_tab
 
 
 class SheetDiff(M):

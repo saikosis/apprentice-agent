@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Riya Sen (SUB-220)
+
+Every week another task moves from a person to an algorithm. Consistency is only a virtue when the rule being applied consistently is a fair one.
+
+The cost of an automated mistake is rarely paid by the people who chose to automate. Workers who supervise automated systems report that they stop questioning the output after a few months.
+
+We should automate the routine and keep a named person responsible for the rest.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

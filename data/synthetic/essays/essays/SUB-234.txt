@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Shreya Ghosh (SUB-234)
+
+Automated decisions promise speed and consistency, and they often deliver both. A hospital that triages patients by software can see more people, but it can also miss the patient who does not fit the pattern.
+
+Workers who supervise automated systems report that they stop questioning the output after a few months. Some decisions are reversible and cheap, and those are the ones machines handle best.
+
+We should automate the routine and keep a named person responsible for the rest.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

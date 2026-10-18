@@ -1,0 +1,34 @@
+{
+  "items": [
+    "SUB-301",
+    "SUB-302",
+    "SUB-303",
+    "SUB-304",
+    "SUB-305",
+    "SUB-306"
+  ],
+  "planted_items": {
+    "E1": [
+      "SUB-301",
+      "SUB-302"
+    ],
+    "E2": [
+      "SUB-303",
+      "SUB-304"
+    ],
+    "E3": [
+      "SUB-305",
+      "SUB-306"
+    ]
+  },
+  "rules": {
+    "E1": "Late essay from a student with an approved accommodation: no late deduction",
+    "E2": "A passage copied without quotation marks: talk to the student first, not a zero",
+    "E3": "Late essay whose extension was asked for before the deadline: no deduction"
+  },
+  "files": [
+    "essays.xlsx",
+    "starter_emails.txt",
+    "essays.zip"
+  ]
+}
