@@ -6,6 +6,8 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { ErrorNote } from "../ui";
 
+const CODE_URL = "https://github.com/saikosis/apprentice-agent/blob/main/sandbox_code/code.txt";
+
 // Shown to any signed-in account that isn't the expert's: the judge code opens a private sandbox.
 export function JoinSandbox({ email, onJoined, footer }: { email?: string; onJoined: () => void; footer?: React.ReactNode }) {
   const [code, setCode] = useState("");
@@ -38,6 +40,12 @@ export function JoinSandbox({ email, onJoined, footer }: { email?: string; onJoi
               Open my sandbox
             </Button>
           </div>
+          <p className="text-sm text-muted-foreground">
+            The judge code is at{" "}
+            <a href={CODE_URL} target="_blank" rel="noreferrer" className="break-all text-foreground underline underline-offset-2">
+              github.com/saikosis/apprentice-agent/blob/main/sandbox_code/code.txt
+            </a>
+          </p>
         </form>
         {err && <ErrorNote>{err}</ErrorNote>}
         {footer}
