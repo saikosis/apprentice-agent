@@ -212,29 +212,39 @@ class Store:
         self.check_writable()
         gone_devs = {d.id for d in await self.deviations(session_id).list()}
         gone_variants = set()
+        clips = {}  # surviving pattern -> its clips, none of this session
         for v in await self.variants.list():
             if session_id not in v.session_ids:
+                clips[v.id] = v.exemplar_clips
                 continue
             devs = [d for d in v.deviation_ids if d not in gone_devs]
             if len(devs) < 2:
                 gone_variants.add(v.id)
                 await self.variants.delete(v.id)
                 continue
+            clips[v.id] = [c for c in v.exemplar_clips if c.session_id != session_id]
             await self.variants.put(
                 v.model_copy(
                     update={
                         "session_ids": [x for x in v.session_ids if x != session_id],
                         "deviation_ids": devs,
                         "frequency": len(devs),
-                        "exemplar_clips": [
-                            c for c in v.exemplar_clips if c.session_id != session_id
-                        ],
+                        "exemplar_clips": clips[v.id],
                     }
                 )
             )
+        # A question goes if it is about this session (its own, or its clip is from here), unless it
+        # asks about a pattern that lives on; that one keeps a clip from another session instead.
         for p in await self.probes.list():
-            if p.session_id == session_id or (p.variant_id and p.variant_id in gone_variants):
+            on_clip = p.clip is not None and p.clip.session_id == session_id
+            if p.variant_id in gone_variants or (
+                (p.session_id == session_id or on_clip) and p.variant_id not in clips
+            ):
                 await self.probes.delete(p.id)
+            elif on_clip and p.variant_id:
+                await self.probes.put(
+                    p.model_copy(update={"clip": next(iter(clips[p.variant_id]), None)})
+                )
         w = await self.get_observed_workflow()
         if w and any(session_id in step.session_ids for step in w.steps):
             steps = [

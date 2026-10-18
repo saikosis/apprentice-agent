@@ -1241,3 +1241,52 @@ def test_a_pattern_seen_in_other_sessions_keeps_them(
     assert kept["frequency"] == 2 and all(c["session_id"] != sid for c in kept["exemplar_clips"])
     steps = api.client.get("/api/observed-workflow").json()["steps"]
     assert [(x["text"], x["session_ids"]) for x in steps] == [("kept", ["s-b"])]
+
+
+def test_deleting_a_session_removes_every_question_about_it(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from backend.app.contract import ClipRef, Probe, Variant
+
+    judge(api, monkeypatch)
+    sid = new_session(api)["id"]
+    mine = store.Store("sandbox", api.db, uid="u-j1")
+
+    def probe(pid: str, clip_session: str, variant: str | None = None) -> Probe:
+        return Probe(
+            id=pid,
+            source="batch",
+            cdm_type="cue",
+            question=pid,
+            variant_id=variant,
+            clip=ClipRef(session_id=clip_session, start_ts="00:10", end_ts="00:30"),
+            created_at=NOW,
+        )
+
+    async def setup() -> None:
+        clips = [ClipRef(session_id=x, start_ts="01:00", end_ts="01:20") for x in (sid, "s-b")]
+        await mine.variants.put(
+            Variant(
+                id="v-kept",
+                name="n",
+                description="d",
+                sop_rules=["§3.2"],
+                session_ids=[sid, "s-b", "s-c"],
+                deviation_ids=["d-a", "d-b", "d-c"],
+                exemplar_clips=clips,
+                frequency=3,
+            )
+        )
+        await mine.probes.put(
+            probe("p-renamed", sid, "var-old-name")
+        )  # its pattern was renamed by a later run
+        await mine.probes.put(
+            probe("p-kept", sid, "v-kept")
+        )  # the pattern lives on in other sessions
+        await mine.probes.put(probe("p-other", "s-b"))
+
+    asyncio.run(setup())
+    assert api.client.delete(f"/api/sessions/{sid}").status_code == 200
+    left = {p["id"]: p for p in api.client.get("/api/probes").json()}
+    assert set(left) == {"p-kept", "p-other"}
+    assert left["p-kept"]["clip"]["session_id"] == "s-b"  # no clip of a deleted recording
