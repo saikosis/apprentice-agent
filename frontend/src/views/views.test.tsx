@@ -39,6 +39,8 @@ describe("views render against fixtures", () => {
     demo(<Overview />);
     expect(await screen.findByText("Most repeated departures")).toBeTruthy();
     expect(screen.getByText("Instructions hidden in an email")).toBeTruthy();
+    expect(screen.getByText(/Want to try it yourself\?/)).toBeTruthy(); // demo only: invites judges to their sandbox
+    expect(screen.getByRole("link", { name: "Sign in to try it" }).getAttribute("href")).toBe("/");
   });
 
   it("Sessions", async () => {

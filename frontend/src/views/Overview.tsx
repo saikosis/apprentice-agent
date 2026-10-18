@@ -1,7 +1,9 @@
-import { CheckIcon, MessageCircleQuestionIcon, MessageSquareTextIcon, ShieldAlertIcon, TrendingUpIcon, XIcon } from "lucide-react";
+import { CheckIcon, FlaskConicalIcon, MessageCircleQuestionIcon, MessageSquareTextIcon, ShieldAlertIcon, TrendingUpIcon, XIcon } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from "recharts";
 import { getGraph, latestReport, listProbes, listSessions, listVariants, type ProbeWithAnswer } from "../api/client";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "../components/ui/chart";
 import { Progress } from "../components/ui/progress";
@@ -163,7 +165,9 @@ function Patterns({ variants }: { variants: Awaited<ReturnType<typeof listVarian
               <span className="ml-auto shrink-0 text-muted-foreground tabular-nums">{v.frequency}×</span>
             </div>
             <Progress value={(v.frequency / max) * 100} className="h-2 [&>[data-slot=progress-indicator]]:bg-chart-1" aria-label={`${v.name}: seen ${v.frequency} times`} />
-            <span className="text-xs text-muted-foreground">in {v.session_ids.length} sessions</span>
+            <span className="text-xs text-muted-foreground">
+                  in {v.session_ids.length} {v.session_ids.length === 1 ? "session" : "sessions"}
+                </span>
           </a>
         ))}
       </CardContent>
@@ -306,8 +310,22 @@ export function Overview() {
           <>
             <PageHeader
               title="Overview"
-              description={`${sessions.length} sessions recorded, ${processed} analysed. What the expert knows that the SOP doesn't say, and whether it carries over.`}
+              description={`${sessions.length} ${sessions.length === 1 ? "session" : "sessions"} recorded, ${processed} analysed. What the expert knows that the SOP doesn't say, and whether it carries over.`}
             />
+            {ws === "demo" && (
+              <Alert className="mb-4">
+                <FlaskConicalIcon />
+                <AlertTitle>Want to try it yourself?</AlertTitle>
+                <AlertDescription>
+                  Sign in, enter the judge code from the submission notes, and record in your own sandbox.
+                </AlertDescription>
+                <AlertAction>
+                  <Button size="sm" asChild>
+                    <a href="/">Sign in to try it</a>
+                  </Button>
+                </AlertAction>
+              </Alert>
+            )}
             <div className="grid gap-4 lg:grid-cols-3">
               {report?.per_arm.sop_only && report.per_arm.sop_graph ? (
                 <ExamHero r={report} />
