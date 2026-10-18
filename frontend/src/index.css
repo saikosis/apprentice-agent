@@ -88,6 +88,7 @@
     --sidebar-accent-foreground: oklch(0.38 0.07 186);
     --sidebar-border: oklch(0.91 0.005 250);
     --sidebar-ring: oklch(0.6 0.09 186);
+    --tour-dim: oklch(0.2 0.01 250 / 45%);
 }
 
 .dark {
@@ -126,6 +127,7 @@
     --sidebar-accent-foreground: oklch(0.88 0.09 182);
     --sidebar-border: oklch(1 0 0 / 8%);
     --sidebar-ring: oklch(0.7 0.1 182);
+    --tour-dim: oklch(0 0 0 / 62%);
 }
 
 @layer base {
@@ -158,6 +160,27 @@
   .pip-body {
     @apply m-0 flex min-h-svh bg-card text-card-foreground;
   }
+  /* Guided tour: the spotlight dims everything around its target; the centred card dims the whole page. */
+  .tour-spot {
+    box-shadow: 0 0 0 200vmax var(--tour-dim);
+  }
+  .tour-dim {
+    background: var(--tour-dim);
+  }
+  /* A pulsing dot that says "look here". */
+  .beacon {
+    @apply relative block size-2.5 rounded-full bg-primary;
+  }
+  .beacon::after {
+    @apply absolute inset-0 rounded-full bg-primary;
+    content: "";
+    animation: beacon 1.8s ease-out infinite;
+  }
+}
+
+@keyframes beacon {
+  from { transform: scale(1); opacity: 0.7; }
+  to { transform: scale(3.2); opacity: 0; }
 }
 
 @keyframes rec {

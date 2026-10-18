@@ -1,6 +1,7 @@
 import type { User } from "firebase/auth";
 import {
   CircleDotIcon,
+  CompassIcon,
   GraduationCapIcon,
   LayoutDashboardIcon,
   UsersIcon,
@@ -50,6 +51,7 @@ import {
 import { Skeleton } from "./components/ui/skeleton";
 import { TooltipProvider } from "./components/ui/tooltip";
 import "./index.css";
+import { Beacon, TOUR_STEPS, Tour, useBeacons, useTour } from "./tour";
 import { ClipProvider, ErrorNote, WsContext, useRoute } from "./ui";
 import { Admin } from "./views/Admin";
 import { SandboxHome } from "./views/SandboxHome";
@@ -82,6 +84,16 @@ const NAV: [string, string, LucideIcon][] = [
   ["exam", "Successor exam", GraduationCapIcon],
 ];
 
+// The sidebar's "try this next" dots, in the order the work happens.
+const BEACON_TIPS: Record<string, string> = {
+  sessions: "Open a recording to see its summary and jump to the moments that mattered.",
+  probes: "Apprentice's why questions wait here. Your answers become the graph's rules.",
+  discovery: "Departures you made more than once, and the workflow you actually followed.",
+  graph: "The SOP plus your exceptions, each linked to its video moment.",
+  exam: "Test an AI successor with and without your graph on cases you label.",
+};
+const BEACON_ORDER = Object.keys(BEACON_TIPS);
+
 function Page({ parts }: { parts: string[] }) {
   const [head, id] = parts;
   if (head === "sessions" && id) return <SessionDetail id={id} />;
@@ -110,6 +122,14 @@ function ThemeToggle() {
   return (
     <Button variant="outline" size="icon" onClick={flip} aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}>
       {dark ? <SunIcon /> : <MoonIcon />}
+    </Button>
+  );
+}
+
+function TourButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button variant="outline" size="icon" onClick={onClick} aria-label="Start the guided tour" title="Guided tour" data-tour="tour">
+      <CompassIcon />
     </Button>
   );
 }
@@ -195,13 +215,18 @@ function AppSidebar({
   readOnly,
   admin,
   judge,
+  beacons,
+  account,
 }: {
   current: string;
   readOnly: boolean;
   admin: boolean;
   judge: boolean;
+  beacons: boolean;
+  account: string | null;
 }) {
   const scenario = useScenarioId();
+  const beacon = useBeacons(account, BEACON_ORDER, current);
   return (
     <Sidebar>
       <SidebarHeader className="h-16 justify-center border-b">
@@ -214,7 +239,7 @@ function AppSidebar({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <Select value={scenario} onValueChange={(v) => switchScenario(v as (typeof SCENARIOS)[number]["id"])}>
-              <SelectTrigger id="scenario" className="w-full">
+              <SelectTrigger id="scenario" className="w-full" data-tour="workflow">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -239,11 +264,18 @@ function AppSidebar({
               ].map(([path, label, Icon]) => (
                 <SidebarMenuItem key={path}>
                   <SidebarMenuButton asChild isActive={current === path} size="lg" tooltip={label}>
-                    <a href={`#/${path}`} aria-current={current === path ? "page" : undefined}>
+                    <a
+                      href={`#/${path}`}
+                      aria-current={current === path ? "page" : undefined}
+                      data-tour={`nav-${path || "overview"}`}
+                    >
                       <Icon />
                       <span>{label}</span>
                     </a>
                   </SidebarMenuButton>
+                  {beacons && beacon.next === path && (
+                    <Beacon tip={BEACON_TIPS[path]} onSeen={() => beacon.mark(path)} />
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -253,7 +285,7 @@ function AppSidebar({
       {!readOnly && (
         <SidebarFooter className="p-3">
           <Button asChild>
-            <a href="#/record">
+            <a href="#/record" data-tour="record">
               <CircleDotIcon data-icon="inline-start" />
               Record a session
             </a>
@@ -297,6 +329,8 @@ function App() {
   const viewing = viewingSandbox();
   const isAdmin = Boolean(who && "is_admin" in who && who.is_admin);
   const current = parts[0] ?? "";
+  // Starts by itself on each account's first sign-in (never in the demo, which has no sign-in).
+  const tour = useTour(SKIP_AUTH || !who || "error" in who || who.role === "none" ? null : account);
 
   const checking = (label: string) => (
     <main className="flex min-h-svh items-center justify-center p-4">
@@ -343,6 +377,8 @@ function App() {
             readOnly={IS_DEMO || Boolean(viewing)}
             admin={isAdmin}
             judge={Boolean(who && "role" in who && who.role === "judge")}
+            beacons={!tour.open}
+            account={IS_DEMO ? "demo" : account}
           />
           <SidebarInset className="min-w-0">
             <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-6">
@@ -373,6 +409,7 @@ function App() {
                 </span>
               )}
               <div className="ml-auto flex items-center gap-2">
+                <TourButton onClick={tour.start} />
                 <ThemeToggle />
                 {IS_DEMO ? (
                   <Button variant="outline" asChild>
@@ -404,6 +441,7 @@ function App() {
               </Suspense>
             </main>
           </SidebarInset>
+          <Tour key={tour.run} steps={TOUR_STEPS} open={tour.open} onClose={tour.end} />
         </SidebarProvider>
       </ClipProvider>
     </WsContext.Provider>
