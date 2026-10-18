@@ -79,12 +79,10 @@ describe("useTour", () => {
   it("starts by itself once per account, and on demand", () => {
     const first = render(<Harness account="u1" />);
     expect(screen.getByText("open")).toBeTruthy();
-    act(() => fireEvent.click(screen.getByText("end")));
-    expect(screen.getByText("closed")).toBeTruthy();
-    first.unmount();
+    first.unmount(); // left mid-tour: reload, tab closed, signed out
 
     const again = render(<Harness account="u1" />);
-    expect(screen.getByText("closed")).toBeTruthy(); // seen already
+    expect(screen.getByText("closed")).toBeTruthy(); // shown once already: never again by itself
     act(() => fireEvent.click(screen.getByText("start")));
     expect(screen.getByText("open")).toBeTruthy();
     again.unmount();

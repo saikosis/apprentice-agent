@@ -82,22 +82,22 @@ const store = {
 
 const seenKey = (account: string) => `apprentice:tour-seen:${account}`;
 
-/** Opens by itself the first time an account signs in; `end` remembers that for next time. `run` changes on
- * every start, so keying the Tour on it restarts from step 1 even mid-tour. */
+/** Opens by itself only the first time an account signs in: it counts as seen the moment it opens, so leaving
+ * mid-tour (reload, sign out) doesn't bring it back. `run` changes on every start, so keying the Tour on it
+ * restarts from step 1 even mid-tour. */
 export function useTour(account: string | null) {
   const [open, setOpen] = useState(false);
   const [run, setRun] = useState(0);
   useEffect(() => {
-    if (account && !store.get(seenKey(account))) setOpen(true);
+    if (!account || store.get(seenKey(account))) return;
+    store.set(seenKey(account), "1");
+    setOpen(true);
   }, [account]);
   const start = useCallback(() => {
     setOpen(true);
     setRun((n) => n + 1);
   }, []);
-  const end = useCallback(() => {
-    if (account) store.set(seenKey(account), "1");
-    setOpen(false);
-  }, [account]);
+  const end = useCallback(() => setOpen(false), []);
   return { open, run, start, end };
 }
 
