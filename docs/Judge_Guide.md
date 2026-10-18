@@ -75,7 +75,7 @@ sandboxes** in the sidebar: that sandbox is listed, and **View** opens it read-o
 - **Change the code:** redeploy with a new `SANDBOX_CODE`. Judges who already joined keep their sandbox.
 - **Limits:**
   - per judge: 5 recordings, 20 graph builds (including pattern runs), 20 exam runs and 20 exam case sets
-  - across all judges: 100 actions a day
+  - across all judges: 300 actions a day
 - **Deletion:** sandboxes are deleted after 14 days. Judges can also reset or delete their own.
 
 ## Part 2: text for the submission notes

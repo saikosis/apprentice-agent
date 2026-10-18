@@ -37,7 +37,7 @@ when no pattern has emerged yet.
 - Per judge, per day-independent totals: **5 recordings, 20 graph builds, 20 exam runs, 20 case generations** (raised from 5 each on Oct 18; recordings stay at 5 because they are the costly video calls).
 - Recording: **auto-stops at 5:00** in the browser; the server rejects `duration_s > 330` (5:30 grace) for sandbox
   sessions. No minimum.
-- Across all judges: **100 sandbox actions per day** (IST day; an action = any of the four above). Off switch:
+- Across all judges: **300 sandbox actions per day** (raised from 100 on Oct 18) (IST day; an action = any of the four above). Off switch:
   `SANDBOX_ENABLED=0`.
 - Limits are enforced on the server and shown on the sandbox start page ("2 of 5 recordings used").
 
