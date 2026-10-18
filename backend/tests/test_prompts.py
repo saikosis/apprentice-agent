@@ -7,7 +7,7 @@ from backend.app import contract, prompts
 
 def test_every_prompt_file_loads_with_valid_front_matter() -> None:
     files = sorted(Path(prompts.PROMPTS_DIR).glob("*.md"))
-    assert len(files) == 10
+    assert len(files) == 12
     for f in files:
         p = prompts.load(f.stem)
         assert p.id == f.stem

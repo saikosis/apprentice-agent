@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from backend.app import domains
 from backend.app.contract import CellChange, SheetDiff, SheetSnapshot
 from backend.app.routers.sessions import get_or_404
-from backend.app.store import LiveStore
+from backend.app.workspace import LiveStore
 
 router = APIRouter(tags=["sheets"])
 

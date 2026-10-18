@@ -1,8 +1,11 @@
 import type { User } from "firebase/auth";
 import {
   CircleDotIcon,
+  CompassIcon,
   GraduationCapIcon,
   LayoutDashboardIcon,
+  UsersIcon,
+  FlaskConicalIcon,
   MessageCircleQuestionIcon,
   MoonIcon,
   NetworkIcon,
@@ -11,9 +14,18 @@ import {
   VideoIcon,
   type LucideIcon,
 } from "lucide-react";
-import { StrictMode, Suspense, lazy, useEffect, useState } from "react";
+import { StrictMode, Suspense, lazy, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
-import { SCENARIOS, currentScenario, me, switchScenario } from "./api/client";
+import {
+  SCENARIOS,
+  currentScenario,
+  me,
+  subscribeScenario,
+  switchScenario,
+  viewKey,
+  viewSandbox,
+  viewingSandbox,
+} from "./api/client";
 import { authConfigured, signIn, signOut, watchUser } from "./auth";
 import { Avatar, AvatarFallback } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
@@ -39,8 +51,12 @@ import {
 import { Skeleton } from "./components/ui/skeleton";
 import { TooltipProvider } from "./components/ui/tooltip";
 import "./index.css";
+import { Beacon, TOUR_STEPS, Tour, useBeacons, useTour } from "./tour";
 import { ClipProvider, ErrorNote, WsContext, useRoute } from "./ui";
+import { Admin } from "./views/Admin";
+import { SandboxHome } from "./views/SandboxHome";
 import { Discovery } from "./views/Discovery";
+import { JoinSandbox } from "./views/JoinSandbox";
 import { Probes } from "./views/Probes";
 import { SessionDetail } from "./views/SessionDetail";
 import { Sessions } from "./views/Sessions";
@@ -68,6 +84,16 @@ const NAV: [string, string, LucideIcon][] = [
   ["exam", "Successor exam", GraduationCapIcon],
 ];
 
+// The sidebar's "try this next" dots, in the order the work happens.
+const BEACON_TIPS: Record<string, string> = {
+  sessions: "Open a recording to see its summary and jump to the moments that mattered.",
+  probes: "Apprentice's why questions wait here. Your answers become the graph's rules.",
+  discovery: "Departures you made more than once, and the workflow you actually followed.",
+  graph: "The SOP plus your exceptions, each linked to its video moment.",
+  exam: "Test an AI successor with and without your graph on cases you label.",
+};
+const BEACON_ORDER = Object.keys(BEACON_TIPS);
+
 function Page({ parts }: { parts: string[] }) {
   const [head, id] = parts;
   if (head === "sessions" && id) return <SessionDetail id={id} />;
@@ -77,6 +103,8 @@ function Page({ parts }: { parts: string[] }) {
   if (head === "discovery") return <Discovery />;
   if (head === "graph") return <GraphView />;
   if (head === "exam") return <Exam />;
+  if (head === "admin") return <Admin />;
+  if (head === "sandbox") return <SandboxHome />;
   return <Overview />;
 }
 
@@ -94,6 +122,14 @@ function ThemeToggle() {
   return (
     <Button variant="outline" size="icon" onClick={flip} aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}>
       {dark ? <SunIcon /> : <MoonIcon />}
+    </Button>
+  );
+}
+
+function TourButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button variant="outline" size="icon" onClick={onClick} aria-label="Start the guided tour" title="Guided tour" data-tour="tour">
+      <CompassIcon />
     </Button>
   );
 }
@@ -171,7 +207,26 @@ function NotExpert({ email, error }: { email?: string; error?: string }) {
   );
 }
 
-function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean }) {
+const useScenarioId = () => useSyncExternalStore(subscribeScenario, () => currentScenario().id);
+const useViewKey = () => useSyncExternalStore(subscribeScenario, viewKey);
+
+function AppSidebar({
+  current,
+  readOnly,
+  admin,
+  judge,
+  beacons,
+  account,
+}: {
+  current: string;
+  readOnly: boolean;
+  admin: boolean;
+  judge: boolean;
+  beacons: boolean;
+  account: string | null;
+}) {
+  const scenario = useScenarioId();
+  const beacon = useBeacons(account, BEACON_ORDER, current);
   return (
     <Sidebar>
       <SidebarHeader className="h-16 justify-center border-b">
@@ -183,8 +238,8 @@ function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean 
             <label htmlFor="scenario">Workflow</label>
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <Select value={currentScenario().id} onValueChange={(v) => switchScenario(v as (typeof SCENARIOS)[number]["id"])}>
-              <SelectTrigger id="scenario" className="w-full">
+            <Select value={scenario} onValueChange={(v) => switchScenario(v as (typeof SCENARIOS)[number]["id"])}>
+              <SelectTrigger id="scenario" className="w-full" data-tour="workflow">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -202,14 +257,25 @@ function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean 
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV.map(([path, label, Icon]) => (
+              {[
+                ...(judge ? ([["sandbox", "My sandbox", FlaskConicalIcon]] as typeof NAV) : []),
+                ...NAV,
+                ...(admin ? ([["admin", "Judge sandboxes", UsersIcon]] as typeof NAV) : []),
+              ].map(([path, label, Icon]) => (
                 <SidebarMenuItem key={path}>
                   <SidebarMenuButton asChild isActive={current === path} size="lg" tooltip={label}>
-                    <a href={`#/${path}`} aria-current={current === path ? "page" : undefined}>
+                    <a
+                      href={`#/${path}`}
+                      aria-current={current === path ? "page" : undefined}
+                      data-tour={`nav-${path || "overview"}`}
+                    >
                       <Icon />
                       <span>{label}</span>
                     </a>
                   </SidebarMenuButton>
+                  {beacons && beacon.next === path && (
+                    <Beacon tip={BEACON_TIPS[path]} onSeen={() => beacon.mark(path)} />
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -219,7 +285,7 @@ function AppSidebar({ current, readOnly }: { current: string; readOnly: boolean 
       {!readOnly && (
         <SidebarFooter className="p-3">
           <Button asChild>
-            <a href="#/record">
+            <a href="#/record" data-tour="record">
               <CircleDotIcon data-icon="inline-start" />
               Record a session
             </a>
@@ -239,6 +305,7 @@ function App() {
   // tied to the account it was asked for, so a late reply or an account switch can't gate the wrong one.
   const account = DEV_AUTH ? "dev" : (user?.uid ?? null);
   const [answer, setAnswer] = useState<{ account: string; who: Me | { error: string } } | null>(null);
+  const [meNonce, setMeNonce] = useState(0); // bumped after the judge code is accepted
   useEffect(() => {
     if (SKIP_AUTH || !account) return;
     let current = true;
@@ -249,11 +316,21 @@ function App() {
     return () => {
       current = false;
     };
-  }, [account]);
+  }, [account, meNonce]);
+  useEffect(() => {
+    const again = () => setMeNonce((n) => n + 1); // e.g. the judge deleted their sandbox
+    window.addEventListener("apprentice:account", again);
+    return () => window.removeEventListener("apprentice:account", again);
+  }, []);
   const who = answer && answer.account === account ? answer.who : undefined;
 
   const ws = IS_DEMO ? "demo" : "live";
+  const scenario = useViewKey(); // remount key: workflow switch or admin view
+  const viewing = viewingSandbox();
+  const isAdmin = Boolean(who && "is_admin" in who && who.is_admin);
   const current = parts[0] ?? "";
+  // Starts by itself on each account's first sign-in (never in the demo, which has no sign-in).
+  const tour = useTour(SKIP_AUTH || !who || "error" in who || who.role === "none" ? null : account);
 
   const checking = (label: string) => (
     <main className="flex min-h-svh items-center justify-center p-4">
@@ -265,20 +342,57 @@ function App() {
     if (!signedIn) return <SignIn />;
     if (who === undefined) return checking("Checking access");
     if ("error" in who) return <NotExpert error={who.error} />;
-    if (!who.is_demo_expert) return <NotExpert email={who.email} />;
+    if (who.role === "none")
+      return (
+        <main className="flex min-h-svh items-center justify-center p-4">
+          <JoinSandbox
+            email={who.email}
+            onJoined={() => ((window.location.hash = "#/sandbox"), setMeNonce((n) => n + 1))}
+            footer={
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" asChild>
+                  <a href="/demo/">Open the read-only demo</a>
+                </Button>
+                {!DEV_AUTH && (
+                  <Button variant="ghost" onClick={() => void signOut()}>
+                    Use another account
+                  </Button>
+                )}
+              </div>
+            }
+          />
+        </main>
+      );
   }
   const email = user?.email ?? (who && "email" in who ? who.email : undefined);
 
   return (
-    <WsContext.Provider value={{ ws, readOnly: IS_DEMO }}>
+    <WsContext.Provider
+      value={{ ws, readOnly: IS_DEMO || Boolean(viewing), sandbox: Boolean(who && "role" in who && who.role === "judge") }}
+    >
       <ClipProvider>
         <SidebarProvider>
-          <AppSidebar current={current} readOnly={IS_DEMO} />
+          <AppSidebar
+            current={current}
+            readOnly={IS_DEMO || Boolean(viewing)}
+            admin={isAdmin}
+            judge={Boolean(who && "role" in who && who.role === "judge")}
+            beacons={!tour.open}
+            account={IS_DEMO ? "demo" : account}
+          />
           <SidebarInset className="min-w-0">
             <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-6">
               <SidebarTrigger />
               <Separator orientation="vertical" className="data-vertical:h-5 data-vertical:self-center" />
-              {IS_DEMO ? (
+              {viewing ? (
+                <div className="flex min-w-0 items-center gap-2 text-sm">
+                  <Badge variant="secondary">Read-only</Badge>
+                  <span className="truncate text-muted-foreground">Viewing {viewing.email}'s sandbox</span>
+                  <Button variant="outline" size="sm" onClick={() => (viewSandbox(null), (window.location.hash = "#/admin"))}>
+                    Stop viewing
+                  </Button>
+                </div>
+              ) : IS_DEMO ? (
                 <div className="flex min-w-0 items-center gap-2 text-sm">
                   <Badge variant="secondary">Demo</Badge>
                   <span className="truncate text-muted-foreground">
@@ -286,9 +400,16 @@ function App() {
                   </span>
                 </div>
               ) : (
-                <span className="text-sm text-muted-foreground">Live workspace</span>
+                <span className="text-sm text-muted-foreground">
+                  {who && "role" in who && who.role === "judge" ? (
+                    <Badge variant="secondary">Judge sandbox</Badge>
+                  ) : (
+                    "Live workspace"
+                  )}
+                </span>
               )}
               <div className="ml-auto flex items-center gap-2">
+                <TourButton onClick={tour.start} />
                 <ThemeToggle />
                 {IS_DEMO ? (
                   <Button variant="outline" asChild>
@@ -314,11 +435,13 @@ function App() {
               </div>
             </header>
             <main className="mx-auto w-full max-w-[1400px] p-4 md:p-6 lg:p-8">
-              <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+              {/* key: switching workflow remounts every page so it refetches that workflow's data */}
+              <Suspense key={scenario} fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
                 <Page parts={parts} />
               </Suspense>
             </main>
           </SidebarInset>
+          <Tour key={tour.run} steps={TOUR_STEPS} open={tour.open} onClose={tour.end} />
         </SidebarProvider>
       </ClipProvider>
     </WsContext.Provider>

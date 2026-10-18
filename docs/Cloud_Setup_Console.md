@@ -114,12 +114,18 @@ IBAN_CODE.
    ```bash
    cat > cors.json <<'EOF'
    [{"origin": ["http://localhost:5173"], "method": ["PUT", "GET"],
-     "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]
+     "responseHeader": ["Content-Type", "x-goog-content-length-range"], "maxAgeSeconds": 3600}]
    EOF
    gcloud storage buckets update gs://apprentice-recordings-aibc2026 --cors-file=cors.json
    ```
 
-**Check:** bucket **Configuration** shows Region `asia-south1` and public access prevention on.
+4. Judges' sandbox recordings are deleted after 14 days. Bucket → **Lifecycle → Add a rule** → action **Delete object**
+   → conditions **Age: 14 days** and **Object name matches prefix**: `sandbox-`, `essays-sandbox-`, `volunteers-sandbox-`
+   → Create. (Or in Cloud Shell: save `{"rule": [{"action": {"type": "Delete"}, "condition": {"age": 14, "matchesPrefix": ["sandbox-", "essays-sandbox-", "volunteers-sandbox-"]}}]}` as `lifecycle.json` and run
+   `gcloud storage buckets update gs://apprentice-recordings-aibc2026 --lifecycle-file=lifecycle.json`.)
+
+**Check:** bucket **Configuration** shows Region `asia-south1` and public access prevention on; **Lifecycle** shows the
+14-day delete rule.
 
 ## 10. Firebase + Google sign-in
 
@@ -164,7 +170,7 @@ From the repo in a bash shell, with the values from steps 1, 8, 10 and 11 (`ADMI
 
 ```bash
 PROJECT=aibuildercup-india-2026 BUCKET=apprentice-recordings-aibc2026 MA_LOCATION=asia-south1 \
-  EXPERT_EMAIL="you@example.com" ADMIN_UIDS=none \
+  EXPERT_EMAIL="you@example.com" ADMIN_UIDS=none SANDBOX_CODE="<judge code, e.g. from openssl rand -hex 6>" \
   VITE_FIREBASE_API_KEY="..." VITE_FIREBASE_AUTH_DOMAIN="aibuildercup-india-2026.firebaseapp.com" \
   VITE_FIREBASE_PROJECT_ID="aibuildercup-india-2026" VITE_GOOGLE_CLIENT_ID="..." \
   bash scripts/deploy.sh
@@ -188,7 +194,7 @@ number on the Cloud Console home page).
    ```bash
    cat > cors.json <<'EOF'
    [{"origin": ["http://localhost:5173", "https://URL-ONE", "https://URL-TWO"], "method": ["PUT", "GET"],
-     "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]
+     "responseHeader": ["Content-Type", "x-goog-content-length-range"], "maxAgeSeconds": 3600}]
    EOF
    gcloud storage buckets update gs://apprentice-recordings-aibc2026 --cors-file=cors.json
    ```

@@ -8,7 +8,7 @@ import { Progress } from "../components/ui/progress";
 import { Separator } from "../components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import type { ExamReport, Session } from "../types/contract";
-import { Loadable, PageHeader, SCENARIO, fmtDate, fmtDuration, go, trapLabel, useAsync, useWs } from "../ui";
+import { Loadable, PageHeader, scenarioInfo, fmtDate, fmtDuration, go, trapLabel, useAsync, useWs } from "../ui";
 import { CDM } from "./Probes";
 import { SessionStatus } from "./Sessions";
 
@@ -217,7 +217,7 @@ function SessionsTable({ sessions }: { sessions: Session[] }) {
     <Card className="gap-0 pb-0 lg:col-span-2">
       <CardHeader className="border-b">
         <CardTitle className="text-lg">Recent sessions</CardTitle>
-        <CardDescription>Recordings of the expert working through {SCENARIO.item_label}s. Select one to see each step.</CardDescription>
+        <CardDescription>Recordings of the expert working through {scenarioInfo().item_label}s. Select one to see each step.</CardDescription>
       </CardHeader>
       <Table>
         <TableHeader>

@@ -29,7 +29,9 @@ def _blob(gcs_uri: str) -> Any:
     return _client().bucket(bucket).blob(name)
 
 
-def _sign(gcs_uri: str, method: str, minutes: int, content_type: str | None) -> str:
+def _sign(
+    gcs_uri: str, method: str, minutes: int, content_type: str | None, max_bytes: int | None
+) -> str:
     # On Cloud Run there is no private key: sign through IAM with the runtime SA's token
     # (needs roles/iam.serviceAccountTokenCreator on itself).
     creds, _ = google.auth.default()
@@ -40,16 +42,40 @@ def _sign(gcs_uri: str, method: str, minutes: int, content_type: str | None) -> 
             expiration=timedelta(minutes=minutes),
             method=method,
             content_type=content_type,
+            # Cloud Storage itself refuses a bigger upload, whatever size the browser declared
+            headers=length_header(max_bytes),
             service_account_email=getattr(creds, "service_account_email", None),
             access_token=creds.token,
         )
     )
 
 
+def length_header(max_bytes: int | None) -> dict[str, str] | None:
+    return {"x-goog-content-length-range": f"0,{max_bytes}"} if max_bytes else None
+
+
 async def signed_url(
-    gcs_uri: str, method: str, minutes: int, content_type: str | None = None
+    gcs_uri: str,
+    method: str,
+    minutes: int,
+    content_type: str | None = None,
+    max_bytes: int | None = None,
 ) -> str:
-    return await run_in_threadpool(_sign, gcs_uri, method, minutes, content_type)
+    return await run_in_threadpool(_sign, gcs_uri, method, minutes, content_type, max_bytes)
+
+
+async def delete_prefix(prefix: str) -> None:
+    """Every object under gs://BUCKET/<prefix> (a sandbox's recordings)."""
+    bucket = os.environ.get("BUCKET")
+    if not bucket:
+        return
+
+    def run() -> None:
+        b = _client().bucket(bucket)
+        for blob in b.list_blobs(prefix=prefix):
+            blob.delete()
+
+    await run_in_threadpool(run)
 
 
 async def exists(gcs_uri: str) -> bool:

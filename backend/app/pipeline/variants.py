@@ -1,19 +1,21 @@
 """Variant discovery across sessions, one call (prompts/variants.md)."""
 
 import logging
+from datetime import UTC, datetime
 
 from backend.app import domains, gemini, jobs
-from backend.app.contract import Variant, VariantList
+from backend.app.contract import SOP, ObservedWorkflow, Variant, VariantList
 from backend.app.pipeline import probes
 from backend.app.pipeline.deviations import segment_for_prompt
+from backend.app.safety import armor
 from backend.app.store import Store
 
-MIN_SESSIONS = 3
 log = logging.getLogger(__name__)
 
 
 def normalize(raw: list[Variant], known: dict[str, str]) -> list[Variant]:
-    """`known` maps deviation id -> session id. Unknown ids are dropped; counts come from code."""
+    """`known` maps deviation id -> session id. Unknown ids are dropped; counts come from code.
+    A pattern is the same departure at least twice, in any number of sessions."""
     out = []
     for i, v in enumerate(raw, start=1):
         devs = [d for d in dict.fromkeys(v.deviation_ids) if d in known]
@@ -44,7 +46,7 @@ def normalize(raw: list[Variant], known: dict[str, str]) -> list[Variant]:
 async def discover(store: Store) -> list[Variant]:
     """One call over all processed sessions; replaces the variants; probes the newly found ones.
     Serialised: two sessions finishing together must not both probe the same new variants."""
-    async with jobs.lock(f"variants:{store.ws}"):
+    async with jobs.lock(f"variants:{store.root}"):
         return await _discover(store)
 
 
@@ -52,8 +54,8 @@ async def _discover(store: Store) -> list[Variant]:
     sessions = [
         s for s in await store.sessions.list() if s.status == "processed" and s.kind == "training"
     ]
-    if len(sessions) < MIN_SESSIONS:
-        log.info("variants: %d processed training sessions, need %d", len(sessions), MIN_SESSIONS)
+    if not sessions:
+        log.info("variants: no processed training sessions yet")
         return []
     sop = await store.current_sop()
     payload: list[dict[str, object]] = []
@@ -78,4 +80,40 @@ async def _discover(store: Store) -> list[Variant]:
     before = {v.name.lower() for v in await store.variants.list()}
     found = await store.variants.replace(normalize(out.output.variants, known))
     await probes.for_variants(store, [v for v in found if v.name.lower() not in before], sop)
+    try:  # after the patterns, so a slow or failed call never delays or loses them; display only
+        await observe(store, payload, sop)
+    except Exception:
+        log.exception("observed workflow failed")
     return found
+
+
+async def observe(store: Store, sessions: list[dict[str, object]], sop: SOP) -> ObservedWorkflow:
+    """The expert's actual procedure, step by step, marked against the SOP. Screened; display only."""
+    out = await gemini.structured(
+        gemini.FLASH_MODEL,
+        "observed_workflow",
+        [gemini.data("Sessions", sessions)],
+        ObservedWorkflow,
+        values=domains.values(store.scenario, SOP=sop.full_text),
+    )
+    real = {str(s["session_id"]) for s in sessions}  # model-written ids: keep only real sessions
+    w = out.output.model_copy(
+        update={
+            "steps": [
+                st.model_copy(update={"session_ids": [i for i in st.session_ids if i in real]})
+                for st in out.output.steps
+            ]
+        }
+    )
+    mod = await armor.screen_output("\n".join(st.text for st in w.steps), "workflow", store.root)
+    await store.moderation.put(mod)
+    result = w.model_copy(
+        update={
+            "built_at": datetime.now(UTC),
+            "prompt_version": out.prompt_ref,
+            "moderation_id": mod.id,
+            "flagged": mod.match_found,
+        }
+    )
+    await store.put_observed_workflow(result)
+    return result

@@ -57,7 +57,7 @@ Non-goals: human-successor arm; any writes to Sheets/Gmail; computer use / auton
 US1 Expert records a session. AC: one click in the PiP window starts tab capture + mic; a red recording indicator is visible in PiP; Stop uploads to GCS through a signed URL; the session reaches `uploaded` within 30 s of Stop for a 4-min recording.
 US2 Expert gets a live probe. AC: within 15 s of skipping PO-match on a consignment invoice, the PiP shows the question; Live speaks it (or the fallback triggers); the expert's voice answer is saved as a ProbeAnswer with `source=voice_live` and can be edited later.
 US3 Expert answers batch probes. AC: ≤2 min after upload, batch probes appear in PiP/answer UI; each shows SOP §, clip timestamp and a jump-to-clip player.
-US4 Team lead sees discovered variants. AC: after ≥3 sessions are processed, the Discovery view lists variants with linked sessions, deviations and SOP §.
+US4 Team lead sees discovered variants. AC: once the same departure has been seen twice (in one session or several), the Discovery view lists variants with linked sessions, deviations and SOP §.
 US5 Successor explores the graph. AC: graph renders ≥1 exception node per planted exception type; clicking a node plays the cited clip at its timestamp.
 US6 Safety. AC: the injection email text is flagged `pi_and_jailbreak` MATCH_FOUND, shown with a red badge, and excluded from graph inputs; exam agent inputs/outputs are screened and logged.
 US7 Exam. AC: 10 cases (2 held-out, 8 generated incl. ≥3 traps) are expert-labelled; both arms run 3× per case; judge scores stored; report shows a per-case table and a bar chart labelled "pilot"; every graph-arm miss creates a new Probe (`source=exam_miss`); no labels are written to the graph.

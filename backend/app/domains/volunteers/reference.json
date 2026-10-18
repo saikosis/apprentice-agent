@@ -88,5 +88,17 @@
     "name": "Anjali Desai",
     "email": "anjali.r-332@mail.test",
     "past_events": "Diwali Drive 2025"
+  },
+  {
+    "kind": "returning_volunteer",
+    "name": "Arnav Bhalla",
+    "email": "arnav.r-403@mail.test",
+    "past_events": "Diwali Drive 2025"
+  },
+  {
+    "kind": "returning_volunteer",
+    "name": "Pallavi Rao",
+    "email": "pallavi.r-404@mail.test",
+    "past_events": "Diwali Drive 2025"
   }
 ]

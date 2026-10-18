@@ -17,6 +17,7 @@ Split:
 | Backend: routers, store, `gemini.py`, pipeline, exam, safety | Done and tested offline; pipeline + exam verified end to end on real Gemini (text dry run) |
 | Prompts (`/prompts/*.md`) | All 10 written |
 | Scripts (`make_synthetic`, `local`, `run_exam`, `seed_demo`, `export_demo`) | Done; `local.py` runs everything on a laptop before A0 |
+| Judge sandbox, one-session learning, summaries (Oct 17) | Code done (`docs/Judge_Sandbox.md`, tickets in `.scratch/judge-sandbox/`). To do: run `scripts/sample_run.py` per workflow into the demo, set `SANDBOX_CODE`, update the bucket (lifecycle + CORS), redeploy. Steps in `docs/Judge_Guide.md` |
 | Scenarios: essay marking + volunteer sign-ups (Oct 17) | Code done, sidebar **Workflow** switcher; to do: store their SOPs, redeploy, prepare the Docs/Sheets/emails, record. Steps in `docs/Scenarios.md` |
 | Real recording through the segmenter; expert answers and labels; real exam numbers | Not yet |
 | GCP / Firebase / Model Armor setup | Not started. Steps written in `docs/Cloud_Setup.md` (Console, CLI and `scripts/cloud_setup.sh`); project `aibuildercup-india-2026` |
@@ -101,7 +102,7 @@ Split:
   - [x] ~~Treat `skipped` as not flagged, but log it~~
 - [x] ~~Model Armor on each segment's text; flagged segments get `quarantined=true` and are excluded from the graph~~ (their text is withheld from every later prompt)
 - [x] ~~`deviations.md` + `deviations.py`: SOP + segments + sheet diff + live deviations; dedup (same rule within 20 s, or same invoice)~~ (dedup decided in code)
-- [x] ~~`variants.md` + `variants.py`: one call over all sessions; runs once 3 or more sessions are processed~~ (auto after each processed session; counts from code)
+- [x] ~~`variants.md` + `variants.py`: one call over all sessions; runs after each processed session; a pattern = the same departure twice, in any number of sessions (Oct 17, `docs/Judge_Sandbox.md`)~~ (auto after each processed session; counts from code)
 - [x] ~~`probes.md` + `probes.py`: CDM types, at most 4 probes per item, at most 20 words each, few-shot examples from SPEC §5~~
 - [x] ~~Session status flow `processing → processed | failed` with `error`~~
 - [ ] **AC (Oct 14):** all 3 planted exception types are detected on the dry-run recording. Text-only dry run on real Gemini (synthetic steps, no video) detected all planted E1/E2/E3 and the injection session; still to do on a real recording (`scripts/local.py process`).

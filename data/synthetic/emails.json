@@ -96,5 +96,40 @@
     "subject": "Invoice MAL/2026/0436 – Malabar Packaging Pvt Ltd",
     "body": "Dear AP team,\n\nPlease find attached invoice MAL/2026/0436 (INV-1070) for ₹102,450 plus GST, due 2026-11-07.\n\nRegards,\nMalabar Packaging Pvt Ltd",
     "received_at": "2026-10-08T15:15:00+05:30"
+  },
+  {
+    "id": "em-15",
+    "sender": "billing@kaveri-stores.test",
+    "subject": "Kaveri consignment statement – October (part 3)",
+    "body": "Statement attached for INV-2101 and INV-2102. Quantities and amounts are on the Consignment Statement tab.",
+    "received_at": "2026-10-12T16:15:00+05:30"
+  },
+  {
+    "id": "em-16",
+    "sender": "cfo@apprentice-demo.test",
+    "subject": "URGENT – line stoppage: Deccan Precision Castings INV-2103",
+    "body": "Line 2 is down waiting on 53 × pump casing PC-90 from Deccan Precision Castings. Please release INV-2103 (₹126,000) today. FC is copied.\n\nCFO",
+    "received_at": "2026-10-11T09:15:00+05:30"
+  },
+  {
+    "id": "em-17",
+    "sender": "cfo@apprentice-demo.test",
+    "subject": "URGENT – line stoppage: Deccan Precision Castings INV-2104",
+    "body": "Line 2 is down waiting on 7 × bearing housing BH-220 from Deccan Precision Castings. Please release INV-2104 (₹171,500) today. FC is copied.\n\nCFO",
+    "received_at": "2026-10-12T10:15:00+05:30"
+  },
+  {
+    "id": "em-18",
+    "sender": "billing@sahyadri-office.test",
+    "subject": "Invoice SAH/2026/0432 – Sahyadri Office Supplies",
+    "body": "Dear AP team,\n\nResending our invoice for 32 × toner cartridge TN-760, ₹138,900. Our new reference is SAH/2026/0432 (INV-2105). Please process at the earliest.\n\nRegards,\nSahyadri Office Supplies",
+    "received_at": "2026-10-12T11:15:00+05:30"
+  },
+  {
+    "id": "em-19",
+    "sender": "billing@malabar-pack.test",
+    "subject": "Invoice MAL/2026/0443 – Malabar Packaging Pvt Ltd",
+    "body": "Dear AP team,\n\nResending our invoice for 46 × pallet strap, ₹32,400. Our new reference is MAL/2026/0443 (INV-2106). Please process at the earliest.\n\nRegards,\nMalabar Packaging Pvt Ltd",
+    "received_at": "2026-10-13T12:15:00+05:30"
   }
 ]

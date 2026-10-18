@@ -24,7 +24,7 @@ run_from() { [ "$1" -ge "$START" ]; }
 pause() { echo; echo ">>> In the console: $1"; read -r -p ">>> Press Enter when done... " _; }
 cors() {
   local f; f=$(mktemp)
-  printf '[{"origin": [%s], "method": ["PUT", "GET"], "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]\n' "$1" > "$f"
+  printf '[{"origin": [%s], "method": ["PUT", "GET"], "responseHeader": ["Content-Type", "x-goog-content-length-range"], "maxAgeSeconds": 3600}]\n' "$1" > "$f"
   gcloud storage buckets update "gs://$BUCKET" --cors-file="$f" --quiet
   rm -f "$f"
 }
@@ -131,6 +131,11 @@ if run_from 9; then
   gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAccount:$SA" \
     --role=roles/storage.objectAdmin --quiet >/dev/null
   cors '"http://localhost:5173"'
+  # judges' sandbox recordings: deleted 14 days after upload (all three workflows' sandbox prefixes)
+  lc=$(mktemp)
+  echo '{"rule": [{"action": {"type": "Delete"}, "condition": {"age": 14, "matchesPrefix": ["sandbox-", "essays-sandbox-", "volunteers-sandbox-"]}}]}' > "$lc"
+  gcloud storage buckets update "gs://$BUCKET" --lifecycle-file="$lc" --quiet
+  rm -f "$lc"
 fi
 
 if run_from 10; then
@@ -160,7 +165,8 @@ if run_from 14; then
   step 14 "first deploy"
   : "${VITE_FIREBASE_API_KEY:?set VITE_FIREBASE_API_KEY (step 10), then START=14}"
   PROJECT="$PROJECT" BUCKET="$BUCKET" MA_LOCATION="$MA_LOCATION" EXPERT_EMAIL="$EXPERT_EMAIL" \
-    ADMIN_UIDS="${ADMIN_UIDS:-none}" VITE_FIREBASE_API_KEY="$VITE_FIREBASE_API_KEY" \
+    ADMIN_UIDS="${ADMIN_UIDS:-none}" SANDBOX_CODE="${SANDBOX_CODE:?set SANDBOX_CODE (the judge code), then START=14}" \
+    VITE_FIREBASE_API_KEY="$VITE_FIREBASE_API_KEY" \
     VITE_FIREBASE_AUTH_DOMAIN="${VITE_FIREBASE_AUTH_DOMAIN:-$PROJECT.firebaseapp.com}" \
     VITE_FIREBASE_PROJECT_ID="${VITE_FIREBASE_PROJECT_ID:-$PROJECT}" VITE_GOOGLE_CLIENT_ID="${VITE_GOOGLE_CLIENT_ID:-}" \
     bash scripts/deploy.sh

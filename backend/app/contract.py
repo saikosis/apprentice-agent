@@ -18,6 +18,25 @@ Arm = Literal["sop_only", "sop_graph"]
 Scenario = Literal["ap", "essays", "volunteers"]  # domain packs in backend/app/domains/
 
 
+class SandboxUsage(M):
+    recordings: int = 0
+    graph_builds: int = 0
+    exam_runs: int = 0
+    case_generations: int = 0
+
+
+class SandboxInfo(M):
+    """A judge's sandbox (docs/Judge_Sandbox.md). Stored at sandboxes/{uid}; global counts filled on read."""
+
+    uid: str
+    email: str
+    created_at: datetime
+    usage: SandboxUsage = SandboxUsage()
+    limit_each: int = 5
+    global_today: int = 0
+    global_limit: int = 100
+
+
 class ScenarioInfo(M):
     """What the UI needs to know about a scenario (backend/app/domains/<id>/config.json)."""
 
@@ -55,7 +74,9 @@ class SOP(M):
 
 class ModerationResult(M):
     id: str
-    target_kind: Literal["segment", "probe_answer", "exam_input", "agent_output", "email"]
+    target_kind: Literal[
+        "segment", "probe_answer", "exam_input", "agent_output", "email", "summary", "workflow"
+    ]
     target_id: str
     template: str
     match_found: bool
@@ -67,7 +88,7 @@ class ModerationResult(M):
 
 class Session(M):
     id: str
-    workspace: Literal["demo", "live"]
+    workspace: Literal["demo", "live", "sandbox"]
     expert_uid: str
     kind: Literal["training", "heldout"]
     status: Literal["created", "uploading", "uploaded", "processing", "processed", "failed"]
@@ -102,6 +123,22 @@ class Segment(M):
     quarantined: bool = False
 
 
+class SummaryItem(M):
+    invoice_id: str | None = None  # the work item (see the note above Segment)
+    steps: list[str]  # what the expert did with it, in order
+
+
+class SessionSummary(M):
+    """Plain-language account of one session (prompts/summary.md). Display only."""
+
+    session_id: str
+    summary: str  # 3-5 sentences
+    items: list[SummaryItem]
+    prompt_version: str = ""
+    moderation_id: str | None = None
+    flagged: bool = False  # Model Armor matched: shown as "kept out", never as trusted text
+
+
 class Deviation(M):
     id: str
     session_id: str
@@ -125,6 +162,25 @@ class Variant(M):
     deviation_ids: list[str]
     exemplar_clips: list[ClipRef]
     frequency: int
+
+
+class WorkflowStep(M):
+    n: int
+    text: str
+    sop_rule: str | None = None  # the section it matches, when it does
+    in_sop: bool
+    session_ids: list[str]
+
+
+class ObservedWorkflow(M):
+    """The expert's actual procedure across sessions (prompts/observed_workflow.md). Display only:
+    never an input to the graph builder, the case writer or the agents."""
+
+    steps: list[WorkflowStep]
+    built_at: datetime | None = None
+    prompt_version: str = ""
+    moderation_id: str | None = None
+    flagged: bool = False
 
 
 class Probe(M):

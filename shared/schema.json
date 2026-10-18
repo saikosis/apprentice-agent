@@ -59,6 +59,9 @@
     "ModerationResult": {
       "$ref": "#/$defs/ModerationResult"
     },
+    "ObservedWorkflow": {
+      "$ref": "#/$defs/ObservedWorkflow"
+    },
     "Probe": {
       "$ref": "#/$defs/Probe"
     },
@@ -74,6 +77,12 @@
     "SOPSection": {
       "$ref": "#/$defs/SOPSection"
     },
+    "SandboxInfo": {
+      "$ref": "#/$defs/SandboxInfo"
+    },
+    "SandboxUsage": {
+      "$ref": "#/$defs/SandboxUsage"
+    },
     "ScenarioInfo": {
       "$ref": "#/$defs/ScenarioInfo"
     },
@@ -86,17 +95,26 @@
     "Session": {
       "$ref": "#/$defs/Session"
     },
+    "SessionSummary": {
+      "$ref": "#/$defs/SessionSummary"
+    },
     "SheetDiff": {
       "$ref": "#/$defs/SheetDiff"
     },
     "SheetSnapshot": {
       "$ref": "#/$defs/SheetSnapshot"
     },
+    "SummaryItem": {
+      "$ref": "#/$defs/SummaryItem"
+    },
     "Variant": {
       "$ref": "#/$defs/Variant"
     },
     "VariantList": {
       "$ref": "#/$defs/VariantList"
+    },
+    "WorkflowStep": {
+      "$ref": "#/$defs/WorkflowStep"
     }
   },
   "$defs": {
@@ -1136,7 +1154,9 @@
             "probe_answer",
             "exam_input",
             "agent_output",
-            "email"
+            "email",
+            "summary",
+            "workflow"
           ],
           "title": "Target Kind",
           "type": "string"
@@ -1186,6 +1206,59 @@
         "checked_at"
       ],
       "title": "ModerationResult",
+      "type": "object"
+    },
+    "ObservedWorkflow": {
+      "additionalProperties": false,
+      "description": "The expert's actual procedure across sessions (prompts/observed_workflow.md). Display only:\nnever an input to the graph builder, the case writer or the agents.",
+      "properties": {
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/WorkflowStep"
+          },
+          "title": "Steps",
+          "type": "array"
+        },
+        "built_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Built At"
+        },
+        "prompt_version": {
+          "default": "",
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "moderation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Moderation Id"
+        },
+        "flagged": {
+          "default": false,
+          "title": "Flagged",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "steps"
+      ],
+      "title": "ObservedWorkflow",
       "type": "object"
     },
     "Probe": {
@@ -1430,6 +1503,83 @@
       "title": "SOPSection",
       "type": "object"
     },
+    "SandboxInfo": {
+      "additionalProperties": false,
+      "description": "A judge's sandbox (docs/Judge_Sandbox.md). Stored at sandboxes/{uid}; global counts filled on read.",
+      "properties": {
+        "uid": {
+          "title": "Uid",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "usage": {
+          "$ref": "#/$defs/SandboxUsage",
+          "default": {
+            "recordings": 0,
+            "graph_builds": 0,
+            "exam_runs": 0,
+            "case_generations": 0
+          }
+        },
+        "limit_each": {
+          "default": 5,
+          "title": "Limit Each",
+          "type": "integer"
+        },
+        "global_today": {
+          "default": 0,
+          "title": "Global Today",
+          "type": "integer"
+        },
+        "global_limit": {
+          "default": 100,
+          "title": "Global Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "created_at"
+      ],
+      "title": "SandboxInfo",
+      "type": "object"
+    },
+    "SandboxUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "recordings": {
+          "default": 0,
+          "title": "Recordings",
+          "type": "integer"
+        },
+        "graph_builds": {
+          "default": 0,
+          "title": "Graph Builds",
+          "type": "integer"
+        },
+        "exam_runs": {
+          "default": 0,
+          "title": "Exam Runs",
+          "type": "integer"
+        },
+        "case_generations": {
+          "default": 0,
+          "title": "Case Generations",
+          "type": "integer"
+        }
+      },
+      "title": "SandboxUsage",
+      "type": "object"
+    },
     "ScenarioInfo": {
       "additionalProperties": false,
       "description": "What the UI needs to know about a scenario (backend/app/domains/<id>/config.json).",
@@ -1654,7 +1804,8 @@
         "workspace": {
           "enum": [
             "demo",
-            "live"
+            "live",
+            "sandbox"
           ],
           "title": "Workspace",
           "type": "string"
@@ -1803,6 +1954,56 @@
       "title": "Session",
       "type": "object"
     },
+    "SessionSummary": {
+      "additionalProperties": false,
+      "description": "Plain-language account of one session (prompts/summary.md). Display only.",
+      "properties": {
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/SummaryItem"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "prompt_version": {
+          "default": "",
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "moderation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Moderation Id"
+        },
+        "flagged": {
+          "default": false,
+          "title": "Flagged",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "session_id",
+        "summary",
+        "items"
+      ],
+      "title": "SessionSummary",
+      "type": "object"
+    },
     "SheetDiff": {
       "additionalProperties": false,
       "properties": {
@@ -1868,6 +2069,35 @@
         "rows"
       ],
       "title": "SheetSnapshot",
+      "type": "object"
+    },
+    "SummaryItem": {
+      "additionalProperties": false,
+      "properties": {
+        "invoice_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invoice Id"
+        },
+        "steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "steps"
+      ],
+      "title": "SummaryItem",
       "type": "object"
     },
     "Variant": {
@@ -1946,6 +2176,50 @@
         "variants"
       ],
       "title": "VariantList",
+      "type": "object"
+    },
+    "WorkflowStep": {
+      "additionalProperties": false,
+      "properties": {
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "sop_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sop Rule"
+        },
+        "in_sop": {
+          "title": "In Sop",
+          "type": "boolean"
+        },
+        "session_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Session Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "n",
+        "text",
+        "in_sop",
+        "session_ids"
+      ],
+      "title": "WorkflowStep",
       "type": "object"
     }
   }

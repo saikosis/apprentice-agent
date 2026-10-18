@@ -8,19 +8,21 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app import errors, jobs
+from backend.app import errors, jobs, sandbox
 from backend.app.contract import AgentRun, Decision, ExamCase, ExamReport, ExpertLabel
 from backend.app.exam import report, scenarios
 from backend.app.routers.auth import CurrentUser
-from backend.app.store import LiveStore, ReadStore, new_id
+from backend.app.store import new_id
+from backend.app.workspace import LiveStore, ReadStore
 
 router = APIRouter(tags=["exam"])
+SANDBOX_CASES = 6  # each rule and each trap (docs/Judge_Sandbox.md)
 
 
 class GenerateReq(BaseModel):
     model_config = ConfigDict(extra="forbid")
     n_generated: int = Field(default=8, ge=1, le=20)
-    heldout_session_ids: list[str] = Field(min_length=1, max_length=2)
+    heldout_session_ids: list[str] = Field(default=[], max_length=2)
 
 
 class LabelReq(BaseModel):
@@ -36,6 +38,15 @@ class RunReq(BaseModel):
 
 @router.post("/exam/generate")
 async def generate(body: GenerateReq, store: LiveStore) -> list[ExamCase]:
+    # Every refusal comes before the charge, so a refused request costs a judge nothing.
+    if store.ws != "sandbox" and not body.heldout_session_ids:
+        raise HTTPException(422, "Generating cases needs analysed held-out sessions.")
+    await store.current_sop()
+    if await store.get_graph() is None:
+        raise errors.conflict("Build the decision graph before generating exam cases.")
+    await sandbox.charge(store, "case_generations")
+    if store.ws == "sandbox":  # one-session flow: no held-out recording, cases from the graph
+        return await scenarios.generate(store, [], SANDBOX_CASES)
     for sid in body.heldout_session_ids:
         s = await store.sessions.get(sid)
         if s is None or s.kind != "heldout" or s.status != "processed":
@@ -66,13 +77,15 @@ async def label(case_id: str, body: LabelReq, user: CurrentUser, store: LiveStor
 async def run(body: RunReq, store: LiveStore) -> dict[str, str]:
     if not any(c.expert_label for c in await store.exam_cases.list()):
         raise errors.conflict("Label at least one exam case before running the exam.")
+    await sandbox.charge(store, "exam_runs")  # after the checks: a refused run costs nothing
+    runs = 1 if store.ws == "sandbox" else body.runs_per_arm  # sandbox: one run per agent
     report_id = new_id("r")
     await store.put_job(report_id, "running")
 
     async def failed(e: Exception) -> None:
         await store.put_job(report_id, "failed", str(getattr(e, "detail", e))[:300])
 
-    jobs.spawn(f"exam {report_id}", report.run_exam(store, report_id, body.runs_per_arm), failed)
+    jobs.spawn(f"exam {report_id}", report.run_exam(store, report_id, runs), failed)
     return {"report_id": report_id}
 
 

@@ -107,6 +107,7 @@ class World:
     essays: dict[str, str]  # submission_id -> text (one Google Doc each)
     emails: list[Email]
     sessions: dict[str, dict[str, Any]]
+    quick: dict[str, Any]  # the 6-item quick plan (judge sandbox)
 
 
 def build_sop() -> SOP:
@@ -206,7 +207,57 @@ def build() -> World:
         }
         for k in range(8)
     }
-    return World(build_sop(), rows, students, essays, build_emails(rows, students), sessions)
+    # Quick plan (docs/Judge_Sandbox.md): each rule twice on new ids, added after everything above.
+    quick_tags = {
+        "SUB-301": "E1",
+        "SUB-302": "E1",
+        "SUB-303": "E2",
+        "SUB-304": "E2",
+        "SUB-305": "E3",
+        "SUB-306": "E3",
+    }
+    for n, (sub, tag) in enumerate(quick_tags.items(), start=42):
+        sid, name = f"ST-{n:02d}", NAMES[n - 1]
+        students.append(
+            {
+                "student_id": sid,
+                "name": name,
+                "email": f"{name.split()[0].lower()}.{sid.lower()}@{SCHOOL}",
+                "course": COURSE,
+                "accommodation": "extended time" if tag == "E1" else "none",
+            }
+        )
+        late = 0 if tag == "E2" else 2
+        submitted = DUE + timedelta(days=late, hours=-3) if late else DUE - timedelta(hours=6)
+        rows.append(
+            {
+                "submission_id": sub,
+                "student_id": sid,
+                "student_name": name,
+                "essay_title": TITLE,
+                "submitted_at": submitted.isoformat(),
+                "due_at": DUE.isoformat(),
+                "days_late": str(late),
+                "rubric_score": "",
+                "late_deduction": "",
+                "final_score": "",
+                "status": "Pending",
+                "notes": "",
+            }
+        )
+        essays[sub] = essay(rng, name, sub, copied=tag == "E2", quoted=False)
+    quick = {
+        "items": list(quick_tags),
+        "planted_items": {
+            t: [s for s, x in quick_tags.items() if x == t] for t in ("E1", "E2", "E3")
+        },
+        "rules": {
+            "E1": "Late essay from a student with an approved accommodation: no late deduction",
+            "E2": "A passage copied without quotation marks: talk to the student first, not a zero",
+            "E3": "Late essay whose extension was asked for before the deadline: no deduction",
+        },
+    }
+    return World(build_sop(), rows, students, essays, build_emails(rows, students), sessions, quick)
 
 
 def essay(rng: random.Random, name: str, sub: str, *, copied: bool, quoted: bool) -> str:
@@ -231,6 +282,11 @@ def build_emails(rows: list[dict[str, Any]], students: list[dict[str, str]]) -> 
         "SUB-227": "My grandmother's funeral is on 9 October in Madurai and I will be travelling.",
         "SUB-238": "I have a doctor's note for a concussion from a cycling accident on 7 October.",
     }
+    if "SUB-305" in by_sub:  # quick plan
+        reasons |= {
+            "SUB-305": "I have a fever and a doctor's certificate from 8 October.",
+            "SUB-306": "My sister's wedding is on 9 October and I'm travelling to Kochi.",
+        }
 
     def ask(sub: str, when: datetime, reason: str) -> tuple[str, str, str, str]:
         r = by_sub[sub]

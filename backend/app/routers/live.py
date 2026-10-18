@@ -11,10 +11,10 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app import domains, errors, gemini, prompts
+from backend.app import domains, errors, gemini, prompts, sandbox
 from backend.app.contract import SOP, Scenario
 from backend.app.routers.sessions import get_or_404
-from backend.app.store import LiveStore
+from backend.app.workspace import LiveStore
 
 router = APIRouter(tags=["live"])
 
@@ -109,6 +109,8 @@ async def live_token(body: TokenReq, store: LiveStore) -> dict[str, object]:
     if not s.live_enabled or s.status not in ("created", "uploading"):
         raise errors.conflict(f"Session {s.id} isn't recording with live questions.")
     now = datetime.now(UTC)
+    if store.ws == "sandbox" and (now - s.started_at).total_seconds() > sandbox.LIVE_WINDOW_S:
+        raise errors.conflict("Live questions end with the 5 minutes of a sandbox recording.")
     token = await _client().aio.auth_tokens.create(
         config=token_config(await store.current_sop(), body.resume_handle, now, store.scenario)
     )

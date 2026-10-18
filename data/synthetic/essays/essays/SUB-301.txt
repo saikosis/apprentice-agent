@@ -1,0 +1,11 @@
+Essay 2: Should we let machines decide?
+Sana Mirza (SUB-301)
+
+The question is no longer whether machines can decide, but whether they should. Consistency is only a virtue when the rule being applied consistently is a fair one.
+
+When a decision goes wrong, a person can explain and apologise; a system can only be audited. Workers who supervise automated systems report that they stop questioning the output after a few months.
+
+Machines should advise, and people should decide when the stakes are high.
+
+References
+Okafor, A. (2024). Machines and Meaning. Lagos: Harbour Press, p. 41.

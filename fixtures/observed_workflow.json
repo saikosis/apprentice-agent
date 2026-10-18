@@ -1,0 +1,80 @@
+{
+  "steps": [
+    {
+      "n": 1,
+      "text": "Filter the AP Queue to Pending and take the oldest invoice",
+      "sop_rule": null,
+      "in_sop": false,
+      "session_ids": [
+        "s-01",
+        "s-02",
+        "s-03",
+        "s-04",
+        "s-05",
+        "s-06"
+      ]
+    },
+    {
+      "n": 2,
+      "text": "Check the vendor exists in the Vendor Master",
+      "sop_rule": "§3.1",
+      "in_sop": true,
+      "session_ids": [
+        "s-01",
+        "s-02",
+        "s-03",
+        "s-04",
+        "s-05",
+        "s-06"
+      ]
+    },
+    {
+      "n": 3,
+      "text": "If the vendor is consignment, reconcile against the Consignment Statement tab instead of a PO; otherwise three-way match PO, GRN and invoice",
+      "sop_rule": "§3.2",
+      "in_sop": false,
+      "session_ids": [
+        "s-01",
+        "s-05"
+      ]
+    },
+    {
+      "n": 4,
+      "text": "Compare vendor, amount and items with the last 10 days' invoices before approving",
+      "sop_rule": null,
+      "in_sop": false,
+      "session_ids": [
+        "s-04",
+        "s-06"
+      ]
+    },
+    {
+      "n": 5,
+      "text": "Above ₹50,000, get the Finance Controller's second approval; after a CFO line-stoppage email for a critical vendor, approve and note FC approval afterwards",
+      "sop_rule": "§3.3",
+      "in_sop": false,
+      "session_ids": [
+        "s-02",
+        "s-06"
+      ]
+    },
+    {
+      "n": 6,
+      "text": "Set the status and email the AP Lead for anything on hold",
+      "sop_rule": "§4.1",
+      "in_sop": true,
+      "session_ids": [
+        "s-01",
+        "s-02",
+        "s-03",
+        "s-04",
+        "s-05",
+        "s-06"
+      ]
+    }
+  ],
+  "built_at": "2026-10-16T12:00:00+05:30",
+  "prompt_version": "observed_workflow@1",
+  "moderation_id": null,
+  "flagged": false
+}

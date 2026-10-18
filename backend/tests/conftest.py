@@ -34,7 +34,9 @@ def api(monkeypatch: pytest.MonkeyPatch) -> Iterator[Api]:
     monkeypatch.setenv("EXPERT_EMAIL", "expert@example.com")
     a = Api(client=None, db=db)  # type: ignore[arg-type]
 
-    async def signed_url(uri: str, method: str, minutes: int, content_type: Any = None) -> str:
+    async def signed_url(
+        uri: str, method: str, minutes: int, content_type: Any = None, max_bytes: Any = None
+    ) -> str:
         a.signed.append((method, uri))
         return f"https://storage.test/{uri.removeprefix('gs://')}?method={method}"
 

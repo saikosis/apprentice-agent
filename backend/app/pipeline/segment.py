@@ -70,7 +70,7 @@ async def process_session(store: Store, session_id: str, video: Any = None) -> N
     `processed`; an exception propagates and the caller marks it `failed`. `video` lets a laptop run
     pass an already-uploaded Gemini file instead of fetching from Cloud Storage.
     """
-    from backend.app.pipeline import deviations, files, probes, variants
+    from backend.app.pipeline import deviations, files, probes, summary, variants
 
     session = await store.sessions.get(session_id)
     if session is None:
@@ -82,9 +82,13 @@ async def process_session(store: Store, session_id: str, video: Any = None) -> N
         store, session, segs, sop, await store.get_sheet_diff(session_id)
     )
     await probes.for_deviations(store, devs, segs, sop)
+    try:  # display only: a failed summary never fails the session
+        await summary.summarise(store, session_id, segs, sop)
+    except Exception:
+        log.exception("summary for %s failed", session_id)
     cur = await store.sessions.get(session_id) or session
     await store.sessions.put(cur.model_copy(update={"status": "processed", "error": None}))
-    try:  # SPEC flow: once 3+ sessions are processed, look for patterns. Never fails the session.
+    try:  # look for patterns after every processed session. Never fails the session.
         await variants.discover(store)
     except Exception:
         log.exception("variant discovery after %s failed", session_id)

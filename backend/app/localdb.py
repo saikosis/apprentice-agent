@@ -91,5 +91,11 @@ class FakeDb:
     def collection(self, path: str) -> CollRef:
         return CollRef(self, path)
 
+    async def recursive_delete(self, ref: DocRef) -> None:
+        """Like Firestore's: the document and everything under it."""
+        for path in [p for p in self.docs if p == ref.path or p.startswith(ref.path + "/")]:
+            self.docs.pop(path)
+        self.save()
+
     def batch(self) -> Batch:
         return Batch()

@@ -123,13 +123,23 @@ export type Explanation = string;
 export type HandChecked = boolean;
 export type HandOverrideTotal = number | null;
 export type Id7 = string;
-export type TargetKind = "segment" | "probe_answer" | "exam_input" | "agent_output" | "email";
+export type TargetKind = "segment" | "probe_answer" | "exam_input" | "agent_output" | "email" | "summary" | "workflow";
 export type TargetId = string;
 export type Template = string;
 export type MatchFound = boolean;
 export type Skipped = boolean;
 export type Blocked1 = boolean;
 export type CheckedAt = string;
+export type N = number;
+export type Text = string;
+export type SopRule2 = string | null;
+export type InSop = boolean;
+export type SessionIds = string[];
+export type Steps = WorkflowStep[];
+export type BuiltAt1 = string | null;
+export type PromptVersion2 = string;
+export type ModerationId = string | null;
+export type Flagged = boolean;
 export type Id8 = string;
 export type SessionId2 = string | null;
 export type DeviationId = string | null;
@@ -137,11 +147,11 @@ export type VariantId = string | null;
 export type Source2 = "live" | "batch" | "exam_miss";
 export type CdmType = "cue" | "goal" | "option" | "experience" | "rule" | "anomaly" | "hypothetical";
 export type Question1 = string;
-export type SopRule2 = string | null;
+export type SopRule3 = string | null;
 export type Status1 = "open" | "answered" | "skipped";
 export type CreatedAt1 = string;
 export type ProbeId = string;
-export type Text = string;
+export type Text1 = string;
 export type Source3 = "voice_live" | "typed" | "edited";
 export type AnsweredAt = string;
 export type Probes = Probe[];
@@ -150,9 +160,19 @@ export type Title = string;
 export type Version1 = number;
 export type Id10 = string;
 export type Title1 = string;
-export type Text1 = string;
+export type Text2 = string;
 export type Sections = SOPSection[];
 export type FullText = string;
+export type Uid = string;
+export type Email1 = string;
+export type CreatedAt2 = string;
+export type Recordings = number;
+export type GraphBuilds = number;
+export type ExamRuns = number;
+export type CaseGenerations = number;
+export type LimitEach = number;
+export type GlobalToday = number;
+export type GlobalLimit = number;
 export type Id11 = "ap" | "essays" | "volunteers";
 export type Title2 = string;
 export type ItemLabel = string;
@@ -172,11 +192,11 @@ export type Vendor = string | null;
 export type Decision2 = ("approve" | "reject" | "hold" | "escalate") | "none";
 export type TranscriptExcerpt = string;
 export type OnScreenText = string;
-export type ModerationId = string | null;
+export type ModerationId1 = string | null;
 export type Quarantined = boolean;
 export type Segments = Segment[];
 export type Id13 = string;
-export type Workspace = "demo" | "live";
+export type Workspace = "demo" | "live" | "sandbox";
 export type ExpertUid = string;
 export type Kind1 = "training" | "heldout";
 export type Status2 = "created" | "uploading" | "uploaded" | "processing" | "processed" | "failed";
@@ -191,9 +211,17 @@ export type SheetSnapshotBeforeId = string | null;
 export type SheetSnapshotAfterId = string | null;
 export type Error = string | null;
 export type SessionId4 = string;
+export type Summary = string;
+export type InvoiceId4 = string | null;
+export type Steps1 = string[];
+export type Items = SummaryItem[];
+export type PromptVersion3 = string;
+export type ModerationId2 = string | null;
+export type Flagged1 = boolean;
+export type SessionId5 = string;
 export type Changes = CellChange[];
 export type Id14 = string;
-export type SessionId5 = string;
+export type SessionId6 = string;
 export type Phase = "before" | "after";
 export type TakenAt = string;
 export type Rows = {
@@ -203,7 +231,7 @@ export type Id15 = string;
 export type Name = string;
 export type Description1 = string;
 export type SopRules = string[];
-export type SessionIds = string[];
+export type SessionIds1 = string[];
 export type DeviationIds = string[];
 export type ExemplarClips = ClipRef[];
 export type Frequency = number;
@@ -229,19 +257,25 @@ export interface Contract {
   InvoiceRow?: InvoiceRow;
   JudgeScore?: JudgeScore;
   ModerationResult?: ModerationResult;
+  ObservedWorkflow?: ObservedWorkflow;
   Probe?: Probe;
   ProbeAnswer?: ProbeAnswer;
   ProbeList?: ProbeList;
   SOP?: SOP;
   SOPSection?: SOPSection;
+  SandboxInfo?: SandboxInfo;
+  SandboxUsage?: SandboxUsage1;
   ScenarioInfo?: ScenarioInfo;
   Segment?: Segment;
   SegmentList?: SegmentList;
   Session?: Session;
+  SessionSummary?: SessionSummary;
   SheetDiff?: SheetDiff;
   SheetSnapshot?: SheetSnapshot;
+  SummaryItem?: SummaryItem;
   Variant?: Variant;
   VariantList?: VariantList;
+  WorkflowStep?: WorkflowStep;
   [k: string]: unknown;
 }
 export interface AgentOutput {
@@ -425,6 +459,24 @@ export interface ModerationResult {
 export interface Filters {
   [k: string]: string;
 }
+/**
+ * The expert's actual procedure across sessions (prompts/observed_workflow.md). Display only:
+ * never an input to the graph builder, the case writer or the agents.
+ */
+export interface ObservedWorkflow {
+  steps: Steps;
+  built_at?: BuiltAt1;
+  prompt_version?: PromptVersion2;
+  moderation_id?: ModerationId;
+  flagged?: Flagged;
+}
+export interface WorkflowStep {
+  n: N;
+  text: Text;
+  sop_rule?: SopRule2;
+  in_sop: InSop;
+  session_ids: SessionIds;
+}
 export interface Probe {
   id: Id8;
   session_id?: SessionId2;
@@ -433,14 +485,14 @@ export interface Probe {
   source: Source2;
   cdm_type: CdmType;
   question: Question1;
-  sop_rule?: SopRule2;
+  sop_rule?: SopRule3;
   clip?: ClipRef | null;
   status?: Status1;
   created_at: CreatedAt1;
 }
 export interface ProbeAnswer {
   probe_id: ProbeId;
-  text: Text;
+  text: Text1;
   source: Source3;
   answered_at: AnsweredAt;
   moderation?: ModerationResult | null;
@@ -458,7 +510,31 @@ export interface SOP {
 export interface SOPSection {
   id: Id10;
   title: Title1;
-  text: Text1;
+  text: Text2;
+}
+/**
+ * A judge's sandbox (docs/Judge_Sandbox.md). Stored at sandboxes/{uid}; global counts filled on read.
+ */
+export interface SandboxInfo {
+  uid: Uid;
+  email: Email1;
+  created_at: CreatedAt2;
+  usage?: SandboxUsage;
+  limit_each?: LimitEach;
+  global_today?: GlobalToday;
+  global_limit?: GlobalLimit;
+}
+export interface SandboxUsage {
+  recordings?: Recordings;
+  graph_builds?: GraphBuilds;
+  exam_runs?: ExamRuns;
+  case_generations?: CaseGenerations;
+}
+export interface SandboxUsage1 {
+  recordings?: Recordings;
+  graph_builds?: GraphBuilds;
+  exam_runs?: ExamRuns;
+  case_generations?: CaseGenerations;
 }
 /**
  * What the UI needs to know about a scenario (backend/app/domains/<id>/config.json).
@@ -493,7 +569,7 @@ export interface Segment {
   decision?: Decision2;
   transcript_excerpt?: TranscriptExcerpt;
   on_screen_text?: OnScreenText;
-  moderation_id?: ModerationId;
+  moderation_id?: ModerationId1;
   quarantined?: Quarantined;
 }
 export interface SegmentList {
@@ -516,13 +592,28 @@ export interface Session {
   sheet_snapshot_after_id?: SheetSnapshotAfterId;
   error?: Error;
 }
-export interface SheetDiff {
+/**
+ * Plain-language account of one session (prompts/summary.md). Display only.
+ */
+export interface SessionSummary {
   session_id: SessionId4;
+  summary: Summary;
+  items: Items;
+  prompt_version?: PromptVersion3;
+  moderation_id?: ModerationId2;
+  flagged?: Flagged1;
+}
+export interface SummaryItem {
+  invoice_id?: InvoiceId4;
+  steps: Steps1;
+}
+export interface SheetDiff {
+  session_id: SessionId5;
   changes: Changes;
 }
 export interface SheetSnapshot {
   id: Id14;
-  session_id: SessionId5;
+  session_id: SessionId6;
   phase: Phase;
   taken_at: TakenAt;
   rows: Rows;
@@ -532,7 +623,7 @@ export interface Variant {
   name: Name;
   description: Description1;
   sop_rules: SopRules;
-  session_ids: SessionIds;
+  session_ids: SessionIds1;
   deviation_ids: DeviationIds;
   exemplar_clips: ExemplarClips;
   frequency: Frequency;

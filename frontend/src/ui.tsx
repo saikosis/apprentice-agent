@@ -11,7 +11,8 @@ import { cn } from "./lib/utils";
 import type { ClipRef, Decision, ModerationResult } from "./types/contract";
 
 // ---- workspace ----
-export const WsContext = createContext<{ ws: Ws; readOnly: boolean }>({ ws: "demo", readOnly: true });
+// sandbox: a judge's private workspace (limits apply; recordings stop at 5:00).
+export const WsContext = createContext<{ ws: Ws; readOnly: boolean; sandbox?: boolean }>({ ws: "demo", readOnly: true });
 export const useWs = () => useContext(WsContext);
 
 // ---- hash router: works on "/" and "/demo/" without server rewrites ----
@@ -90,12 +91,15 @@ export function PageHeader({ title, description, actions, crumb }: { title: stri
 }
 
 // ---- marks ----
-// Labels for the current scenario (switching scenario reloads the page, so reading them once is enough).
-export const SCENARIO = currentScenario();
+// Labels for the current scenario. Read at render time: switching remounts the pages (main.tsx), no reload.
+export const scenarioInfo = currentScenario;
 export const decisionLabel = (d: Decision | "none") =>
-  d === "none" ? "No decision" : (SCENARIO.decision_labels[d] ?? d);
-export const trapLabel = (t: string) => (t === "none" ? "" : (SCENARIO.traps[t] ?? t));
-export const ITEM = SCENARIO.item_label.charAt(0).toUpperCase() + SCENARIO.item_label.slice(1); // "Invoice"
+  d === "none" ? "No decision" : (currentScenario().decision_labels[d] ?? d);
+export const trapLabel = (t: string) => (t === "none" ? "" : (currentScenario().traps[t] ?? t));
+export const itemTitle = () => {
+  const l = currentScenario().item_label;
+  return l.charAt(0).toUpperCase() + l.slice(1); // "Invoice"
+};
 const DECISION_DOT = { approve: "bg-success", reject: "bg-destructive", hold: "bg-warning", escalate: "bg-chart-5", none: "bg-muted-foreground" };
 
 export function DecisionChip({ d }: { d: Decision | "none" | null | undefined }) {
@@ -172,7 +176,7 @@ export function ClipProvider({ children }: { children: ReactNode }) {
     setSrc(null);
     setErr(null);
     setOpen(true);
-    videoUrl(c.session_id).then(setSrc, () => setErr("This recording isn't available here. The clip reference is still valid."));
+    videoUrl(c.session_id).then(setSrc, () => setErr("No video for this clip. Sample sessions are written from steps, not recorded; in your own sessions clips play here."));
   }, []);
 
   const onLoaded = () => {

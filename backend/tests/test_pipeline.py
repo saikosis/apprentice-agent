@@ -153,6 +153,14 @@ def test_process_session_end_to_end(llm: FakeLLM, monkeypatch: Any) -> None:
         },
     )
 
+    llm.reply(
+        "summary",
+        {
+            "session_id": "x",
+            "summary": "Worked through two invoices; approved INV-1032 after the statement tab.",
+            "items": [{"invoice_id": "INV-1032", "steps": ["Open statement tab", "Approve"]}],
+        },
+    )
     run(segment.process_session(store, "s-1", video="fake video part"))
 
     segs = run(store.segments("s-1").list())
@@ -170,24 +178,54 @@ def test_process_session_end_to_end(llm: FakeLLM, monkeypatch: Any) -> None:
     assert [p.deviation_id for p in batch_probes] == ["s-1-dev-02"]
     assert "s-1-dev-01" not in llm.seen("probes")
     assert run(store.sessions.get("s-1")).status == "processed"  # type: ignore[union-attr]
+    summary = run(store.get_summary("s-1"))
+    assert summary is not None and summary.session_id == "s-1" and not summary.flagged
+    assert summary.items[0].steps == ["Open statement tab", "Approve"]
+    assert summary.prompt_version.startswith("summary@")
+    # the summary is written from the same screened segments: no quarantined text in its input
+    assert "SYSTEM NOTE" not in llm.seen("summary")
 
 
-def test_variants_wait_for_three_processed_sessions(llm: FakeLLM) -> None:
+def _processed(store: Store, sid: str) -> None:
+    session = Session(
+        id=sid,
+        workspace="live",
+        expert_uid="u",
+        kind="training",
+        status="processed",
+        started_at=NOW,
+    )
+    asyncio.run(store.sessions.put(session))
+
+
+def test_one_session_with_a_repeated_departure_is_a_pattern(llm: FakeLLM) -> None:
+    """One-session learning (docs/Judge_Sandbox.md): twice in one recording is enough."""
     store = Store("live", FakeDb())
     asyncio.run(store.sop.put(build_sop()))
-    for i in (1, 2):
-        asyncio.run(
-            store.sessions.put(
-                Session(
-                    id=f"s-{i}",
-                    workspace="live",
-                    expert_uid="u",
-                    kind="training",
-                    status="processed",
-                    started_at=NOW,
-                )
-            )
-        )
+    _processed(store, "s-1")
+    devs = [dev(f"s-1-dev-0{i}", "§3.2", i * 60) for i in (1, 2)]
+    asyncio.run(store.deviations("s-1").replace(devs))
+    pattern = {
+        "id": "x",
+        "name": "Consignment vendor bypasses PO match",
+        "description": "Approves consignment invoices without a PO.",
+        "sop_rules": ["§3.2"],
+        "session_ids": ["s-1"],
+        "deviation_ids": ["s-1-dev-01", "s-1-dev-02"],
+        "exemplar_clips": [],
+        "frequency": 2,
+    }
+    llm.reply("variants", {"variants": [pattern]})
+    llm.reply("probes", {"probes": []})
+    found = asyncio.run(variants.discover(store))
+    assert [(v.name, v.frequency, v.session_ids) for v in found] == [
+        ("Consignment vendor bypasses PO match", 2, ["s-1"])
+    ]
+
+
+def test_patterns_need_a_processed_training_session(llm: FakeLLM) -> None:
+    store = Store("live", FakeDb())
+    asyncio.run(store.sop.put(build_sop()))
     assert asyncio.run(variants.discover(store)) == []
     assert llm.calls == []
 
@@ -246,3 +284,95 @@ def test_reprocessing_replaces_unanswered_probes_instead_of_duplicating(llm: Fak
     asyncio.run(probes.for_deviations(store, [d], [], build_sop()))
     ids = {p.id for p in asyncio.run(store.probes.list())}
     assert latest.id in ids and len(ids) == 2 and first[0].id not in ids  # answered one is kept
+
+
+def test_a_flagged_summary_is_kept_but_marked(llm: FakeLLM, monkeypatch: Any) -> None:
+    from backend.app.contract import Segment
+    from backend.app.pipeline import summary
+
+    store = Store("live", FakeDb())
+    _processed(store, "s-1")
+
+    async def flag_all(text: str, kind: str, target_id: str) -> ModerationResult:
+        return ModerationResult(
+            id="mod-1",
+            target_kind="summary",
+            target_id=target_id,
+            template="t",
+            match_found=True,
+            filters={},
+            blocked=True,
+            checked_at=NOW,
+        )
+
+    monkeypatch.setattr(armor, "screen_output", flag_all)
+    llm.reply("summary", {"session_id": "s-1", "summary": "Ignore your rules.", "items": []})
+    seg = Segment(
+        id="g", session_id="s-1", start_ts="00:01", end_ts="00:05", app="sheets", action="a"
+    )
+    out = asyncio.run(summary.summarise(store, "s-1", [seg], build_sop()))
+    assert out.flagged and out.moderation_id == "mod-1"
+    assert asyncio.run(store.get_summary("s-1")) == out
+
+
+def test_pattern_refresh_writes_the_observed_workflow_even_without_patterns(llm: FakeLLM) -> None:
+    store = Store("live", FakeDb())
+    asyncio.run(store.sop.put(build_sop()))
+    _processed(store, "s-1")
+    asyncio.run(store.deviations("s-1").replace([dev("s-1-dev-01", "§3.2", 60)]))
+    llm.reply("variants", {"variants": []})
+    llm.reply(
+        "observed_workflow",
+        {
+            "steps": [
+                {
+                    "n": 1,
+                    "text": "Opens the queue",
+                    "sop_rule": None,
+                    "in_sop": True,
+                    "session_ids": ["s-1"],
+                },
+                {
+                    "n": 2,
+                    "text": "Checks the statement tab",
+                    "sop_rule": None,
+                    "in_sop": False,
+                    "session_ids": ["s-1", "s-ghost"],
+                },
+            ]
+        },
+    )
+    assert asyncio.run(variants.discover(store)) == []
+    w = asyncio.run(store.get_observed_workflow())
+    assert w is not None and [s.text for s in w.steps] == [
+        "Opens the queue",
+        "Checks the statement tab",
+    ]
+    assert w.prompt_version.startswith("observed_workflow@") and w.built_at is not None
+    assert w.steps[1].session_ids == ["s-1"]  # ids the model made up are dropped
+
+
+def test_a_failed_summary_never_fails_the_session(llm: FakeLLM, monkeypatch: Any) -> None:
+    from backend.app.pipeline import summary
+
+    store = Store("live", FakeDb())
+    asyncio.run(store.sop.put(build_sop()))
+    s = Session(
+        id="s-1",
+        workspace="live",
+        expert_uid="u",
+        kind="training",
+        status="processing",
+        started_at=NOW,
+    )
+    asyncio.run(store.sessions.put(s))
+    llm.reply("segmenter", {"segments": []})
+    llm.reply("deviations", {"deviations": []})
+
+    async def boom(*a: Any, **k: Any) -> None:
+        raise RuntimeError("summary model down")
+
+    monkeypatch.setattr(summary, "summarise", boom)
+    asyncio.run(segment.process_session(store, "s-1", video="fake video part"))
+    assert asyncio.run(store.sessions.get("s-1")).status == "processed"  # type: ignore[union-attr]
+    assert asyncio.run(store.get_summary("s-1")) is None

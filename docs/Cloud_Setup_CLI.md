@@ -170,7 +170,7 @@ gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAc
   --role=roles/storage.objectAdmin
 cat > /tmp/apprentice-cors.json <<'EOF'
 [{"origin": ["http://localhost:5173"], "method": ["PUT", "GET"],
-  "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]
+  "responseHeader": ["Content-Type", "x-goog-content-length-range"], "maxAgeSeconds": 3600}]
 EOF
 gcloud storage buckets update "gs://$BUCKET" --cors-file=/tmp/apprentice-cors.json
 ```
@@ -178,8 +178,18 @@ gcloud storage buckets update "gs://$BUCKET" --cors-file=/tmp/apprentice-cors.js
 If the name is taken ("already exists" and you don't own it), pick another suffix, update `BUCKET`, and use the same name in
 step 14. The Cloud Run URL is added to CORS in step 15.
 
-**Check:** `gcloud storage buckets describe "gs://$BUCKET" --format='value(location,cors_config)'` shows `ASIA-SOUTH1` and the
-localhost origin.
+Judges' sandbox recordings are deleted 14 days after upload (docs/Judge_Sandbox.md). Each workflow's sandbox folders
+start differently, so the rule lists all three prefixes:
+
+```bash
+cat > /tmp/apprentice-lifecycle.json <<'EOF'
+{"rule": [{"action": {"type": "Delete"}, "condition": {"age": 14, "matchesPrefix": ["sandbox-", "essays-sandbox-", "volunteers-sandbox-"]}}]}
+EOF
+gcloud storage buckets update "gs://$BUCKET" --lifecycle-file=/tmp/apprentice-lifecycle.json
+```
+
+**Check:** `gcloud storage buckets describe "gs://$BUCKET" --format='value(location,cors_config,lifecycle_config)'` shows
+`ASIA-SOUTH1`, the localhost origin, and the 14-day delete rule.
 
 ## 10. Firebase + Google sign-in (console only)
 
@@ -246,9 +256,14 @@ GCP_PROJECT=$PROJECT uv run python -m scripts.make_synthetic --upload-sop
 
 `ADMIN_UIDS` isn't known until you sign in once (step 15); use a placeholder for now.
 
+The judge code (`SANDBOX_CODE`) opens judges' private sandboxes (docs/Judge_Guide.md). Make it once, keep it somewhere
+private, and use the same one on every deploy.
+
 ```bash
 export ADMIN_UIDS=none
+export SANDBOX_CODE=$(openssl rand -hex 6)   # once; afterwards reuse the same value
 PROJECT=$PROJECT BUCKET=$BUCKET MA_LOCATION=$MA_LOCATION EXPERT_EMAIL=$EXPERT_EMAIL ADMIN_UIDS=$ADMIN_UIDS \
+  SANDBOX_CODE=$SANDBOX_CODE \
   VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN \
   VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
   bash scripts/deploy.sh
@@ -288,7 +303,7 @@ echo "$URL $URL2"   # both must be non-empty
    ```bash
    cat > ~/apprentice-cors.json <<EOF
    [{"origin": ["http://localhost:5173", "$URL", "$URL2"], "method": ["PUT", "GET"],
-     "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]
+     "responseHeader": ["Content-Type", "x-goog-content-length-range"], "maxAgeSeconds": 3600}]
    EOF
    gcloud storage buckets update "gs://$BUCKET" --cors-file="$HOME/apprentice-cors.json"
    gcloud storage buckets describe "gs://$BUCKET" --format='value(cors_config)'   # no empty "" origin
