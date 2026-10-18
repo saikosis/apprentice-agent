@@ -9,7 +9,8 @@ import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartToo
 import { Progress } from "../components/ui/progress";
 import { Separator } from "../components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import type { ExamReport, Session } from "../types/contract";
+import { useEffect } from "react";
+import type { DecisionGraph, ExamReport, Session } from "../types/contract";
 import { Loadable, PageHeader, scenarioInfo, fmtDate, fmtDuration, go, trapLabel, useAsync, useWs } from "../ui";
 import { CDM } from "./Probes";
 import { SessionName, SessionStatus, sessionNames } from "./Sessions";
@@ -23,6 +24,23 @@ const caseConfig = {
 // Colours go to the categories present, so six slices never reuse a hue.
 const CDM_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--muted-foreground)", "var(--secondary-foreground)"];
 
+// What hasn't caught up with the latest analysed session yet: a graph built before it, and an exam
+// run on an older graph (in a sandbox, at first both are the sample run's).
+export function behind(
+  sessions: Session[],
+  graph: Pick<DecisionGraph, "version" | "built_at"> | null,
+  report: Pick<ExamReport, "graph_version"> | null,
+) {
+  const t = (iso: string) => new Date(iso).getTime();
+  const latest = Math.max(0, ...sessions.filter((s) => s.status === "processed").map((s) => t(s.started_at)));
+  const graphBehind = Boolean(graph && latest > t(graph.built_at));
+  return { graph: graphBehind, exam: Boolean(report && (graphBehind || report.graph_version !== graph?.version)) };
+}
+
+function Behind({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm font-medium text-warning">{children}</p>;
+}
+
 function Delta({ value, unit, good = true }: { value: number; unit: string; good?: boolean }) {
   const up = value >= 0;
   return (
@@ -34,7 +52,7 @@ function Delta({ value, unit, good = true }: { value: number; unit: string; good
   );
 }
 
-function ExamHero({ r }: { r: ExamReport }) {
+function ExamHero({ r, stale }: { r: ExamReport; stale: boolean }) {
   const so = r.per_arm.sop_only!;
   const sg = r.per_arm.sop_graph!;
   const data = r.cases.map((c) => ({ case: c.case_id.replace("c-", ""), sop_only: c.sop_only_judge_mean, sop_graph: c.sop_graph_judge_mean }));
@@ -48,6 +66,12 @@ function ExamHero({ r }: { r: ExamReport }) {
           <Delta value={Math.round(sg.agreement_pct - so.agreement_pct)} unit=" pts" />
           over the SOP-only agent ({Math.round(so.agreement_pct)}%) on {r.n_cases} cases
         </p>
+        {stale && (
+          <Behind>
+            From an older graph that doesn't include your latest sessions. <a href="#/graph" className="underline">Rebuild the graph</a>, then run
+            the exam again.
+          </Behind>
+        )}
       </CardHeader>
       <CardContent>
         <ChartContainer config={caseConfig} className="aspect-auto h-60 w-full">
@@ -69,7 +93,7 @@ function ExamHero({ r }: { r: ExamReport }) {
   );
 }
 
-function StatColumn({ probes, nodes, exceptions, r }: { probes: ProbeWithAnswer[]; nodes: number; exceptions: number; r: ExamReport | null }) {
+function StatColumn({ probes, nodes, exceptions, r, stale }: { probes: ProbeWithAnswer[]; nodes: number; exceptions: number; r: ExamReport | null; stale: boolean }) {
   const answered = probes.filter((p) => p.status !== "open").length;
   const traps = r?.cases.filter((c) => c.trap_type !== "none").length ?? 0;
   return (
@@ -94,6 +118,11 @@ function StatColumn({ probes, nodes, exceptions, r }: { probes: ProbeWithAnswer[
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{exceptions} exceptions</span> to the written SOP, each tied to a clip.
           </p>
+          {stale && (
+            <Behind>
+              Built before your latest session. <a href="#/graph" className="underline">Rebuild it</a> to include it.
+            </Behind>
+          )}
         </CardHeader>
         {r && (
           <>
@@ -157,7 +186,7 @@ function Patterns({ variants }: { variants: Awaited<ReturnType<typeof listVarian
         <CardDescription className="eyebrow">Most repeated departures</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        {top.length === 0 && <p className="text-sm text-muted-foreground">Patterns appear after 3 analysed sessions.</p>}
+        {top.length === 0 && <p className="text-sm text-muted-foreground">Patterns appear once the same departure shows up twice.</p>}
         {top.map((v) => (
           <a key={v.id} href="#/discovery" className="flex flex-col gap-2 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
             <div className="flex items-baseline gap-3 text-sm">
@@ -300,10 +329,18 @@ export function Overview() {
     () => Promise.all([listSessions(ws), listProbes(ws), listVariants(ws), getGraph(ws), latestReport(ws)]),
     [ws],
   );
+  // While a recording is being analysed, keep refreshing: its steps, questions and patterns arrive on their own.
+  const busy = state.data?.[0].some((s) => s.status === "processing" || s.status === "uploading");
+  useEffect(() => {
+    if (!busy) return;
+    const t = setInterval(state.reload, 5000);
+    return () => clearInterval(t);
+  }, [busy, state.reload]);
   return (
     <Loadable state={state}>
       {([sessions, probes, variants, graph, report]) => {
         const processed = sessions.filter((s) => s.status === "processed").length;
+        const late = behind(sessions, graph, report);
         return (
           <>
             <PageHeader
@@ -326,7 +363,7 @@ export function Overview() {
             )}
             <div className="grid gap-4 lg:grid-cols-3">
               {report?.per_arm.sop_only && report.per_arm.sop_graph ? (
-                <ExamHero r={report} />
+                <ExamHero r={report} stale={late.exam} />
               ) : (
                 <Card className="lg:col-span-2">
                   <CardHeader>
@@ -336,7 +373,7 @@ export function Overview() {
                   </CardHeader>
                 </Card>
               )}
-              <StatColumn probes={probes} nodes={graph?.nodes.length ?? 0} exceptions={graph?.nodes.filter((n) => n.kind === "exception").length ?? 0} r={report} />
+              <StatColumn probes={probes} nodes={graph?.nodes.length ?? 0} exceptions={graph?.nodes.filter((n) => n.kind === "exception").length ?? 0} r={report} stale={late.graph} />
               <ProbeMix probes={probes} />
               <Patterns variants={variants} />
               <Traps r={report} />
