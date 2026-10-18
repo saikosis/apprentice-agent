@@ -1529,10 +1529,14 @@
             "case_generations": 0
           }
         },
-        "limit_each": {
-          "default": 5,
-          "title": "Limit Each",
-          "type": "integer"
+        "limits": {
+          "$ref": "#/$defs/SandboxUsage",
+          "default": {
+            "recordings": 0,
+            "graph_builds": 0,
+            "exam_runs": 0,
+            "case_generations": 0
+          }
         },
         "global_today": {
           "default": 0,

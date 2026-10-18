@@ -45,7 +45,7 @@ export function Admin() {
                       <TableCell>{fmtDate(r.created_at)}</TableCell>
                       {LIMITS.map(([k]) => (
                         <TableCell key={k} className="tabular-nums">
-                          {r.usage?.[k] ?? 0} of {r.limit_each}
+                          {r.usage?.[k] ?? 0} of {r.limits?.[k] ?? 0}
                         </TableCell>
                       ))}
                       <TableCell className="pr-4 text-right">

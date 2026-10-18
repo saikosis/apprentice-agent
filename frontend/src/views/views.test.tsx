@@ -216,7 +216,7 @@ describe("admin", () => {
       email: "judge1@example.com",
       created_at: "2026-10-17T10:00:00Z",
       usage: { recordings: 2, graph_builds: 1, exam_runs: 0, case_generations: 0 },
-      limit_each: 5,
+      limits: { recordings: 5, graph_builds: 20, exam_runs: 20, case_generations: 20 },
       global_today: 3,
       global_limit: 100,
     };
@@ -246,7 +246,7 @@ describe("judge sandbox home", () => {
       email: "judge1@example.com",
       created_at: "2026-10-17T10:00:00Z",
       usage: { recordings: 1, graph_builds: 0, exam_runs: 0, case_generations: 0 },
-      limit_each: 5,
+      limits: { recordings: 5, graph_builds: 20, exam_runs: 20, case_generations: 20 },
       global_today: 7,
       global_limit: 100,
     };

@@ -715,6 +715,30 @@ def test_a_judge_gets_five_recordings(api: Api, monkeypatch: pytest.MonkeyPatch)
     assert info["usage"]["recordings"] == 5 and info["global_today"] == 5
 
 
+def test_a_judge_gets_twenty_of_everything_else(api: Api, monkeypatch: pytest.MonkeyPatch) -> None:
+    from fastapi import HTTPException
+
+    from backend.app import sandbox
+
+    judge(api, monkeypatch)
+    limits = api.client.get("/api/sandbox").json()["limits"]
+    assert limits == {"recordings": 5, "graph_builds": 20, "exam_runs": 20, "case_generations": 20}
+    mine = store.Store("sandbox", api.db, uid="u-j1")
+    for _ in range(20):
+        asyncio.run(sandbox.charge(mine, "graph_builds"))
+    with pytest.raises(HTTPException, match="20 of 20 graph builds"):
+        asyncio.run(sandbox.charge(mine, "graph_builds"))
+
+
+def test_sandboxes_saved_with_the_old_single_limit_still_load(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    judge(api, monkeypatch)
+    doc = api.db.document("sandboxes/u-j1")
+    asyncio.run(doc.set({**asyncio.run(doc.get()).to_dict(), "limit_each": 5}))
+    assert api.client.get("/api/sandbox").json()["limits"]["exam_runs"] == 20
+
+
 def test_the_expert_is_never_limited(api: Api) -> None:
     for _ in range(6):
         new_session(api)
