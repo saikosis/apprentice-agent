@@ -222,6 +222,8 @@ describe("judge code", () => {
     });
     const joined = vi.fn();
     render(<JoinSandbox email="j@example.com" onJoined={joined} />);
+    const where = screen.getByRole("link", { name: /sandbox_code\/code\.txt/ });
+    expect(where.getAttribute("href")).toBe("https://github.com/saikosis/apprentice-agent/blob/main/sandbox_code/code.txt");
     const input = screen.getByLabelText("Judge code");
     fireEvent.change(input, { target: { value: "wrong" } });
     fireEvent.click(screen.getByRole("button", { name: "Open my sandbox" }));
