@@ -315,6 +315,7 @@ Security: all Firestore access is server-side (Admin SDK). Firestore rules deny 
 | GET /api/sessions | `?ws=live\|demo` | `Session[]` |
 | GET /api/sessions/{id} | – | `{session: Session, segments: Segment[], deviations: Deviation[], diff: SheetDiff\|null, summary: SessionSummary\|null}` |
 | GET /api/sessions/{id}/video-url | – | `{url}` (signed GET, 1 h) |
+| DELETE /api/sessions/{id} | – | `{ok}`. Judge sandboxes only (403 otherwise): removes the session, its steps, departures, summary, questions and recording, and its part of patterns and the observed workflow; 409 while analysing; refunds the recording credit for sessions the judge recorded |
 | POST /api/sessions/{id}/deviations | `{sop_rule, question, invoice_id?, t_seconds, model_timestamp?}` | `{deviation: Deviation, probe: Probe}` |
 | POST /api/variants/discover | `{}` | 202; then GET /api/variants → `Variant[]` |
 | GET /api/probes | `?status=open&session_id=` | `Probe[]` |

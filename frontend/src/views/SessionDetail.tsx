@@ -1,6 +1,6 @@
 import { LoaderIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getSession, processSession } from "../api/client";
+import { getSession, listSessions, processSession } from "../api/client";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -24,7 +24,7 @@ import {
   useAsync,
   useWs,
 } from "../ui";
-import { SessionStatus } from "./Sessions";
+import { SessionStatus, sessionNames } from "./Sessions";
 
 const APP = { sheets: "Sheets", gmail: "Gmail", docs: "Docs", forms: "Forms", calendar: "Calendar", other: "Other" } as const;
 
@@ -65,6 +65,7 @@ function SummaryCard({ s }: { s: SessionSummary }) {
 export function SessionDetail({ id }: { id: string }) {
   const { ws, readOnly } = useWs();
   const state = useAsync(() => getSession(ws, id), [ws, id]);
+  const all = useAsync(() => listSessions(ws), [ws]); // for the same name as on the Sessions page
   const [err, setErr] = useState<string | null>(null);
   const status = state.data?.session.status;
 
@@ -78,6 +79,7 @@ export function SessionDetail({ id }: { id: string }) {
   return (
     <Loadable state={state}>
       {({ session, segments, deviations, diff, summary }) => {
+        const name = (all.data && sessionNames(all.data).get(session.id)) || "Session";
         const clipFor = (start: string, end: string) => ({ session_id: session.id, start_ts: start, end_ts: end });
         return (
           <>
@@ -87,10 +89,10 @@ export function SessionDetail({ id }: { id: string }) {
                   <a href="#/sessions" className="hover:text-foreground">
                     Sessions
                   </a>{" "}
-                  / {session.id}
+                  / {name}
                 </>
               }
-              title={`Session ${session.id}`}
+              title={name}
               description={
                 <>
                   {fmtDate(session.started_at)}, {fmtDuration(session.duration_s)} long.{" "}

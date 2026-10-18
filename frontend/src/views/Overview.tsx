@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import type { ExamReport, Session } from "../types/contract";
 import { Loadable, PageHeader, scenarioInfo, fmtDate, fmtDuration, go, trapLabel, useAsync, useWs } from "../ui";
 import { CDM } from "./Probes";
-import { SessionStatus } from "./Sessions";
+import { SessionName, SessionStatus, sessionNames } from "./Sessions";
 
 
 const caseConfig = {
@@ -217,6 +217,7 @@ function Traps({ r }: { r: ExamReport | null }) {
 }
 
 function SessionsTable({ sessions }: { sessions: Session[] }) {
+  const names = sessionNames(sessions);
   return (
     <Card className="gap-0 pb-0 lg:col-span-2">
       <CardHeader className="border-b">
@@ -240,10 +241,7 @@ function SessionsTable({ sessions }: { sessions: Session[] }) {
             .map((s) => (
               <TableRow key={s.id} className="cursor-pointer" onClick={() => go(`/sessions/${s.id}`)}>
                 <TableCell className="pl-4">
-                  <a href={`#/sessions/${s.id}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-3 font-medium">
-                    <span className="flex size-8 items-center justify-center rounded-md bg-muted font-mono text-xs">{s.id.replace("s-", "")}</span>
-                    Session {s.id}
-                  </a>
+                  <SessionName s={s} name={names.get(s.id) ?? s.id} />
                 </TableCell>
                 <TableCell>{fmtDate(s.started_at)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmtDuration(s.duration_s)}</TableCell>

@@ -128,6 +128,17 @@ def check_open() -> None:
         raise HTTPException(403, "The judge sandbox is closed.")
 
 
+async def refund(ws_store: store.Store, kind: Kind) -> None:
+    """Give one credit back (the judge deleted a session they recorded). The day's global count stays."""
+    if ws_store.ws != "sandbox":
+        return
+    uid = ws_store.uid or ""
+    usage = await _usage(uid)
+    used = getattr(usage, kind)
+    if used > 0:
+        await _usage_doc(uid).set(usage.model_copy(update={kind: used - 1}).model_dump())  # type: ignore[attr-defined]
+
+
 async def charge(ws_store: store.Store, kind: Kind) -> None:
     """Count one sandbox action before it starts; refuse past the judge's or the day's limit.
     No-op outside a sandbox (the expert is never limited)."""

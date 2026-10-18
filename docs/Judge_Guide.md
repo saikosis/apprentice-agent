@@ -92,5 +92,4 @@ sandboxes** in the sidebar: that sandbox is listed, and **View** opens it read-o
 > 5. **Successor exam:** generate 6 practice cases, label them as you would decide, and run the exam. It compares an AI
 >    successor that has only the SOP with one that also has your decision graph.
 >
-> Your sandbox is visible only to you and the organisers, and is deleted after 14 days. A read-only demo with no sign-in
-> is at /demo/.
+> Your sandbox is visible only to you and the organisers, and is deleted after 14 days.

@@ -14,7 +14,7 @@ import { GraphView } from "./Graph";
 import { Probes } from "./Probes";
 import { Record } from "./Record";
 import { SessionDetail } from "./SessionDetail";
-import { Sessions } from "./Sessions";
+import { Sessions, sessionNames } from "./Sessions";
 
 // jsdom has no canvas/layout: stub cytoscape and ResizeObserver.
 vi.mock("cytoscape", () => ({ default: () => ({ on: () => undefined, destroy: () => undefined }) }));
@@ -45,8 +45,20 @@ describe("views render against fixtures", () => {
 
   it("Sessions", async () => {
     demo(<Sessions />);
-    expect(await screen.findByText("s-01")).toBeTruthy();
+    expect(await screen.findByText("Session 1")).toBeTruthy(); // numbered oldest first, not the raw id
+    expect(screen.getByText("Session 8")).toBeTruthy();
+    expect(screen.queryByText("s-01")).toBeNull();
     expect(screen.getAllByText("Held out for exam")).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull(); // read-only demo
+  });
+
+  it("sessionNames: the copied sample run is named, the judge's own recordings are numbered", () => {
+    const s = (id: string, at: string, expert_uid = "u-1") =>
+      ({ id, started_at: at, expert_uid, workspace: "sandbox", kind: "training", status: "processed" }) as const;
+    const names = sessionNames([s("s-b", "2026-10-18T10:00"), s("s-quick", "2026-10-16T10:00", "sample"), s("s-a", "2026-10-17T10:00")]);
+    expect(names.get("s-quick")).toBe("Sample session");
+    expect(names.get("s-a")).toBe("Session 1");
+    expect(names.get("s-b")).toBe("Session 2");
   });
 
   it("SessionDetail shows the quarantined injection email", async () => {

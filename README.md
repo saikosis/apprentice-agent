@@ -1,7 +1,6 @@
 # Apprentice
 
-**Live app: https://apprentice-410061958227.asia-south1.run.app** · Read-only demo, no sign-in:
-https://apprentice-410061958227.asia-south1.run.app/demo/
+**Live app: https://apprentice-410061958227.asia-south1.run.app**
 
 Apprentice is an AI apprentice that sits beside an expert while they work in Google Sheets, Docs, Forms and Gmail. It
 watches the screen, listens, and asks *why* whenever the expert departs from the written procedure. It turns the answers

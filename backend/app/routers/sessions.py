@@ -6,7 +6,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app import errors, jobs, sandbox, ts
+from backend.app import errors, jobs, sandbox, storage, ts
 from backend.app.contract import ClipRef, Deviation, Probe, Segment, Session
 from backend.app.pipeline import segment
 from backend.app.routers.auth import CurrentUser
@@ -83,20 +83,43 @@ async def session_detail(session_id: str, store: ReadStore) -> dict[str, object]
     }
 
 
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str, user: CurrentUser, store: LiveStore) -> dict[str, bool]:
+    """A judge deletes a session from their sandbox, with its analysis and recording, and gets the
+    recording credit back for sessions they recorded (not the copied sample). The expert's live
+    recordings can't be deleted here."""
+    if store.ws != "sandbox":
+        raise HTTPException(403, "Only sessions in a judge's sandbox can be deleted.")
+    async with jobs.lock(f"session:{store.root}/{session_id}"):  # vs. process, and a second delete
+        s = await get_or_404(store, session_id)
+        if s.status == "processing":
+            raise errors.conflict(
+                "This session is still being analysed. Delete it when that finishes."
+            )
+        if s.gcs_uri:  # first: if storage fails, nothing else is gone yet
+            await storage.delete(s.gcs_uri)
+        async with jobs.lock(f"variants:{store.root}"):  # patterns are being edited
+            await store.delete_session(session_id)
+        if s.expert_uid == user.uid:
+            await sandbox.refund(store, "recordings")
+    return {"ok": True}
+
+
 @router.post("/sessions/{session_id}/process", status_code=202)
 async def process(session_id: str, store: LiveStore, force: bool = False) -> dict[str, str]:
     """`force=true` restarts a session stuck in `processing` (e.g. the instance died mid-run)."""
-    s = await get_or_404(store, session_id)
-    allowed: tuple[str, ...] = (
-        ("uploaded", "failed", "processing") if force else ("uploaded", "failed")
-    )
-    if store.ws == "sandbox":  # each sandbox recording is analysed once: no retries, no force
-        allowed = ("uploaded",)
-    if s.status not in allowed:
-        raise errors.conflict(
-            f"Session {session_id} is {s.status}; upload the recording before processing it."
+    async with jobs.lock(f"session:{store.root}/{session_id}"):  # vs. a delete of the same session
+        s = await get_or_404(store, session_id)
+        allowed: tuple[str, ...] = (
+            ("uploaded", "failed", "processing") if force else ("uploaded", "failed")
         )
-    await store.sessions.put(s.model_copy(update={"status": "processing", "error": None}))
+        if store.ws == "sandbox":  # each sandbox recording is analysed once: no retries, no force
+            allowed = ("uploaded",)
+        if s.status not in allowed:
+            raise errors.conflict(
+                f"Session {session_id} is {s.status}; upload the recording before processing it."
+            )
+        await store.sessions.put(s.model_copy(update={"status": "processing", "error": None}))
 
     async def failed(e: Exception) -> None:
         cur = await store.sessions.get(session_id)

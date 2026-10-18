@@ -204,6 +204,52 @@ class Store:
         self.check_writable()
         await self.db.document(f"{self.root}/observed_workflow/current").set(_dump(w))
 
+    async def delete_session(self, session_id: str) -> None:
+        """A session and what was learned from it: its steps, departures, summary, sheet snapshots and
+        questions (with answers). Patterns and the observed workflow lose this session's part; a pattern
+        left with fewer than two departures is no longer one and goes, with its questions. The graph and
+        exam reports keep what they learned until they are rebuilt."""
+        self.check_writable()
+        gone_devs = {d.id for d in await self.deviations(session_id).list()}
+        gone_variants = set()
+        for v in await self.variants.list():
+            if session_id not in v.session_ids:
+                continue
+            devs = [d for d in v.deviation_ids if d not in gone_devs]
+            if len(devs) < 2:
+                gone_variants.add(v.id)
+                await self.variants.delete(v.id)
+                continue
+            await self.variants.put(
+                v.model_copy(
+                    update={
+                        "session_ids": [x for x in v.session_ids if x != session_id],
+                        "deviation_ids": devs,
+                        "frequency": len(devs),
+                        "exemplar_clips": [
+                            c for c in v.exemplar_clips if c.session_id != session_id
+                        ],
+                    }
+                )
+            )
+        for p in await self.probes.list():
+            if p.session_id == session_id or (p.variant_id and p.variant_id in gone_variants):
+                await self.probes.delete(p.id)
+        w = await self.get_observed_workflow()
+        if w and any(session_id in step.session_ids for step in w.steps):
+            steps = [
+                step.model_copy(
+                    update={"session_ids": [x for x in step.session_ids if x != session_id]}
+                )
+                for step in w.steps
+            ]
+            steps = [step for step in steps if step.session_ids]
+            if steps:
+                await self.put_observed_workflow(w.model_copy(update={"steps": steps}))
+            else:
+                await self.db.document(f"{self.root}/observed_workflow/current").delete()
+        await self.db.recursive_delete(self.db.document(f"{self.root}/sessions/{session_id}"))
+
     async def get_summary(self, session_id: str) -> SessionSummary | None:
         snap = await self.db.document(f"{self.root}/sessions/{session_id}/summary/current").get()
         return SessionSummary.model_validate(snap.to_dict()) if snap.exists else None
