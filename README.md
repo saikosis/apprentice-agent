@@ -7,7 +7,7 @@ watches the screen, listens, and asks *why* whenever the expert departs from the
 into a decision graph, then **tests whether the knowledge carried over**: an AI successor with only the SOP is compared
 with one that also has the graph, on cases the expert labels.
 
-Built for the AI Builder Cup (Oct 14–18, 2026).
+Built for the AI Builder Cup
 
 ## The problem
 
